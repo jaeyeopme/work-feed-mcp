@@ -23,7 +23,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src", "."]
+pythonpath = ["src", ".", "../../src"]
 markers = [
   "live: opt-in tests that may call external Upwork endpoints",
 ]
@@ -39,5 +39,5 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-mypy_path = "src"
+mypy_path = "src:../../src"
 packages = ["upwork_collector"]

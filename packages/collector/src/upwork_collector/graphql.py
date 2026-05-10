@@ -1,51 +1,10 @@
-"""GraphQL request construction and response extraction."""
+"""Compatibility shim for Upwork GraphQL helpers."""
 
-from __future__ import annotations
+from upwork_app.integrations.upwork.graphql import (
+    ENDPOINT,
+    QUERY_DOCUMENT,
+    build_request_payload,
+    extract_results,
+)
 
-from typing import Any
-
-from upwork_collector.errors import UpstreamSchemaOrTemporaryError
-
-ENDPOINT = "https://www.upwork.com/api/graphql/v1"
-
-QUERY_DOCUMENT = """
-query VisitorJobSearch($request: VisitorJobSearchV1Request!) {
-  search {
-    universalSearchNuxt {
-      visitorJobSearchV1(request: $request) {
-        results {
-          id
-          title
-          description
-        }
-      }
-    }
-  }
-}
-""".strip()
-
-
-def build_request_payload(
-    query: str | None = None, *, offset: int = 0, count: int = 50
-) -> dict[str, Any]:
-    request: dict[str, Any] = {"paging": {"offset": offset, "count": count}}
-    if query:
-        request["userQuery"] = query
-    return {"query": QUERY_DOCUMENT, "variables": {"request": request}}
-
-
-def extract_results(response: dict[str, Any]) -> list[dict[str, Any]]:
-    if response.get("errors"):
-        raise UpstreamSchemaOrTemporaryError("upstream GraphQL returned errors")
-    try:
-        results = response["data"]["search"]["universalSearchNuxt"]["visitorJobSearchV1"]["results"]
-    except (KeyError, TypeError) as exc:
-        raise UpstreamSchemaOrTemporaryError("upstream response missing job results path") from exc
-    if not isinstance(results, list):
-        raise UpstreamSchemaOrTemporaryError("upstream job results path is not a list")
-    typed_results: list[dict[str, Any]] = []
-    for item in results:
-        if not isinstance(item, dict):
-            raise UpstreamSchemaOrTemporaryError("upstream job result item is not an object")
-        typed_results.append(item)
-    return typed_results
+__all__ = ["ENDPOINT", "QUERY_DOCUMENT", "build_request_payload", "extract_results"]

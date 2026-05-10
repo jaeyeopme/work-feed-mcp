@@ -22,11 +22,11 @@ test:
 quality: format-check lint typecheck test
 
 smoke:
-	PYTHONPATH=src $(PYTHON) -m upwork_collector collect --fixture $(FIXTURE) > $(SMOKE_OUT)
+	PYTHONPATH=src:../../src $(PYTHON) -m upwork_collector collect --fixture $(FIXTURE) > $(SMOKE_OUT)
 	$(PYTHON) -c 'import json,sys; [json.loads(line) for line in sys.stdin if line.strip()]' < $(SMOKE_OUT)
 
 live-smoke:
-	PYTHONPATH=src UPWORK_COLLECTOR_LIVE=1 $(PYTHON) -m upwork_collector live-smoke --query "$(QUERY)" --max-pages $(MAX_PAGES) --page-size $(PAGE_SIZE)
+	PYTHONPATH=src:../../src UPWORK_COLLECTOR_LIVE=1 $(PYTHON) -m upwork_collector live-smoke --query "$(QUERY)" --max-pages $(MAX_PAGES) --page-size $(PAGE_SIZE)
 
 clean:
 	rm -rf .pytest_cache .mypy_cache .ruff_cache src/*.egg-info

@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "upwork-app"
+version = "0.1.0"
+description = "FastAPI backend for the Upwork job discovery pipeline."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "upwork-app maintainers" }]
+dependencies = [
+  "fastapi>=0.115",
+  "pydantic>=2.7",
+]
+
+[project.scripts]
+upwork-app = "upwork_app.cli.__main__:main"
+upwork-app-collect = "upwork_app.cli.collect:main"
+upwork-app-ingest = "upwork_app.cli.ingest:main"
+upwork-app-analytics = "upwork_app.cli.analytics:main"
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.27",
+  "uvicorn>=0.30",
+  "mypy>=1.10",
+  "pytest>=8",
+  "ruff>=0.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+mypy_path = "src"
+packages = ["upwork_app"]
+plugins = []

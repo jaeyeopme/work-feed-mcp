@@ -4,6 +4,10 @@ Upwork job discovery pipeline monorepo입니다.
 
 이 저장소의 목표는 Upwork job 데이터를 안정적으로 수집하고, 이후 agent/LLM이 분석에 활용할 수 있도록 구조화된 로컬 데이터 파이프라인을 제공하는 것입니다. 목적은 자동 지원/메시지 작성이 아니라 **분석 가능한 데이터 수집**입니다.
 
+## LLM/agent quick context
+
+처음 이 repo를 읽는 LLM/agent는 [`docs/LLM_CONTEXT.md`](docs/LLM_CONTEXT.md)를 먼저 확인하세요. 현재 구현 상태, 모듈 경계, E2E flow, 금지사항이 한 문서에 정리되어 있습니다.
+
 ## 현재 MVP 상태
 
 현재 구현된 MVP 경로는 다음과 같습니다.

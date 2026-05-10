@@ -14,6 +14,14 @@ from upwork_app.services.ingestion import ingest_records, read_jsonl
 FIXTURE = Path(__file__).parent / "fixtures" / "visitor_job_search_response.json"
 
 
+def assert_two_jobs_persisted(db: Path) -> None:
+    connection = sqlite3.connect(db)
+    try:
+        assert connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0] == 2
+    finally:
+        connection.close()
+
+
 def test_health_endpoint() -> None:
     client = TestClient(app)
 
@@ -60,6 +68,36 @@ def test_ingest_and_analytics_endpoints(tmp_path: Path, monkeypatch: pytest.Monk
     }
 
 
+def test_ingest_endpoint_accepts_jobs_payload(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    db = tmp_path / "jobs-payload.sqlite"
+    monkeypatch.setenv("UPWORK_APP_DB", str(db))
+    client = TestClient(app)
+    jobs = client.post("/collect", json={"fixture": str(FIXTURE)}).json()["jobs"]
+
+    response = client.post("/ingest", json={"jobs": jobs, "source_query": "python"})
+
+    assert response.status_code == 200
+    assert response.json()["record_count"] == 2
+    assert "db_path" not in response.json()
+    assert_two_jobs_persisted(db)
+
+
+def test_ingest_endpoint_requires_one_payload_shape(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("UPWORK_APP_DB", str(tmp_path / "invalid.sqlite"))
+    client = TestClient(app)
+    jobs = client.post("/collect", json={"fixture": str(FIXTURE)}).json()["jobs"]
+
+    missing_payload = client.post("/ingest", json={"source_query": "python"})
+    duplicate_payload = client.post("/ingest", json={"jsonl": "", "jobs": jobs})
+
+    assert missing_payload.status_code == 422
+    assert duplicate_payload.status_code == 422
+
+
 def test_collect_and_ingest_endpoint(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     db = tmp_path / "upwork.sqlite"
     monkeypatch.setenv("UPWORK_APP_DB", str(db))
@@ -76,11 +114,7 @@ def test_collect_and_ingest_endpoint(tmp_path: Path, monkeypatch: pytest.MonkeyP
     assert response.status_code == 200
     assert response.json()["record_count"] == 2
     assert "db_path" not in response.json()
-    connection = sqlite3.connect(db)
-    try:
-        assert connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0] == 2
-    finally:
-        connection.close()
+    assert_two_jobs_persisted(db)
 
 
 def test_http_ingest_rejects_caller_chosen_db_path(

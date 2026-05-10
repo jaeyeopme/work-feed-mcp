@@ -21,8 +21,8 @@ The project uses a single app-first structure because it is expected to behave l
 
 - `GET /health`
 - `POST /collect`
-- `POST /ingest`
-- `POST /collect-and-ingest`
+- `POST /ingest` — accepts either `jobs: [...]` or `jsonl`, exactly one
+- `POST /collect-and-ingest` — MVP convenience endpoint; future run resources can supersede it
 - `GET /analytics/{summary|skills|jobs|budgets|runs|clients}`
 
 HTTP endpoints use the server-side `UPWORK_APP_DB` setting for SQLite access. Caller-chosen database paths are CLI-only to avoid exposing arbitrary filesystem reads/writes through the web API.
@@ -42,3 +42,5 @@ make e2e-smoke
 ## Safety
 
 Live collection keeps the `UPWORK_COLLECTOR_LIVE=1` gate and credential redaction behavior. Tests and smoke checks use fixtures only.
+
+Analytics routes are intentionally explicit instead of a dynamic `/{name}` dispatcher so OpenAPI docs and future query-specific parameters stay clear.

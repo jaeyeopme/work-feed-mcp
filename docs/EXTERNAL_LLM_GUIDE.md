@@ -81,8 +81,8 @@ Then call:
 ```text
 GET  /health
 POST /collect
-POST /ingest
-POST /collect-and-ingest
+POST /ingest (prefer `jobs: [...]`; JSONL remains supported for pipeline compatibility)
+POST /collect-and-ingest (MVP convenience endpoint)
 GET  /analytics/summary
 ```
 

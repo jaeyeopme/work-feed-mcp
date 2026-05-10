@@ -58,8 +58,8 @@ make run APP_DB=/tmp/upwork.sqlite
 ```text
 GET  /health
 POST /collect
-POST /ingest
-POST /collect-and-ingest
+POST /ingest               # accepts jobs[] for HTTP clients or jsonl for pipeline compatibility
+POST /collect-and-ingest   # convenience MVP endpoint; run resources can replace this later
 GET  /analytics/summary
 GET  /analytics/skills
 GET  /analytics/jobs
@@ -75,6 +75,9 @@ curl -X POST http://127.0.0.1:8000/collect \
   -H 'content-type: application/json' \
   -d '{"fixture":"tests/fixtures/visitor_job_search_response.json"}'
 ```
+
+
+HTTP ingest는 일반 클라이언트용으로 `jobs: [...]` 입력을 권장하고, 기존 JSONL 파이프라인 호환을 위해 `jsonl: "..."`도 지원합니다. 둘 중 하나만 보낼 수 있습니다.
 
 ## CLI 예시
 

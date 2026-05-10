@@ -9,6 +9,7 @@ from upwork_app.api.deps import settings
 from upwork_app.api.error_mapping import collector_http_error, ingest_http_error
 from upwork_app.core.config import Settings
 from upwork_app.core.errors import IngestError
+from upwork_app.domain.collector_record import validate_payload
 from upwork_app.integrations.upwork.errors import CollectorError
 from upwork_app.schemas.ingest import CollectAndIngestRequest, IngestRequest, IngestResponse
 from upwork_app.services.collector import collect_jobs, jobs_to_jsonl
@@ -22,7 +23,11 @@ router = APIRouter(tags=["ingest"])
 @router.post("/ingest", response_model=IngestResponse)
 def ingest(request: IngestRequest, app_settings: Settings = settings_dependency) -> IngestResponse:
     try:
-        records = read_jsonl(StringIO(request.jsonl))
+        if request.jobs is not None:
+            records = [validate_payload(job) for job in request.jobs]
+        else:
+            assert request.jsonl is not None
+            records = read_jsonl(StringIO(request.jsonl))
         result = ingest_records(
             records,
             db_path=app_settings.default_db_path,

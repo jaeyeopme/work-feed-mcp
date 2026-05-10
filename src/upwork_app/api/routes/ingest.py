@@ -18,6 +18,7 @@ from upwork_app.services.ingestion import ingest_records, read_jsonl
 settings_dependency = Depends(settings)
 
 router = APIRouter(tags=["ingest"])
+runs_router = APIRouter(prefix="/runs", tags=["runs"])
 
 
 @router.post("/ingest", response_model=IngestResponse)
@@ -65,3 +66,10 @@ def collect_and_ingest(
     except IngestError as exc:
         raise ingest_http_error(exc) from exc
     return IngestResponse.model_validate(asdict(result))
+
+
+@runs_router.post("/collect", response_model=IngestResponse)
+def create_collect_run(
+    request: CollectAndIngestRequest, app_settings: Settings = settings_dependency
+) -> IngestResponse:
+    return collect_and_ingest(request, app_settings)

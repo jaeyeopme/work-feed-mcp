@@ -80,9 +80,10 @@ Then call:
 
 ```text
 GET  /health
-POST /collect
+POST /collect              # summary only
+POST /collect/jobs         # preview/full normalized jobs
 POST /ingest (prefer `jobs: [...]`; JSONL remains supported for pipeline compatibility)
-POST /collect-and-ingest (MVP convenience endpoint)
+POST /collect-and-ingest (MVP convenience endpoint; prefer POST /runs/collect for new clients)
 GET  /analytics/summary
 ```
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -17,6 +17,11 @@ class CollectRequest(BaseModel):
     page_size: int = Field(default=50, ge=1, le=50)
 
 
-class CollectResponse(BaseModel):
+class CollectSummaryResponse(BaseModel):
     record_count: int
+    query: str | None
+    source: Literal["fixture", "live"]
+
+
+class CollectJobsResponse(CollectSummaryResponse):
     jobs: list[dict[str, Any]]

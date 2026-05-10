@@ -57,9 +57,11 @@ make run APP_DB=/tmp/upwork.sqlite
 
 ```text
 GET  /health
-POST /collect
+POST /collect              # summary only
+POST /collect/jobs         # preview/full normalized jobs
 POST /ingest               # accepts jobs[] for HTTP clients or jsonl for pipeline compatibility
-POST /collect-and-ingest   # convenience MVP endpoint; run resources can replace this later
+POST /collect-and-ingest   # legacy MVP convenience endpoint
+POST /runs/collect         # preferred run-style collect+ingest endpoint
 GET  /analytics/summary
 GET  /analytics/skills
 GET  /analytics/jobs
@@ -68,10 +70,18 @@ GET  /analytics/runs
 GET  /analytics/clients
 ```
 
-Fixture collect 예시:
+Fixture collect summary 예시:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/collect \
+  -H 'content-type: application/json' \
+  -d '{"fixture":"tests/fixtures/visitor_job_search_response.json"}'
+```
+
+Full jobs preview 예시:
+
+```bash
+curl -X POST http://127.0.0.1:8000/collect/jobs \
   -H 'content-type: application/json' \
   -d '{"fixture":"tests/fixtures/visitor_job_search_response.json"}'
 ```

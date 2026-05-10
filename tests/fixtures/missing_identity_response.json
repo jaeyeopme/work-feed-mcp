@@ -1,0 +1,17 @@
+{
+  "data": {
+    "search": {
+      "universalSearchNuxt": {
+        "visitorJobSearchV1": {
+          "results": [
+            {
+              "title": "Missing Identity",
+              "description": "This should fail closed.",
+              "skills": []
+            }
+          ]
+        }
+      }
+    }
+  }
+}

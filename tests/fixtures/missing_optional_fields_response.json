@@ -1,0 +1,19 @@
+{
+  "data": {
+    "search": {
+      "universalSearchNuxt": {
+        "visitorJobSearchV1": {
+          "results": [
+            {
+              "id": "raw-job-optional",
+              "ciphertext": "cipher-job-optional",
+              "title": "Optional Fields Missing",
+              "description": "Only required fields are present.",
+              "skills": []
+            }
+          ]
+        }
+      }
+    }
+  }
+}

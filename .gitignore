@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+.venv/
+venv/
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Local live/session material - never commit
+*.cookie
+*.cookies
+*.session
+*.sessions
+*.proxy
+*.secrets
+session*.txt
+cookie*.txt
+cookies*.txt
+proxy*.txt
+upwork-session*
+upwork-cookie*
+
+# Forbidden runtime/state outputs for this collector core
+*.sqlite
+*.sqlite3
+snapshot-*.json
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# OMX runtime noise; keep .omx/context and .omx/plans available as provenance
+.omx/logs/
+.omx/state/
+.omx/metrics.json
+.omx/tmux-hook.json

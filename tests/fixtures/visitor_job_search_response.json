@@ -1,0 +1,33 @@
+{
+  "data": {
+    "search": {
+      "universalSearchNuxt": {
+        "visitorJobSearchV1": {
+          "results": [
+            {
+              "id": "raw-job-1",
+              "ciphertext": "cipher-job-1",
+              "title": "Python Data Collector",
+              "description": "Build a data collection utility with clean JSONL output.",
+              "skills": [{"name": "Python"}, {"name": "Data Scraping"}],
+              "postedOn": "2026-05-01T00:00:00Z",
+              "jobType": "hourly",
+              "contractorTier": "intermediate",
+              "hourlyBudget": {"min": 25, "max": 45}
+            },
+            {
+              "id": "raw-job-2",
+              "cipherText": "cipher-job-2",
+              "title": "GraphQL Parser",
+              "description": "Normalize GraphQL job search responses.",
+              "skills": ["GraphQL", "Python"],
+              "postedOn": "2026-05-02T00:00:00Z",
+              "jobType": "fixed",
+              "fixedPriceBudget": {"amount": 500}
+            }
+          ]
+        }
+      }
+    }
+  }
+}

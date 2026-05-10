@@ -33,17 +33,3 @@ Add new backend behavior under `src/upwork_app`. Keep the old `packages/*` modul
 Live collection keeps the existing `UPWORK_COLLECTOR_LIVE=1` gate and credential redaction behavior. Tests and smoke checks use fixtures only.
 
 HTTP endpoints use the server-side `UPWORK_APP_DB` setting for SQLite access. Caller-chosen database paths are CLI-only to avoid exposing arbitrary filesystem reads/writes through the web API.
-
-## Local command runner
-
-The repository includes a `justfile` for short local commands:
-
-```bash
-just dev
-just quality
-just smoke
-just e2e
-just dupe
-```
-
-`make` remains as the compatibility verification surface used by existing docs and legacy package checks.

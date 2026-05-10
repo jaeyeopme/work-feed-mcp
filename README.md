@@ -41,7 +41,14 @@ api/routes           HTTP request/response binding only
 ## FastAPI 실행
 
 ```bash
-UPWORK_APP_DB=/tmp/upwork.sqlite uv run --extra dev uvicorn upwork_app.main:app --reload
+make dev
+```
+
+실행 설정은 `make` 변수로 바꿀 수 있습니다.
+
+```bash
+make dev APP_DB=/tmp/upwork.sqlite APP_PORT=8080
+make run APP_DB=/tmp/upwork.sqlite
 ```
 
 주요 endpoint:

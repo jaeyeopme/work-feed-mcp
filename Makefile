@@ -1,6 +1,9 @@
-.PHONY: app-quality app-smoke legacy-quality legacy-smoke quality smoke e2e-smoke live-smoke clean
+.PHONY: dev run app-quality app-smoke legacy-quality legacy-smoke quality smoke e2e-smoke live-smoke clean
 
 QUERY ?= python
+APP_HOST ?= 127.0.0.1
+APP_PORT ?= 8000
+APP_DB ?= /tmp/upwork.sqlite
 MAX_PAGES ?= 1
 PAGE_SIZE ?= 50
 FIXTURE ?= packages/collector/tests/fixtures/visitor_job_search_response.json
@@ -8,6 +11,13 @@ LEGACY_FIXTURE ?= tests/fixtures/visitor_job_search_response.json
 SMOKE_OUT ?= /tmp/upwork-app-fixture.jsonl
 E2E_DB ?= /tmp/upwork-e2e.sqlite
 E2E_JSONL ?= /tmp/upwork-e2e.jsonl
+
+
+dev:
+	UPWORK_APP_DB=$(APP_DB) uv run --extra dev uvicorn upwork_app.main:app --host $(APP_HOST) --port $(APP_PORT) --reload
+
+run:
+	UPWORK_APP_DB=$(APP_DB) uv run --extra dev uvicorn upwork_app.main:app --host $(APP_HOST) --port $(APP_PORT)
 
 app-quality:
 	uv run --extra dev ruff format --check .

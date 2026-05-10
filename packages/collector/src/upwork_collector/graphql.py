@@ -9,22 +9,14 @@ from upwork_collector.errors import UpstreamSchemaOrTemporaryError
 ENDPOINT = "https://www.upwork.com/api/graphql/v1"
 
 QUERY_DOCUMENT = """
-query VisitorJobSearch($query: String, $paging: Paging) {
+query VisitorJobSearch($request: VisitorJobSearchV1Request!) {
   search {
     universalSearchNuxt {
-      visitorJobSearchV1(query: $query, paging: $paging) {
+      visitorJobSearchV1(request: $request) {
         results {
           id
           title
           description
-          ciphertext
-          cipherText
-          skills { name }
-          postedOn
-          jobType
-          contractorTier
-          hourlyBudget { min max }
-          fixedPriceBudget { amount }
         }
       }
     }
@@ -34,15 +26,12 @@ query VisitorJobSearch($query: String, $paging: Paging) {
 
 
 def build_request_payload(
-    query: str | None = None, *, offset: int = 0, count: int = 10
+    query: str | None = None, *, offset: int = 0, count: int = 50
 ) -> dict[str, Any]:
-    return {
-        "query": QUERY_DOCUMENT,
-        "variables": {
-            "query": query,
-            "paging": {"offset": offset, "count": count},
-        },
-    }
+    request: dict[str, Any] = {"paging": {"offset": offset, "count": count}}
+    if query:
+        request["userQuery"] = query
+    return {"query": QUERY_DOCUMENT, "variables": {"request": request}}
 
 
 def extract_results(response: dict[str, Any]) -> list[dict[str, Any]]:

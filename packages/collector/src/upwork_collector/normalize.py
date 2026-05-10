@@ -59,9 +59,12 @@ def normalize_result(raw: dict[str, Any]) -> Job:
     )
     if not raw_id:
         raise UpstreamSchemaOrTemporaryError("job result missing required raw identity field")
-    if not cipher:
+    if cipher:
+        job_id = cipher
+    elif raw_id.isdecimal():
+        job_id = f"~02{raw_id}"
+    else:
         raise UpstreamSchemaOrTemporaryError("job result missing required ciphertext for permalink")
-    job_id = cipher
 
     title = _first_text(raw.get("title"), job.get("title"))
     description = _first_text(raw.get("description"), raw.get("snippet"), job.get("description"))

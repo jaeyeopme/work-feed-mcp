@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 from http.cookiejar import CookieJar
@@ -18,13 +19,27 @@ from upwork_collector.errors import (
 )
 from upwork_collector.graphql import ENDPOINT, build_request_payload
 
-USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/537.36 Chrome Safari"
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
+_VISITOR_TOKEN_PATTERN = re.compile(r"(?i)(?:^|[;\s])visitor_gql_token=([^;\s]+)")
 
 
 def require_live_enabled(env: dict[str, str] | None = None) -> None:
     source = os.environ if env is None else env
     if source.get("UPWORK_COLLECTOR_LIVE") != "1":
         raise CredentialRequiredError("live collection requires UPWORK_COLLECTOR_LIVE=1")
+
+
+def _extract_visitor_token(cookie_jar: CookieJar, cookie_header: str = "") -> str | None:
+    for cookie in cookie_jar:
+        if cookie.name == "visitor_gql_token" and cookie.value:
+            return cookie.value
+    match = _VISITOR_TOKEN_PATTERN.search(cookie_header)
+    if match:
+        return match.group(1)
+    return None
 
 
 def classify_http_status(status: int, body: str = "") -> None:
@@ -38,7 +53,7 @@ def classify_http_status(status: int, body: str = "") -> None:
 
 
 def collect_live(
-    query: str | None, *, max_pages: int = 1, page_size: int = 10
+    query: str | None, *, max_pages: int = 1, page_size: int = 50
 ) -> list[dict[str, Any]]:
     require_live_enabled()
     credentials = load_credential_references()
@@ -51,15 +66,31 @@ def collect_live(
             )
         )
     opener = urllib.request.build_opener(*handlers)
-    headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Origin": "https://www.upwork.com",
+        "Referer": "https://www.upwork.com/",
+    }
     cookie_values = [
         secret.value for secret in (credentials.cookie, credentials.session) if secret is not None
     ]
-    if cookie_values:
-        headers["Cookie"] = "; ".join(cookie_values)
+    cookie_header = "; ".join(cookie_values)
+    if cookie_header:
+        headers["Cookie"] = cookie_header
 
     try:
-        opener.open(urllib.request.Request("https://www.upwork.com/", headers=headers), timeout=20)
+        bootstrap_headers = {
+            **headers,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        }
+        opener.open(
+            urllib.request.Request("https://www.upwork.com/", headers=bootstrap_headers), timeout=20
+        )
+        visitor_token = _extract_visitor_token(cookie_jar, cookie_header)
+        if visitor_token:
+            headers["Authorization"] = f"Bearer {visitor_token}"
         all_results: list[dict[str, Any]] = []
         for page in range(max_pages):
             payload = build_request_payload(query, offset=page * page_size, count=page_size)

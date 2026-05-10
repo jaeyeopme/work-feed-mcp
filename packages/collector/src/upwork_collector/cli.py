@@ -51,13 +51,13 @@ def build_parser() -> argparse.ArgumentParser:
     collect.add_argument("--live", action="store_true")
     collect.add_argument("--query")
     collect.add_argument("--max-pages", type=_max_pages, default=1)
-    collect.add_argument("--page-size", type=_page_size, default=10)
+    collect.add_argument("--page-size", type=_page_size, default=50)
     collect.add_argument("--output", choices=["jsonl"], default="jsonl")
 
     live = subcommands.add_parser("live-smoke")
     live.add_argument("--query")
     live.add_argument("--max-pages", type=_max_pages, default=1)
-    live.add_argument("--page-size", type=_page_size, default=10)
+    live.add_argument("--page-size", type=_page_size, default=50)
     return parser
 
 

@@ -56,6 +56,32 @@ def test_graphql_errors_fail_closed() -> None:
         normalize_response(load_fixture("graphql_errors_response.json"))
 
 
+def test_live_numeric_id_without_ciphertext_builds_permalink() -> None:
+    response = {
+        "data": {
+            "search": {
+                "universalSearchNuxt": {
+                    "visitorJobSearchV1": {
+                        "results": [
+                            {
+                                "id": "2053400105465582222",
+                                "title": "Live Shape",
+                                "description": "Current visitor search result shape.",
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+
+    job = normalize_response(response)[0]
+
+    assert job.id == "~022053400105465582222"
+    assert job.url == "https://www.upwork.com/jobs/~022053400105465582222"
+    assert job.raw_id == "2053400105465582222"
+
+
 def test_raw_id_without_ciphertext_fails_closed() -> None:
     response = {
         "data": {

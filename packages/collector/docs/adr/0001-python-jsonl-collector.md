@@ -6,7 +6,7 @@ Accepted.
 
 ## 맥락
 
-이 저장소는 `/Users/jaeyeop/Workspace/upwork-collector`에 위치한 Upwork collector의 canonical 구현 대상이다.
+이 저장소는 `/Users/jaeyeop/Workspace/upwork/packages/collector`에 위치한 Upwork collector의 canonical 구현 대상이다.
 
 이전 계획에서는 깨끗한 Python scraper core를 승인했고, UI/watcher/scheduler/storage/Swift/Go-native collector/SQLite/snapshot/recommendation 기능은 MVP 범위에서 제외했다.
 

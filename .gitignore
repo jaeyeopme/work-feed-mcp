@@ -46,3 +46,4 @@ snapshot-*.json
 .omx/state/
 .omx/metrics.json
 .omx/tmux-hook.json
+.omx

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from upwork_collector.cli import main
+from upwork_collector.cli import build_parser, main
 from upwork_collector.errors import ExitCode
 
 
@@ -47,6 +47,18 @@ def test_invalid_page_size_exits_usage_error(capsys) -> None:  # type: ignore[no
 
     assert code == ExitCode.USAGE_ERROR
     assert captured.out == ""
+
+
+def test_live_cli_defaults_to_one_page_of_fifty() -> None:
+    parser = build_parser()
+
+    live_args = parser.parse_args(["live-smoke", "--query", "python"])
+    collect_args = parser.parse_args(["collect", "--live", "--query", "python"])
+
+    assert live_args.max_pages == 1
+    assert live_args.page_size == 50
+    assert collect_args.max_pages == 1
+    assert collect_args.page_size == 50
 
 
 def test_malformed_fixture_maps_to_schema_failure(capsys) -> None:  # type: ignore[no-untyped-def]

@@ -11,14 +11,7 @@ from upwork_app.main import app
 from upwork_app.services.collector import jobs_to_jsonl
 from upwork_app.services.ingestion import ingest_records, read_jsonl
 
-FIXTURE = (
-    Path(__file__).parent.parent
-    / "packages"
-    / "collector"
-    / "tests"
-    / "fixtures"
-    / "visitor_job_search_response.json"
-)
+FIXTURE = Path(__file__).parent / "fixtures" / "visitor_job_search_response.json"
 
 
 def test_health_endpoint() -> None:

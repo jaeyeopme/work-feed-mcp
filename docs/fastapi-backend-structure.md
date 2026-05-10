@@ -1,6 +1,6 @@
 # FastAPI backend structure
 
-The project uses an app-first structure because it is now expected to behave like a common Python backend.
+The project uses a single app-first structure because it is expected to behave like a common Python backend.
 
 ## Directory responsibilities
 
@@ -15,10 +15,7 @@ The project uses an app-first structure because it is now expected to behave lik
 | `src/upwork_app/domain` | Domain validation and internal data types |
 | `src/upwork_app/integrations/upwork` | Upwork-specific transport, GraphQL, credentials, normalization |
 | `src/upwork_app/cli` | Local batch commands that call the same services as the API |
-
-## Migration rule
-
-Add new backend behavior under `src/upwork_app`. Keep the old `packages/*` modules stable until all callers have migrated, then remove them in a separate cleanup pass.
+| `tests` | App-level API/service tests and fixtures |
 
 ## API shape
 
@@ -28,8 +25,20 @@ Add new backend behavior under `src/upwork_app`. Keep the old `packages/*` modul
 - `POST /collect-and-ingest`
 - `GET /analytics/{summary|skills|jobs|budgets|runs|clients}`
 
+HTTP endpoints use the server-side `UPWORK_APP_DB` setting for SQLite access. Caller-chosen database paths are CLI-only to avoid exposing arbitrary filesystem reads/writes through the web API.
+
+## Local command runner
+
+The repository uses `make` for short local commands:
+
+```bash
+make dev
+make run
+make quality
+make smoke
+make e2e-smoke
+```
+
 ## Safety
 
-Live collection keeps the existing `UPWORK_COLLECTOR_LIVE=1` gate and credential redaction behavior. Tests and smoke checks use fixtures only.
-
-HTTP endpoints use the server-side `UPWORK_APP_DB` setting for SQLite access. Caller-chosen database paths are CLI-only to avoid exposing arbitrary filesystem reads/writes through the web API.
+Live collection keeps the `UPWORK_COLLECTOR_LIVE=1` gate and credential redaction behavior. Tests and smoke checks use fixtures only.

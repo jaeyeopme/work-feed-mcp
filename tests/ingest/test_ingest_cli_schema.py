@@ -4,7 +4,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-from upwork_ingest.cli import main
+from upwork_app.cli.ingest import main
 
 
 def _record(job_id: str = "~021111", *, title: str = "Python data pipeline") -> dict[str, object]:
@@ -34,7 +34,7 @@ def test_ingest_cli_file_input_writes_schema_rows_and_raw_records(tmp_path: Path
     db = tmp_path / "upwork.sqlite"
     _write_jsonl(jsonl, [_record(), _record("~022222", title="React UI")])
 
-    assert main(["ingest", "--db", str(db), "--input", str(jsonl), "--query", "python"]) == 0
+    assert main(["--db", str(db), "--input", str(jsonl), "--query", "python"]) == 0
 
     connection = sqlite3.connect(db)
     assert connection.execute("SELECT COUNT(*) FROM ingest_runs").fetchone()[0] == 1
@@ -53,8 +53,8 @@ def test_repeated_ingest_is_idempotent_for_jobs_but_records_observations(tmp_pat
     db = tmp_path / "upwork.sqlite"
     _write_jsonl(jsonl, [_record()])
 
-    assert main(["ingest", "--db", str(db), "--input", str(jsonl), "--run-id", "run-a"]) == 0
-    assert main(["ingest", "--db", str(db), "--input", str(jsonl), "--run-id", "run-b"]) == 0
+    assert main(["--db", str(db), "--input", str(jsonl), "--run-id", "run-a"]) == 0
+    assert main(["--db", str(db), "--input", str(jsonl), "--run-id", "run-b"]) == 0
 
     connection = sqlite3.connect(db)
     assert connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0] == 1
@@ -70,7 +70,7 @@ def test_schema_uses_explicit_keys_indexes_and_text_json_payload(tmp_path: Path)
     jsonl = tmp_path / "jobs.jsonl"
     db = tmp_path / "upwork.sqlite"
     _write_jsonl(jsonl, [_record()])
-    assert main(["ingest", "--db", str(db), "--input", str(jsonl)]) == 0
+    assert main(["--db", str(db), "--input", str(jsonl)]) == 0
 
     connection = sqlite3.connect(db)
     tables = {

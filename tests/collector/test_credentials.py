@@ -4,8 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from upwork_collector.credentials import SecretValue, load_credential_references, redact
-from upwork_collector.errors import CredentialRequiredError
+from upwork_app.integrations.upwork.credentials import (
+    SecretValue,
+    load_credential_references,
+    redact,
+)
+from upwork_app.integrations.upwork.errors import CredentialRequiredError
 
 
 def test_fixture_style_paths_do_not_require_credentials() -> None:

@@ -1,14 +1,14 @@
 # Job JSONL contract
 
-이 문서는 `packages/collector`가 stdout으로 출력하는 normalized job JSONL contract입니다. Downstream package는 collector internals가 아니라 이 contract를 소비해야 합니다.
+이 문서는 `src/upwork_app/integrations/upwork`가 생산하는 normalized job JSONL contract입니다. Downstream code는 Upwork transport internals가 아니라 이 contract를 소비해야 합니다.
 
-## Producer
+## Producer and consumer
 
-- Producer: `packages/collector`
-- Output: stdout, one JSON object per line
-- Consumer: `packages/ingest`
+- Producer: `src/upwork_app/integrations/upwork` and `upwork-app-collect`
+- Output: one JSON object per line when using CLI JSONL output
+- Consumer: `src/upwork_app/services/ingestion`
 
-Collector는 durable state나 SQLite를 쓰지 않습니다. `ingest`가 수집 시점 metadata와 SQLite 저장을 담당합니다.
+The Upwork integration layer does not own durable state or SQLite. Ingestion adds collection-time metadata and persists records to SQLite.
 
 ## Required fields
 
@@ -39,7 +39,7 @@ Collector는 durable state나 SQLite를 쓰지 않습니다. `ingest`가 수집 
 
 ## Current downstream behavior
 
-`packages/ingest`는 위 collector JSONL을 검증한 뒤 SQLite에 다음 정보를 추가합니다.
+`src/upwork_app/services/ingestion` validates collector JSONL and adds these SQLite fields/metadata:
 
 - `run_id`
 - `source_query`
@@ -50,17 +50,14 @@ Collector는 durable state나 SQLite를 쓰지 않습니다. `ingest`가 수집 
 - `received_at`
 - `payload_json` in `raw_records`
 
-`payload_json`은 collector-emitted normalized JSON object입니다. upstream GraphQL/private payload가 아닙니다.
+`payload_json` is the normalized JSON object emitted by the collector/integration layer. It is not an upstream GraphQL/private payload.
 
 ## Client fields
 
-현재 collector contract에는 rich client fields가 없습니다.
+The current collector contract has no rich client fields.
 
-따라서 `packages/analytics`는 client-related column이 SQLite `jobs` table에 있을 때만 해당 dimension을 집계합니다. 없으면 `unknown`/`null`로 반환하고, title/description에서 추론하지 않습니다.
+Therefore `src/upwork_app/repositories/client_analytics.py` aggregates client-related dimensions only when those columns exist in SQLite `jobs`. Missing dimensions return `unknown`/`null`; the app must not infer client country/spend/payment status from title or description text.
 
-## Future downstream additions
+## Future additions
 
-- `packages/ranker` may add `score`, `score_version`, `score_reasons`, `reject_reasons` later.
-- `packages/report` may add presentation-only sections, badges, summaries, and action hints later.
-
-이 future field들은 collector JSONL required field가 아닙니다.
+Future ranking/reporting features may add `score`, `score_version`, `score_reasons`, presentation summaries, or action hints downstream. These are not collector JSONL required fields.

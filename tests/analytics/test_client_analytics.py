@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from upwork_analytics.client import client_dimension_buckets
+from upwork_app.repositories.client_analytics import client_dimension_buckets
 
 
 def test_missing_client_dimensions_return_unknown_without_inference() -> None:

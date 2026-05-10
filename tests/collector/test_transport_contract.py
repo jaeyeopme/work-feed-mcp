@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from http.cookiejar import Cookie, CookieJar
 
-from upwork_collector.transport import _extract_visitor_token
+from upwork_app.integrations.upwork.transport import _extract_visitor_token
 
 
 def _cookie(name: str, value: str) -> Cookie:

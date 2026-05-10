@@ -2,7 +2,7 @@
 
 ## Project summary
 
-This repository is now organized as a conventional Python/FastAPI backend around `src/upwork_app`.
+This repository is a conventional Python/FastAPI backend organized around `src/upwork_app`.
 
 Primary app path:
 
@@ -16,17 +16,10 @@ src/upwork_app/db/                  SQLite schema/connection helpers
 src/upwork_app/domain/              domain validation/data types
 src/upwork_app/integrations/upwork/ Upwork transport + normalization
 src/upwork_app/cli/                 local CLI entrypoints
+tests/                              API/service tests and fixtures
 ```
 
-Legacy package path remains mostly as compatibility shims for historical imports/tests:
-
-```text
-packages/collector   legacy collector compatibility package
-packages/ingest      legacy ingest compatibility package
-packages/analytics   legacy analytics compatibility package
-packages/ranker      future placeholder
-packages/report      future placeholder
-```
+There is no longer a `packages/*` compatibility layer. New code should go under `src/upwork_app`.
 
 ## Core flow
 
@@ -34,7 +27,7 @@ packages/report      future placeholder
 Upwork fixture/live response
   -> integrations/upwork.normalize
   -> normalized job JSONL
-  -> services.ingestion / db.schema
+  -> services.ingestion / repositories.ingestion / db.schema
   -> SQLite tables
   -> services.analytics / repositories.analytics
   -> CLI or FastAPI JSON response
@@ -45,22 +38,16 @@ Upwork fixture/live response
 - Keep Upwork collection dumb and secret-safe.
 - Do not store upstream GraphQL/private payloads in raw records.
 - Do not run live Upwork collection unless the user explicitly opts in.
+- HTTP endpoints must use server-side DB settings and must not accept arbitrary caller-selected filesystem DB paths.
 - Analytics reads SQLite only.
 - Ranking, reporting, notification, UI, scheduler, and auto-apply are out of the MVP.
 
 ## Verification
 
-Prefer root app checks for new work:
+Use the root commands documented in `README.md` for local verification:
 
-```bash
-make app-quality
-make app-smoke
-make e2e-smoke
-```
+- `make quality`
+- `make smoke`
+- `make e2e-smoke`
 
-Run full compatibility checks before claiming broad completion:
-
-```bash
-make quality
-make smoke
-```
+Run live smoke only after explicit opt-in because it can contact Upwork.

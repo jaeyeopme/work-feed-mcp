@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from upwork_collector.errors import (
+from upwork_app.integrations.upwork.errors import (
     CredentialRequiredError,
     ExitCode,
     InternalFailureError,
@@ -12,7 +12,7 @@ from upwork_collector.errors import (
     UsageError,
     exit_code_for_error,
 )
-from upwork_collector.transport import classify_http_status
+from upwork_app.integrations.upwork.transport import classify_http_status
 
 
 def test_typed_errors_map_to_stable_exit_codes() -> None:

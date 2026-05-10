@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from upwork_collector.models import Job
+from upwork_app.integrations.upwork.models import Job
 
 
 def test_job_serialization_is_json_compatible() -> None:

@@ -4,8 +4,8 @@ import json
 import sqlite3
 from pathlib import Path
 
-from upwork_analytics.cli import main
-from upwork_analytics.queries import budgets, jobs, runs, skills, summary
+from upwork_app.cli.analytics import main
+from upwork_app.repositories.analytics import budgets, jobs, runs, skills, summary
 
 
 def _seed_db(path: Path) -> None:
@@ -143,7 +143,7 @@ def test_cli_outputs_json_and_reads_sqlite_only(tmp_path: Path, capsys) -> None:
     db = tmp_path / "upwork.sqlite"
     _seed_db(db)
 
-    assert main(["query", "skills", "--db", str(db)]) == 0
+    assert main(["skills", "--db", str(db)]) == 0
     output = json.loads(capsys.readouterr().out)
 
     assert output["query"] == "skills"

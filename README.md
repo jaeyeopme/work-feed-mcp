@@ -38,6 +38,26 @@ api/routes           HTTP request/response binding only
 - analytics는 SQLite read-only입니다.
 - ranking, auto-apply, message generation, notification, report delivery는 MVP 범위 밖입니다.
 
+
+## 빠른 실행: just
+
+`just`를 쓰면 긴 `uv run ...` 명령을 줄일 수 있습니다.
+
+```bash
+just dev      # FastAPI reload server
+just run      # FastAPI server without reload
+just quality  # app lint/typecheck/tests
+just smoke    # fixture collect smoke
+just e2e      # collect -> ingest -> analytics
+just dupe     # jscpd duplicate check
+```
+
+환경값은 env로 바꿀 수 있습니다.
+
+```bash
+UPWORK_APP_DB=/tmp/upwork.sqlite APP_PORT=8080 just dev
+```
+
 ## FastAPI 실행
 
 ```bash

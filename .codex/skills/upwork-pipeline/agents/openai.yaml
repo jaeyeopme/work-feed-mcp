@@ -1,0 +1,3 @@
+display_name: Upwork Pipeline
+short_description: Work safely in the Upwork data pipeline repo.
+default_prompt: Use the Upwork pipeline repo skill to inspect, modify, or verify collector, ingest, and analytics work while preserving module boundaries.

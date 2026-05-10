@@ -6,7 +6,7 @@ Upwork job discovery pipeline monorepo입니다.
 
 ## LLM/agent quick context
 
-처음 이 repo를 읽는 LLM/agent는 [`docs/LLM_CONTEXT.md`](docs/LLM_CONTEXT.md)를 먼저 확인하세요. 현재 구현 상태, 모듈 경계, E2E flow, 금지사항이 한 문서에 정리되어 있습니다.
+처음 이 repo를 읽는 LLM/agent는 [`docs/LLM_CONTEXT.md`](docs/LLM_CONTEXT.md)를 먼저 확인하세요. 외부 LLM에게 프로젝트를 설명하거나 작업을 맡길 때는 [`docs/EXTERNAL_LLM_GUIDE.md`](docs/EXTERNAL_LLM_GUIDE.md)를 함께 제공하세요.
 
 ## 현재 MVP 상태
 

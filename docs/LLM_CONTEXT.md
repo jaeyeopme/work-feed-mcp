@@ -2,6 +2,11 @@
 
 이 문서는 LLM/agent가 이 저장소를 처음 읽을 때 기준으로 삼는 빠른 컨텍스트입니다. 세부 구현은 각 package README와 source/test를 확인하세요.
 
+
+## External LLM usage
+
+외부 LLM에게 이 프로젝트를 설명하거나 작업을 맡길 때는 [`docs/EXTERNAL_LLM_GUIDE.md`](EXTERNAL_LLM_GUIDE.md)를 함께 제공하세요. 이 문서에는 copy-paste project brief, 안전한 작업 prompt, 검증 명령, 흔한 오해 목록이 포함되어 있습니다.
+
 ## 현재 한 줄 요약
 
 현재 구현된 MVP는 다음 경로입니다.

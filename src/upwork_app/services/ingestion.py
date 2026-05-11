@@ -5,11 +5,10 @@ from __future__ import annotations
 import json
 import sqlite3
 import sys
-import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 
 from upwork_app.core.errors import UsageError, ValidationError
 from upwork_app.db.schema import initialize_schema
@@ -19,8 +18,10 @@ from upwork_app.repositories import ingestion as ingestion_repository
 
 @dataclass(frozen=True, slots=True)
 class IngestResult:
-    run_id: str
-    record_count: int
+    seen_count: int
+    inserted_count: int
+    skipped_count: int
+    new_jobs: tuple[dict[str, Any], ...]
     db_path: str
     input_path: str | None
     source_query: str | None
@@ -65,82 +66,64 @@ def load_records(input_path: str) -> list[CollectorRecord]:
             stream.close()
 
 
+def _job_response(record: CollectorRecord) -> dict[str, Any]:
+    return {
+        "job_id": record.job_id,
+        "source": record.source,
+        "title": record.title,
+        "description": record.description,
+        "url": record.url,
+        "skills": list(record.skills),
+        "posted_at": record.posted_at,
+        "job_type": record.job_type,
+        "contractor_tier": record.contractor_tier,
+        "hourly_min": record.hourly_min,
+        "hourly_max": record.hourly_max,
+        "fixed_amount": record.fixed_amount,
+        "raw_id": record.raw_id,
+    }
+
+
 def ingest_records(
     records: list[CollectorRecord],
     *,
     db_path: str,
     input_path: str | None,
     source_query: str | None,
-    run_id: str | None = None,
 ) -> IngestResult:
-    resolved_run_id = run_id or f"run-{uuid.uuid4()}"
-    started_at = utc_now()
     path = Path(db_path)
     if path.parent != Path(""):
         path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(path)
+    new_jobs: list[dict[str, Any]] = []
     try:
         initialize_schema(connection)
-        ingestion_repository.insert_run(
-            connection,
-            run_id=resolved_run_id,
-            source_query=source_query,
-            input_path=input_path,
-            started_at=started_at,
-        )
-        for line_number, record in enumerate(records, start=1):
-            observed_at = utc_now()
-            ingestion_repository.upsert_job(connection, record, observed_at)
-            ingestion_repository.replace_skills(connection, record)
-            ingestion_repository.insert_observation(
-                connection,
-                record=record,
-                run_id=resolved_run_id,
-                source_query=source_query,
-                observed_at=observed_at,
-                line_number=line_number,
-            )
-            ingestion_repository.insert_raw_record(
-                connection,
-                record=record,
-                run_id=resolved_run_id,
-                received_at=observed_at,
-                line_number=line_number,
-            )
-        ingestion_repository.complete_run(
-            connection, run_id=resolved_run_id, completed_at=utc_now(), record_count=len(records)
-        )
+        for record in records:
+            if ingestion_repository.insert_job_if_new(connection, record, utc_now()):
+                ingestion_repository.insert_skills(connection, record)
+                new_jobs.append(_job_response(record))
         connection.commit()
     except Exception:
         connection.rollback()
-        try:
-            initialize_schema(connection)
-            ingestion_repository.fail_run(
-                connection, run_id=resolved_run_id, completed_at=utc_now()
-            )
-            connection.commit()
-        except Exception:
-            connection.rollback()
         raise
     finally:
         connection.close()
     return IngestResult(
-        run_id=resolved_run_id,
-        record_count=len(records),
+        seen_count=len(records),
+        inserted_count=len(new_jobs),
+        skipped_count=len(records) - len(new_jobs),
+        new_jobs=tuple(new_jobs),
         db_path=str(path),
         input_path=input_path,
         source_query=source_query,
     )
 
 
-def ingest_jsonl(
-    *, db_path: str, input_path: str, source_query: str | None, run_id: str | None = None
-) -> IngestResult:
+def ingest_jsonl(*, db_path: str, input_path: str, source_query: str | None) -> IngestResult:
     records = load_records(input_path)
     return ingest_records(
         records,
         db_path=db_path,
         input_path=None if input_path == "-" else input_path,
         source_query=source_query,
-        run_id=run_id,
     )

@@ -22,13 +22,13 @@ Current structure:
 - tests: app-level tests and fixtures.
 
 Product intent:
-- Stable, analysis-ready data collection.
+- Stable, deduplicated job storage for later external LLM selection.
 - Not Upwork application automation.
 - No auto-apply, proposal/message generation, LLM ranking, scheduler, or report delivery in MVP.
 
 Hard boundaries:
 - Keep Upwork collection dumb and secret-safe.
-- Store only normalized collector job records, not upstream GraphQL/private payloads.
+- Store only deduplicated jobs and job skills, not upstream GraphQL/private payloads, run history, or observation logs.
 - SQLite persistence belongs in ingestion/db/repository layers.
 - Analytics reads SQLite only.
 - HTTP endpoints use server-side DB settings and must not accept arbitrary caller-selected DB paths.
@@ -48,7 +48,7 @@ The project can run this local flow:
 ```text
 fixture or live collector input
   -> normalized job records/JSONL
-  -> SQLite database
+  -> SQLite jobs/job_skills database
   -> basic JSON analytics queries
   -> FastAPI or CLI responses
 ```
@@ -83,7 +83,8 @@ GET  /health
 POST /collect              # summary only
 POST /collect/jobs         # preview/full normalized jobs
 POST /ingest (prefer `jobs: [...]`; JSONL remains supported for pipeline compatibility)
-POST /collect-and-ingest (MVP convenience endpoint; prefer POST /runs/collect for new clients)
+POST /collect-and-ingest (MVP convenience endpoint returning new jobs and counts)
+POST /runs/collect (run-style collect+ingest endpoint returning new jobs and counts)
 GET  /analytics/summary
 ```
 
@@ -114,6 +115,7 @@ Live evidence must be reported separately from fixture/local contract evidence.
 
 - “The project auto-applies to jobs.” Wrong. Auto-apply/message generation is out of scope.
 - “The project ranks jobs.” Wrong. Ranking is not implemented.
+- “The project stores every collection run or observation.” Wrong. It stores only unique jobs and skills.
 - “Analytics can infer client spend/country from text.” Wrong. Missing client fields become unknown/null.
 - “Fixture tests prove live Upwork works.” Wrong. Fixture/local tests prove contracts only; live smoke is separate opt-in evidence.
 - “New code should go under `packages/*`.” Wrong. New backend code should go under `src/upwork_app`.

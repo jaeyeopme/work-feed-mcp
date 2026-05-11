@@ -39,18 +39,15 @@ The Upwork integration layer does not own durable state or SQLite. Ingestion add
 
 ## Current downstream behavior
 
-`src/upwork_app/services/ingestion` validates collector JSONL and adds these SQLite fields/metadata:
+`src/upwork_app/services/ingestion` validates collector JSONL/job objects and inserts only jobs whose `job_id` is not already present. Existing jobs are skipped rather than updated for observation history.
 
-- `run_id`
-- `source_query`
+The jobs store adds these DB-managed fields:
+
 - `content_hash`
 - `first_seen_at`
-- `last_seen_at`
-- `observed_at`
-- `received_at`
-- `payload_json` in `raw_records`
+- `created_at`
 
-`payload_json` is the normalized JSON object emitted by the collector/integration layer. It is not an upstream GraphQL/private payload.
+The app does not persist per-job observation logs, raw normalized payload archives, or collection/run history.
 
 ## Client fields
 

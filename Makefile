@@ -1,9 +1,9 @@
-.PHONY: dev run quality smoke e2e-smoke live-smoke clean
+.PHONY: dev run quality smoke e2e-smoke live-smoke collect-live-once clean
 
-QUERY ?= python
+QUERY ?=
 APP_HOST ?= 127.0.0.1
 APP_PORT ?= 8000
-APP_DB ?= /tmp/upwork.sqlite
+APP_DB ?= $(CURDIR)/data/upwork.sqlite
 MAX_PAGES ?= 1
 PAGE_SIZE ?= 50
 FIXTURE ?= tests/fixtures/visitor_job_search_response.json
@@ -30,13 +30,16 @@ smoke:
 e2e-smoke:
 	rm -f $(E2E_DB) $(E2E_JSONL)
 	uv run --extra dev upwork-app-collect --fixture $(FIXTURE) > $(E2E_JSONL)
-	uv run --extra dev upwork-app-ingest --db $(E2E_DB) --input $(E2E_JSONL) --query "$(QUERY)"
+	uv run --extra dev upwork-app-ingest --db $(E2E_DB) --input $(E2E_JSONL) $(if $(QUERY),--query "$(QUERY)",)
 	uv run --extra dev upwork-app-analytics summary --db $(E2E_DB)
 	uv run --extra dev upwork-app-analytics skills --db $(E2E_DB)
 	uv run --extra dev upwork-app-analytics clients --db $(E2E_DB)
 
 live-smoke:
-	UPWORK_COLLECTOR_LIVE=1 uv run --extra dev upwork-app-collect --live --query "$(QUERY)" --max-pages $(MAX_PAGES) --page-size $(PAGE_SIZE)
+	UPWORK_COLLECTOR_LIVE=1 uv run --extra dev upwork-app-collect --live $(if $(QUERY),--query "$(QUERY)",) --max-pages $(MAX_PAGES) --page-size $(PAGE_SIZE)
+
+collect-live-once:
+	QUERY="$(QUERY)" APP_DB="$(APP_DB)" MAX_PAGES="$(MAX_PAGES)" PAGE_SIZE="$(PAGE_SIZE)" ./scripts/collect_live_once.sh
 
 clean:
 	rm -rf .pytest_cache .mypy_cache .ruff_cache src/*.egg-info

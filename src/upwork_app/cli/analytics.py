@@ -25,7 +25,7 @@ class AnalyticsArgumentParser(argparse.ArgumentParser):
 
 def build_parser() -> argparse.ArgumentParser:
     parser = AnalyticsArgumentParser(prog="upwork-app-analytics")
-    parser.add_argument("name", choices=("summary", "skills", "jobs", "budgets", "runs", "clients"))
+    parser.add_argument("name", choices=("summary", "skills", "jobs", "budgets", "clients"))
     parser.add_argument("--db", required=True)
     parser.add_argument("--skill")
     parser.add_argument("--title")

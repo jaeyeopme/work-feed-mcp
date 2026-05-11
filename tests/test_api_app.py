@@ -22,6 +22,14 @@ def assert_two_jobs_persisted(db: Path) -> None:
         connection.close()
 
 
+def assert_inserted_two_jobs_response(response) -> None:  # type: ignore[no-untyped-def]
+    assert response.status_code == 200
+    assert response.json()["inserted_count"] == 2
+    assert response.json()["skipped_count"] == 0
+    assert len(response.json()["new_jobs"]) == 2
+    assert "db_path" not in response.json()
+
+
 def assert_collect_run_endpoint(client: TestClient, path: str, db: Path) -> None:
     response = client.post(
         path,
@@ -31,9 +39,7 @@ def assert_collect_run_endpoint(client: TestClient, path: str, db: Path) -> None
         },
     )
 
-    assert response.status_code == 200
-    assert response.json()["record_count"] == 2
-    assert "db_path" not in response.json()
+    assert_inserted_two_jobs_response(response)
     assert_two_jobs_persisted(db)
 
 
@@ -82,7 +88,7 @@ def test_ingest_and_analytics_endpoints(tmp_path: Path, monkeypatch: pytest.Monk
     )
 
     assert ingest_response.status_code == 200
-    assert ingest_response.json()["record_count"] == 2
+    assert ingest_response.json()["inserted_count"] == 2
     assert "db_path" not in ingest_response.json()
 
     analytics_response = client.get("/analytics/summary")
@@ -90,7 +96,7 @@ def test_ingest_and_analytics_endpoints(tmp_path: Path, monkeypatch: pytest.Monk
     assert analytics_response.status_code == 200
     assert analytics_response.json() == {
         "query": "summary",
-        "rows": [{"jobs": 2, "runs": 1, "observations": 2, "raw_records": 2}],
+        "rows": [{"jobs": 2, "skills": 4}],
     }
 
 
@@ -104,9 +110,7 @@ def test_ingest_endpoint_accepts_jobs_payload(
 
     response = client.post("/ingest", json={"jobs": jobs, "source_query": "python"})
 
-    assert response.status_code == 200
-    assert response.json()["record_count"] == 2
-    assert "db_path" not in response.json()
+    assert_inserted_two_jobs_response(response)
     assert_two_jobs_persisted(db)
 
 
@@ -132,7 +136,7 @@ def test_collect_and_ingest_endpoint(tmp_path: Path, monkeypatch: pytest.MonkeyP
     assert_collect_run_endpoint(client, "/collect-and-ingest", db)
 
 
-def test_runs_collect_endpoint_creates_ingest_run(
+def test_runs_collect_endpoint_collects_new_jobs(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     db = tmp_path / "runs.sqlite"
@@ -166,4 +170,4 @@ def test_service_ingest_still_accepts_jsonl(tmp_path: Path) -> None:
     records = read_jsonl(__import__("io").StringIO(jobs_to_jsonl(collect_from_fixture(FIXTURE))))
     result = ingest_records(records, db_path=str(db), input_path=None, source_query="python")
 
-    assert result.record_count == 2
+    assert result.inserted_count == 2

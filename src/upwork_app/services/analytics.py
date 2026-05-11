@@ -55,8 +55,6 @@ def run_query(
             return analytics.jobs(connection, skill=skill, title=title)
         case "budgets":
             return analytics.budgets(connection)
-        case "runs":
-            return analytics.runs(connection)
         case "clients":
             return analytics.clients(connection)
     raise ValueError(f"unknown analytics query: {name}")

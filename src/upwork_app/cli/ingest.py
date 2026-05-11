@@ -23,7 +23,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--db", required=True)
     parser.add_argument("--input", required=True)
     parser.add_argument("--query", dest="source_query")
-    parser.add_argument("--run-id")
     return parser
 
 
@@ -34,7 +33,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             db_path=args.db,
             input_path=args.input,
             source_query=args.source_query,
-            run_id=args.run_id,
         )
         print(json.dumps(asdict(result), ensure_ascii=False, sort_keys=True))
         return 0

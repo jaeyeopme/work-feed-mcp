@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from upwork_app.schemas.collect import CollectRequest
@@ -15,7 +17,6 @@ class IngestRequest(BaseModel):
         default=None, description="Collector-normalized job objects. Preferred for HTTP clients."
     )
     source_query: str | None = None
-    run_id: str | None = None
 
     @model_validator(mode="after")
     def require_exactly_one_payload(self) -> IngestRequest:
@@ -27,8 +28,10 @@ class IngestRequest(BaseModel):
 
 
 class IngestResponse(BaseModel):
-    run_id: str
-    record_count: int
+    seen_count: int
+    inserted_count: int
+    skipped_count: int
+    new_jobs: list[dict[str, Any]]
     input_path: str | None
     source_query: str | None
 
@@ -38,4 +41,3 @@ class CollectAndIngestRequest(BaseModel):
 
     collect: CollectRequest
     source_query: str | None = None
-    run_id: str | None = None

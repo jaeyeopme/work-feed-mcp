@@ -28,15 +28,17 @@ Upwork fixture/live response
   -> integrations/upwork.normalize
   -> normalized job JSONL
   -> services.ingestion / repositories.ingestion / db.schema
-  -> SQLite tables
+  -> SQLite `jobs` and `job_skills` tables
   -> services.analytics / repositories.analytics
   -> CLI or FastAPI JSON response
 ```
 
+Ingestion is deduplicating and jobs-only: existing `job_id` values are skipped, newly inserted jobs are returned as downstream selection candidates, and no run/observation/raw-record history is persisted.
+
 ## Boundaries
 
 - Keep Upwork collection dumb and secret-safe.
-- Do not store upstream GraphQL/private payloads in raw records.
+- Do not store upstream GraphQL/private payloads, observation logs, or collection run history.
 - Do not run live Upwork collection unless the user explicitly opts in.
 - HTTP endpoints must use server-side DB settings and must not accept arbitrary caller-selected filesystem DB paths.
 - Analytics reads SQLite only.

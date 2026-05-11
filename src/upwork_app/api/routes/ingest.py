@@ -34,7 +34,6 @@ def ingest(request: IngestRequest, app_settings: Settings = settings_dependency)
             db_path=app_settings.default_db_path,
             input_path=None,
             source_query=request.source_query,
-            run_id=request.run_id,
         )
     except IngestError as exc:
         raise ingest_http_error(exc) from exc
@@ -59,7 +58,6 @@ def collect_and_ingest(
             db_path=app_settings.default_db_path,
             input_path=None,
             source_query=request.source_query or request.collect.query,
-            run_id=request.run_id,
         )
     except CollectorError as exc:
         raise collector_http_error(exc) from exc

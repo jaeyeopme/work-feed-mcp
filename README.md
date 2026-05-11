@@ -36,6 +36,7 @@ api/routes           HTTP request/response binding only
 - Upwork integration은 normalized job record만 생산합니다.
 - credential/session/proxy/token은 diagnostics에서 redaction되어야 합니다.
 - SQLite persistence는 ingestion/db/repository 계층 책임입니다.
+- SQLite에는 중복 없는 `jobs`와 `job_skills`만 저장합니다. 수집 run 이력, raw payload archive, observation log는 저장하지 않습니다.
 - analytics는 SQLite read-only입니다.
 - ranking, auto-apply, message generation, notification, report delivery는 MVP 범위 밖입니다.
 - HTTP API는 caller-selected DB path를 받지 않습니다. 서버 설정 `UPWORK_APP_DB` 또는 `make APP_DB=...`를 사용합니다.
@@ -66,7 +67,6 @@ GET  /analytics/summary
 GET  /analytics/skills
 GET  /analytics/jobs
 GET  /analytics/budgets
-GET  /analytics/runs
 GET  /analytics/clients
 ```
 
@@ -125,6 +125,7 @@ Live smoke는 명시적으로 opt-in할 때만 실행합니다.
 
 ```bash
 make live-smoke QUERY="python"
+make collect-live-once QUERY="python" APP_DB=./data/upwork.sqlite
 ```
 
 ## LLM/agent quick context

@@ -22,14 +22,12 @@ class QueryResult:
 
 
 def summary(connection: sqlite3.Connection) -> QueryResult:
-    """Return high-level job/run/raw-record counts."""
+    """Return high-level jobs-store counts."""
 
     rows = [
         {
             "jobs": _count_table(connection, "jobs"),
-            "runs": _count_table(connection, "ingest_runs"),
-            "observations": _count_table(connection, "job_observations"),
-            "raw_records": _count_table(connection, "raw_records"),
+            "skills": _count_table(connection, "job_skills"),
         }
     ]
     return QueryResult(query="summary", rows=tuple(rows))
@@ -78,12 +76,12 @@ def jobs(
 
     sql = """
         SELECT job_id, title, url, job_type, hourly_min, hourly_max, fixed_amount,
-               first_seen_at, last_seen_at
+               first_seen_at, created_at
           FROM jobs
     """
     if where:
         sql += " WHERE " + " AND ".join(f"({clause})" for clause in where)
-    sql += " ORDER BY last_seen_at DESC, job_id ASC"
+    sql += " ORDER BY first_seen_at DESC, job_id ASC"
     return QueryResult(query="jobs", rows=tuple(_dict_rows(connection.execute(sql, params))))
 
 
@@ -111,21 +109,6 @@ def budgets(connection: sqlite3.Connection) -> QueryResult:
         )
     )
     return QueryResult(query="budgets", rows=tuple(rows))
-
-
-def runs(connection: sqlite3.Connection) -> QueryResult:
-    """Return ingest run stats."""
-
-    rows = _dict_rows(
-        connection.execute(
-            """
-            SELECT run_id, source_query, input_path, started_at, completed_at, record_count, status
-              FROM ingest_runs
-             ORDER BY started_at DESC, run_id ASC
-            """
-        )
-    )
-    return QueryResult(query="runs", rows=tuple(rows))
 
 
 def clients(connection: sqlite3.Connection) -> QueryResult:

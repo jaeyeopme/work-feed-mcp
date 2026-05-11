@@ -50,11 +50,6 @@ def budgets(app_settings: Settings = settings_dependency) -> AnalyticsResponse:
     return _analytics_response(app_settings, "budgets")
 
 
-@router.get("/runs", response_model=AnalyticsResponse)
-def runs(app_settings: Settings = settings_dependency) -> AnalyticsResponse:
-    return _analytics_response(app_settings, "runs")
-
-
 @router.get("/clients", response_model=AnalyticsResponse)
 def clients(app_settings: Settings = settings_dependency) -> AnalyticsResponse:
     return _analytics_response(app_settings, "clients")

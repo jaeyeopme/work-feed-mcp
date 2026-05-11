@@ -22,10 +22,13 @@ The project uses a single app-first structure because it is expected to behave l
 - `GET /health`
 - `POST /collect`
 - `POST /ingest` — accepts either `jobs: [...]` or `jsonl`, exactly one
-- `POST /collect-and-ingest` — MVP convenience endpoint; future run resources can supersede it
-- `GET /analytics/{summary|skills|jobs|budgets|runs|clients}`
+- `POST /collect-and-ingest` — MVP convenience endpoint returning insert/skip counts and new jobs
+- `POST /runs/collect` — run-style collect+ingest endpoint returning insert/skip counts and new jobs
+- `GET /analytics/{summary|skills|jobs|budgets|clients}`
 
 HTTP endpoints use the server-side `UPWORK_APP_DB` setting for SQLite access. Caller-chosen database paths are CLI-only to avoid exposing arbitrary filesystem reads/writes through the web API.
+
+Persistence is intentionally jobs-only: new SQLite databases contain `jobs` and `job_skills`. The app does not persist run history, raw record archives, or observation logs.
 
 ## Local command runner
 

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, slots=True)
 class Settings:
-    """Runtime settings for the FastAPI application."""
+    """Runtime settings for CLI collection and ingestion."""
 
     default_db_path: str = "/tmp/upwork.sqlite"
     allow_live_collect: bool = False

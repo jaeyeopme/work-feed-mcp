@@ -2,21 +2,19 @@
 
 ## Project summary
 
-This repository is a conventional Python/FastAPI backend organized around `src/upwork_app`.
+This repository is a CLI-first local data engine for the Upwork job discovery pipeline. OpenClaw or another agent layer is expected to act as the user interface/orchestrator.
 
 Primary app path:
 
 ```text
-src/upwork_app/main.py              FastAPI app
-src/upwork_app/api/routes/          HTTP routes
-src/upwork_app/schemas/             Pydantic API schemas
 src/upwork_app/services/            orchestration/use cases
 src/upwork_app/repositories/        SQLite query/persistence helpers
 src/upwork_app/db/                  SQLite schema/connection helpers
 src/upwork_app/domain/              domain validation/data types
 src/upwork_app/integrations/upwork/ Upwork transport + normalization
 src/upwork_app/cli/                 local CLI entrypoints
-tests/                              API/service tests and fixtures
+tests/                              CLI/service tests and fixtures
+scripts/                            local operational helpers
 ```
 
 There is no longer a `packages/*` compatibility layer. New code should go under `src/upwork_app`.
@@ -30,7 +28,7 @@ Upwork fixture/live response
   -> services.ingestion / repositories.ingestion / db.schema
   -> SQLite `jobs` and `job_skills` tables
   -> services.analytics / repositories.analytics
-  -> CLI or FastAPI JSON response
+  -> CLI JSON output for OpenClaw/agent consumption
 ```
 
 Ingestion is deduplicating and jobs-only: existing `job_id` values are skipped, newly inserted jobs are returned as downstream selection candidates, and no run/observation/raw-record history is persisted.
@@ -40,9 +38,10 @@ Ingestion is deduplicating and jobs-only: existing `job_id` values are skipped, 
 - Keep Upwork collection dumb and secret-safe.
 - Do not store upstream GraphQL/private payloads, observation logs, or collection run history.
 - Do not run live Upwork collection unless the user explicitly opts in.
-- HTTP endpoints must use server-side DB settings and must not accept arbitrary caller-selected filesystem DB paths.
 - Analytics reads SQLite only.
-- Ranking, reporting, notification, UI, scheduler, and auto-apply are out of the MVP.
+- Scheduler/background execution is outside the app core; OpenClaw or OS scheduler should call CLI commands.
+- Ranking, reporting, notification, UI, scheduler installation, proposal/message generation, and auto-apply are out of this repo's core data-engine scope.
+- Recommendation/ranking belongs in OpenClaw skills unless explicitly promoted later.
 
 ## Verification
 

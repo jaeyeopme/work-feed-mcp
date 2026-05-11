@@ -1,8 +1,6 @@
-.PHONY: dev run quality smoke e2e-smoke live-smoke collect-live-once clean
+.PHONY: quality smoke e2e-smoke live-smoke collect-live-once clean
 
 QUERY ?=
-APP_HOST ?= 127.0.0.1
-APP_PORT ?= 8000
 APP_DB ?= $(CURDIR)/data/upwork.sqlite
 MAX_PAGES ?= 1
 PAGE_SIZE ?= 50
@@ -10,12 +8,6 @@ FIXTURE ?= tests/fixtures/visitor_job_search_response.json
 SMOKE_OUT ?= /tmp/upwork-app-fixture.jsonl
 E2E_DB ?= /tmp/upwork-e2e.sqlite
 E2E_JSONL ?= /tmp/upwork-e2e.jsonl
-
-dev:
-	UPWORK_APP_DB=$(APP_DB) uv run --extra dev uvicorn upwork_app.main:app --host $(APP_HOST) --port $(APP_PORT) --reload
-
-run:
-	UPWORK_APP_DB=$(APP_DB) uv run --extra dev uvicorn upwork_app.main:app --host $(APP_HOST) --port $(APP_PORT)
 
 quality:
 	uv run --extra dev ruff format --check .

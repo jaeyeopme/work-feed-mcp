@@ -14,7 +14,6 @@ QueryResult = analytics.QueryResult
 @dataclass(slots=True)
 class AnalyticsServiceError(Exception):
     message: str
-    status_code: int = 503
 
     def __str__(self) -> str:
         return self.message
@@ -34,9 +33,9 @@ def query_database(
         finally:
             connection.close()
     except sqlite3.OperationalError as exc:
-        raise AnalyticsServiceError("analytics database unavailable", status_code=503) from exc
+        raise AnalyticsServiceError("analytics database unavailable") from exc
     except sqlite3.Error as exc:
-        raise AnalyticsServiceError("analytics query failed", status_code=500) from exc
+        raise AnalyticsServiceError("analytics query failed") from exc
 
 
 def run_query(

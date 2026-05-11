@@ -1,17 +1,16 @@
-# AGENTS.md — upwork backend
+# AGENTS.md — upwork data engine
 
 ## Role and intent
 
-This repository is a conventional FastAPI backend for the Upwork job discovery pipeline. Keep responsibilities separated by app layer:
+This repository is a CLI-first local data engine for the Upwork job discovery pipeline. OpenClaw/agents are expected to provide the user interface, orchestration, scheduling assistance, and recommendation layer. Keep responsibilities separated by app layer:
 
 - `src/upwork_app/integrations/upwork`: Upwork/fixture collection, credential redaction, GraphQL transport, and normalized job records.
 - `src/upwork_app/services`: application use cases for collection, ingestion, and analytics orchestration.
 - `src/upwork_app/repositories` and `src/upwork_app/db`: SQLite persistence, schema, and query helpers.
-- `src/upwork_app/api/routes`: HTTP request/response binding only.
-- `src/upwork_app/schemas`: Pydantic request/response models.
-- `src/upwork_app/cli`: local batch commands for the same use cases.
+- `src/upwork_app/domain`: collector-record validation and canonical data contracts.
+- `src/upwork_app/cli`: stable local commands for OpenClaw/agent and batch usage.
 
-The implemented MVP path is `integrations/upwork → services/ingestion → services/analytics`, exposed through FastAPI and CLI.
+The implemented MVP path is `integrations/upwork → services/ingestion → services/analytics`, exposed through CLI commands.
 
 ## Boundaries
 
@@ -19,12 +18,13 @@ Keep Upwork collection dumb and secret-safe:
 
 - normalized job records only; no upstream private GraphQL envelopes in persisted raw records.
 - diagnostics must redact credential/session/proxy/token material.
-- no ranking, auto-apply, proposal/message generation, scheduling, notifications, or UI in the MVP.
+- no backend ranking, auto-apply, proposal/message generation, app-native scheduling, notifications, or UI in the core data engine.
+- recommendation/ranking belongs in OpenClaw skills unless explicitly promoted later.
 - no proxy acquisition docs or access-control bypass playbooks.
 
-SQLite persistence belongs in ingestion/db/repository code. Analytics reads SQLite only. HTTP endpoints must not accept caller-selected local DB paths; web reads/writes use server-side settings such as `UPWORK_APP_DB`.
+SQLite persistence belongs in ingestion/db/repository code. Analytics reads SQLite only. Scheduler/background execution is external/OpenClaw/OS responsibility and should call CLI commands.
 
-Use `docs/LLM_CONTEXT.md`, `docs/fastapi-backend-structure.md`, and `docs/contracts/job-jsonl.md` for detailed context.
+Use `docs/LLM_CONTEXT.md` and `docs/contracts/job-jsonl.md` for detailed context.
 
 ## Verification
 

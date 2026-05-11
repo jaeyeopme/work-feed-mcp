@@ -1,34 +1,257 @@
 # upwork
 
-Upwork job discovery backend입니다. 목적은 Upwork job 데이터를 안정적으로 수집하고, agent/LLM이 분석에 활용할 수 있도록 구조화된 로컬 데이터 파이프라인과 FastAPI HTTP 인터페이스를 제공하는 것입니다. 자동 지원/메시지 작성이 아니라 **분석 가능한 데이터 수집**이 범위입니다.
+Upwork job discovery를 위한 **CLI-first 로컬 데이터 엔진**입니다.
+
+역할은 단순합니다.
+
+```text
+Upwork/fixture 수집
+  -> normalized JSONL
+  -> SQLite에 중복 없이 적재
+  -> CLI로 조회/분석
+  -> OpenClaw가 UI/오케스트레이션/추천 담당
+```
+
+이 저장소는 웹 애플리케이션이 아닙니다. FastAPI 서버는 제거되었고, OpenClaw나 사람이 호출하기 좋은 CLI 명령을 제공하는 것이 핵심입니다.
+
+자동 지원, proposal/message 생성, auto-apply는 범위 밖입니다.
+
+## 설치 / 준비
+
+필요한 것:
+
+- Python 3.11+
+- `uv`
+
+처음 실행 전 의존성은 `uv run`이 자동으로 맞춥니다.
+
+```bash
+uv run --extra dev pytest -q
+```
+
+## 가장 빠른 로컬 사용법: fixture로 수집 → 적재 → 조회
+
+실제 Upwork에 접속하지 않고 전체 로컬 흐름을 확인하는 방법입니다.
+
+```bash
+# 1. fixture 응답을 normalized JSONL로 변환
+uv run --extra dev upwork-app-collect \
+  --fixture tests/fixtures/visitor_job_search_response.json \
+  > /tmp/upwork-jobs.jsonl
+
+# 2. JSONL을 SQLite에 중복 없이 적재
+uv run --extra dev upwork-app-ingest \
+  --db /tmp/upwork.sqlite \
+  --input /tmp/upwork-jobs.jsonl \
+  --query python
+
+# 3. 저장된 데이터 조회
+uv run --extra dev upwork-app-analytics summary --db /tmp/upwork.sqlite
+uv run --extra dev upwork-app-analytics skills --db /tmp/upwork.sqlite
+uv run --extra dev upwork-app-analytics jobs --db /tmp/upwork.sqlite
+uv run --extra dev upwork-app-analytics budgets --db /tmp/upwork.sqlite
+uv run --extra dev upwork-app-analytics clients --db /tmp/upwork.sqlite
+```
+
+동일한 fixture를 다시 ingest하면 기존 `job_id`는 skip됩니다.
+
+```bash
+uv run --extra dev upwork-app-ingest \
+  --db /tmp/upwork.sqlite \
+  --input /tmp/upwork-jobs.jsonl \
+  --query python
+```
+
+`upwork-app-ingest` 출력에는 OpenClaw가 바로 사용할 수 있는 `new_jobs`가 포함됩니다.
+
+```json
+{
+  "seen_count": 2,
+  "inserted_count": 0,
+  "skipped_count": 2,
+  "new_jobs": []
+}
+```
+
+## 자주 쓰는 Make 명령
+
+```bash
+# 품질 검사: format check, lint, mypy, pytest
+make quality
+
+# fixture collect가 JSONL을 정상 출력하는지 확인
+make smoke
+
+# fixture collect -> ingest -> analytics 전체 확인
+make e2e-smoke
+```
+
+## CLI 명령 reference
+
+### `upwork-app-collect`
+
+Upwork fixture 또는 live 응답을 normalized JSONL로 출력합니다.
+
+```bash
+uv run --extra dev upwork-app-collect --fixture <fixture-json>
+uv run --extra dev upwork-app-collect --live --query "python" --max-pages 1 --page-size 50
+```
+
+옵션:
+
+- `--fixture PATH`: fixture JSON 파일에서 수집
+- `--live`: 실제 Upwork live 수집
+- `--query TEXT`: 검색어
+- `--max-pages N`: 최대 5
+- `--page-size N`: 최대 50
+
+주의:
+
+- live 수집은 실제 Upwork에 접속합니다.
+- live 수집은 명시적 opt-in 상황에서만 실행하세요.
+- credential/session/proxy/token은 로그에 노출되지 않아야 합니다.
+
+### `upwork-app-ingest`
+
+collector JSONL을 SQLite에 적재합니다. `job_id` 기준으로 중복을 건너뜁니다.
+
+```bash
+uv run --extra dev upwork-app-ingest \
+  --db ./data/upwork.sqlite \
+  --input /tmp/upwork-jobs.jsonl \
+  --query "python"
+```
+
+옵션:
+
+- `--db PATH`: SQLite DB 경로
+- `--input PATH`: collector JSONL 경로. `-`는 stdin
+- `--query TEXT`: 이 입력을 만들 때 사용한 검색어 메타데이터
+
+출력은 JSON입니다.
+
+주요 필드:
+
+- `seen_count`: 입력에서 본 record 수
+- `inserted_count`: 새로 inserted 된 job 수
+- `skipped_count`: 이미 있어서 skip 된 job 수
+- `new_jobs`: 이번 ingest에서 새로 들어온 job 목록
+- `db_path`: DB 경로
+- `source_query`: 검색어
+
+OpenClaw 추천은 우선 `new_jobs`만 대상으로 돌리면 됩니다.
+
+### `upwork-app-analytics`
+
+SQLite DB를 조회합니다.
+
+```bash
+uv run --extra dev upwork-app-analytics summary --db ./data/upwork.sqlite
+uv run --extra dev upwork-app-analytics skills --db ./data/upwork.sqlite
+uv run --extra dev upwork-app-analytics jobs --db ./data/upwork.sqlite
+uv run --extra dev upwork-app-analytics jobs --db ./data/upwork.sqlite --skill Python
+uv run --extra dev upwork-app-analytics jobs --db ./data/upwork.sqlite --title backend
+uv run --extra dev upwork-app-analytics budgets --db ./data/upwork.sqlite
+uv run --extra dev upwork-app-analytics clients --db ./data/upwork.sqlite
+```
+
+쿼리 종류:
+
+- `summary`: job/skill 개수 요약
+- `skills`: skill별 빈도
+- `jobs`: 저장된 job 목록. `--skill`, `--title` 필터 가능
+- `budgets`: budget/hourly 관련 요약
+- `clients`: client 관련 요약. 현재 schema에 없는 client 필드는 `unknown`으로 반환
+
+## Live 수집 사용법
+
+### 1회 live 수집만 테스트
+
+```bash
+make live-smoke QUERY="python" MAX_PAGES=1 PAGE_SIZE=50
+```
+
+이 명령은 live collect만 실행하고 DB에 저장하지 않습니다.
+
+### live 수집 후 바로 SQLite에 적재
+
+```bash
+make collect-live-once \
+  QUERY="python" \
+  APP_DB="$(pwd)/data/upwork.sqlite" \
+  MAX_PAGES=1 \
+  PAGE_SIZE=50
+```
+
+내부 흐름:
+
+```text
+upwork-app-collect --live
+  -> temp JSONL
+  -> upwork-app-ingest --db APP_DB
+  -> ingest 결과 JSON 출력
+```
+
+`collect-live-once`는 OpenClaw나 OS scheduler가 호출하기 좋은 현재의 one-shot primitive입니다.
+
+## 주기 실행 예시
+
+앱 내부 scheduler는 없습니다. 주기 실행은 OpenClaw가 설정을 돕거나 OS scheduler가 CLI를 호출하는 방식이 권장됩니다.
+
+예: cron에서 30분마다 실행
+
+```cron
+*/30 * * * * cd /path/to/upwork && QUERY="python" APP_DB="/path/to/upwork/data/upwork.sqlite" MAX_PAGES=1 PAGE_SIZE=50 ./scripts/collect_live_once.sh >> /path/to/upwork/data/collect.log 2>&1
+```
+
+macOS에서는 launchd를 사용할 수도 있습니다. 실제 등록 파일은 환경마다 달라지므로 OpenClaw `upwork-scheduler-setup` skill에서 생성/검증하는 방향을 권장합니다.
+
+## OpenClaw에서 쓰는 방식
+
+OpenClaw는 이 repo를 직접 구현체로 확장하기보다, CLI를 호출하는 UI/orchestrator로 사용하는 것이 목표입니다.
+
+권장 cycle:
+
+```text
+1. collect-live-once 실행
+2. ingest JSON에서 inserted_count / skipped_count / new_jobs 확인
+3. inserted_count > 0이면 new_jobs만 추천 대상으로 사용
+4. 추천/선호 memory는 OpenClaw skill 내부 파일에 저장
+5. 주기 실행 상태는 로그/DB/skill state로 확인
+```
+
+권장 skill 순서:
+
+```text
+skills/upwork-cycle              # one-shot collect -> ingest -> new_jobs 확인
+skills/upwork-scheduler-setup    # cron/launchd/systemd 설정 도움
+skills/upwork-cycle-status       # 최근 실행 로그/DB 증가 확인
+skills/upwork-query              # DB 조회를 자연어 UI로 감싸기
+skills/upwork-new-job-recommend  # 신규 공고 추천
+```
 
 ## 현재 구조
 
-이 프로젝트는 일반적인 Python 백엔드 형태의 단일 root app으로 동작합니다.
-
 ```text
 src/upwork_app/
-  main.py                 FastAPI app entrypoint (`upwork_app.main:app`)
-  api/routes/             HTTP endpoints
-  schemas/                Pydantic request/response models
-  services/               application orchestration
+  services/               collection/ingestion/analytics use cases
   repositories/           SQLite query/persistence helpers
   db/                     SQLite connection/schema
   domain/                 collector record validation/domain types
   integrations/upwork/    Upwork transport + normalization boundary
-  cli/                    local batch CLIs
-tests/                    API/service fixtures and tests
+  cli/                    local batch CLIs for OpenClaw/agent usage
+tests/                    CLI/service fixtures and tests
+scripts/                  local operational helpers
 ```
-
-신규 작업의 source of truth는 `src/upwork_app`입니다. 별도 `packages/*` compatibility layer는 유지하지 않습니다.
 
 ## 책임 경계
 
 ```text
 integrations/upwork  Upwork/fixture → normalized job records
+services/collector   collection use case
 services/ingestion   normalized JSONL → SQLite
 services/analytics   SQLite → query result JSON
-api/routes           HTTP request/response binding only
+cli                  stable command surface for OpenClaw and local batch usage
 ```
 
 중요한 경계:
@@ -38,73 +261,8 @@ api/routes           HTTP request/response binding only
 - SQLite persistence는 ingestion/db/repository 계층 책임입니다.
 - SQLite에는 중복 없는 `jobs`와 `job_skills`만 저장합니다. 수집 run 이력, raw payload archive, observation log는 저장하지 않습니다.
 - analytics는 SQLite read-only입니다.
-- ranking, auto-apply, message generation, notification, report delivery는 MVP 범위 밖입니다.
-- HTTP API는 caller-selected DB path를 받지 않습니다. 서버 설정 `UPWORK_APP_DB` 또는 `make APP_DB=...`를 사용합니다.
-
-## FastAPI 실행
-
-```bash
-make dev
-```
-
-실행 설정은 `make` 변수로 바꿀 수 있습니다.
-
-```bash
-make dev APP_DB=/tmp/upwork.sqlite APP_PORT=8080
-make run APP_DB=/tmp/upwork.sqlite
-```
-
-주요 endpoint:
-
-```text
-GET  /health
-POST /collect              # summary only
-POST /collect/jobs         # preview/full normalized jobs
-POST /ingest               # accepts jobs[] for HTTP clients or jsonl for pipeline compatibility
-POST /collect-and-ingest   # legacy MVP convenience endpoint
-POST /runs/collect         # preferred run-style collect+ingest endpoint
-GET  /analytics/summary
-GET  /analytics/skills
-GET  /analytics/jobs
-GET  /analytics/budgets
-GET  /analytics/clients
-```
-
-Fixture collect summary 예시:
-
-```bash
-curl -X POST http://127.0.0.1:8000/collect \
-  -H 'content-type: application/json' \
-  -d '{"fixture":"tests/fixtures/visitor_job_search_response.json"}'
-```
-
-Full jobs preview 예시:
-
-```bash
-curl -X POST http://127.0.0.1:8000/collect/jobs \
-  -H 'content-type: application/json' \
-  -d '{"fixture":"tests/fixtures/visitor_job_search_response.json"}'
-```
-
-
-HTTP ingest는 일반 클라이언트용으로 `jobs: [...]` 입력을 권장하고, 기존 JSONL 파이프라인 호환을 위해 `jsonl: "..."`도 지원합니다. 둘 중 하나만 보낼 수 있습니다.
-
-## CLI 예시
-
-```bash
-uv run --extra dev upwork-app-collect \
-  --fixture tests/fixtures/visitor_job_search_response.json \
-  > /tmp/upwork-jobs.jsonl
-
-uv run --extra dev upwork-app-ingest \
-  --db /tmp/upwork.sqlite \
-  --input /tmp/upwork-jobs.jsonl \
-  --query python
-
-uv run --extra dev upwork-app-analytics summary --db /tmp/upwork.sqlite
-uv run --extra dev upwork-app-analytics skills --db /tmp/upwork.sqlite
-uv run --extra dev upwork-app-analytics clients --db /tmp/upwork.sqlite
-```
+- ranking, auto-apply, message generation, notification, report delivery는 이 데이터 엔진 범위 밖입니다. 추천/랭킹은 OpenClaw skill 레이어에서 다룹니다.
+- scheduler는 앱 내부 책임이 아닙니다. OpenClaw 또는 OS scheduler(cron/launchd/systemd 등)가 CLI 명령을 호출하는 방식으로 운영합니다.
 
 ## 검증
 

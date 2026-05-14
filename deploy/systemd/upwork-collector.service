@@ -8,4 +8,4 @@ Type=oneshot
 WorkingDirectory=/home/ubuntu/upwork
 Environment=UPWORK_COLLECTOR_LIVE=1
 EnvironmentFile=/home/ubuntu/upwork-data/config/upwork.env
-ExecStart=/home/ubuntu/.local/bin/uv run upwork-app collect-scheduled --db /home/ubuntu/upwork-data/upwork.db --queries "python,scraping" --max-pages 1 --page-size 50
+ExecStart=/home/ubuntu/.local/bin/uv run upwork-app collect-scheduled --db /home/ubuntu/upwork-data/upwork.db --queries "python,scraping" --max-pages 5 --page-size 50

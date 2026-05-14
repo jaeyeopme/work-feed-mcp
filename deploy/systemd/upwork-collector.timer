@@ -1,9 +1,9 @@
 [Unit]
-Description=Run Upwork scheduled collector every 30 minutes
+Description=Run Upwork scheduled collector every 60 minutes
 
 [Timer]
-OnActiveSec=30m
-OnUnitActiveSec=30m
+OnActiveSec=60m
+OnUnitActiveSec=60m
 Persistent=true
 
 [Install]

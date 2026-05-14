@@ -12,7 +12,7 @@ Recommended one-shot command:
 UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
   --db /home/ubuntu/upwork-data/upwork.db \
   --queries "python,scraping" \
-  --max-pages 1 \
+  --max-pages 5 \
   --page-size 50
 ```
 
@@ -32,8 +32,8 @@ Default:
 repo: /home/ubuntu/upwork
 runtime: /home/ubuntu/upwork-data
 env file: /home/ubuntu/upwork-data/config/upwork.env
-cadence: every 30 minutes
-max pages: 1
+cadence: every 60 minutes
+max pages: 5
 page size: 50
 ```
 
@@ -48,4 +48,4 @@ macOS `launchd` and cron can still call the same one-shot CLI, but they are not 
 - Live collection remains explicit opt-in through `UPWORK_COLLECTOR_LIVE=1`.
 - Proxy/token material must stay outside git and logs.
 - Do not document proxy acquisition or access-control bypass.
-- Keep the first pass at 30 minutes. If rate-limit/block evidence appears, reduce query count/pages before increasing cadence.
+- Keep the default cadence at 60 minutes. If rate-limit/block evidence appears, reduce query count/pages before increasing cadence.

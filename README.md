@@ -150,7 +150,7 @@ OpenClaw 추천은 우선 `new_jobs`만 대상으로 돌리면 됩니다.
 UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
   --db ./data/upwork.sqlite \
   --queries "python,scraping" \
-  --max-pages 1 \
+  --max-pages 5 \
   --page-size 50
 ```
 
@@ -224,7 +224,7 @@ upwork-app-collect --live
 UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
   --db ./data/upwork.sqlite \
   --queries "python,scraping,automation" \
-  --max-pages 1 \
+  --max-pages 5 \
   --page-size 50
 ```
 
@@ -247,7 +247,7 @@ systemd units: ~/.config/systemd/user/upwork-collector.{service,timer}
 
 상세 설치 절차와 systemd unit 예시는 `docs/server-install.md`와 `deploy/systemd/`를 참고하세요.
 
-기본 주기 권장값은 30분, `--max-pages 1`, `--page-size 50`입니다. 연속 실행은 block을 유발할 수 있으므로 query/page를 늘리기 전에 journal을 확인하세요.
+기본 주기 권장값은 60분, `--max-pages 5`, `--page-size 50`입니다. 연속 실행은 block을 유발할 수 있으므로 query/page를 늘리기 전에 journal을 확인하세요.
 
 ## OpenClaw에서 쓰는 방식
 

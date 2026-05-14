@@ -110,6 +110,7 @@ uv run --extra dev upwork-app-collect --live --query "python" --max-pages 1 --pa
 - live 수집은 실제 Upwork에 접속합니다.
 - live 수집은 명시적 opt-in 상황에서만 실행하세요.
 - credential/session/proxy/token은 로그에 노출되지 않아야 합니다.
+- 이 저장소는 proxy 획득, access-control 우회, scraper snapshot 저장을 안내하지 않습니다.
 
 ### `upwork-app-ingest`
 
@@ -141,6 +142,27 @@ uv run --extra dev upwork-app-ingest \
 
 OpenClaw 추천은 우선 `new_jobs`만 대상으로 돌리면 됩니다.
 
+### `upwork-app collect-scheduled` / `upwork-app-collect-scheduled`
+
+여러 live query를 순차 수집하고 같은 SQLite DB에 적재하는 one-shot 명령입니다. systemd timer 같은 OS scheduler가 호출하기 위한 표면입니다.
+
+```bash
+UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
+  --db ./data/upwork.sqlite \
+  --queries "python,scraping" \
+  --max-pages 1 \
+  --page-size 50
+```
+
+옵션:
+
+- `--db PATH`: SQLite DB 경로
+- `--queries TEXT`: comma-separated 검색어 목록
+- `--max-pages N`: query당 최대 5
+- `--page-size N`: 최대 50
+
+이 명령은 추천/랭킹을 하지 않습니다. 추천 후보 선정과 이유 작성은 agent skill 레이어 책임입니다.
+
 ### `upwork-app-analytics`
 
 SQLite DB를 조회합니다.
@@ -171,7 +193,7 @@ uv run --extra dev upwork-app-analytics clients --db ./data/upwork.sqlite
 make live-smoke QUERY="python" MAX_PAGES=1 PAGE_SIZE=50
 ```
 
-이 명령은 live collect만 실행하고 DB에 저장하지 않습니다.
+이 명령은 live collect만 실행하고 DB에 저장하지 않습니다. 성공 기준은 scraper 전용 SQLite나 raw snapshot이 아니라 normalized JSONL record 출력입니다. `PAGE_SIZE=50`은 Upwork 요청의 `paging.count=50`으로 전달됩니다.
 
 ### live 수집 후 바로 SQLite에 적재
 
@@ -194,17 +216,38 @@ upwork-app-collect --live
 
 `collect-live-once`는 OpenClaw나 OS scheduler가 호출하기 좋은 현재의 one-shot primitive입니다.
 
-## 주기 실행 예시
+### 여러 query를 한 번에 live 수집 후 적재
 
-앱 내부 scheduler는 없습니다. 주기 실행은 OpenClaw가 설정을 돕거나 OS scheduler가 CLI를 호출하는 방식이 권장됩니다.
+서버 scheduler는 `collect-scheduled`를 호출하는 방식이 권장됩니다. 이 명령은 앱 내부 scheduler가 아니라 **one-shot CLI**입니다. 반복 실행은 systemd/cron/launchd 같은 OS scheduler가 담당합니다.
 
-예: cron에서 30분마다 실행
-
-```cron
-*/30 * * * * cd /path/to/upwork && QUERY="python" APP_DB="/path/to/upwork/data/upwork.sqlite" MAX_PAGES=1 PAGE_SIZE=50 ./scripts/collect_live_once.sh >> /path/to/upwork/data/collect.log 2>&1
+```bash
+UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
+  --db ./data/upwork.sqlite \
+  --queries "python,scraping,automation" \
+  --max-pages 1 \
+  --page-size 50
 ```
 
-macOS에서는 launchd를 사용할 수도 있습니다. 실제 등록 파일은 환경마다 달라지므로 OpenClaw `upwork-scheduler-setup` skill에서 생성/검증하는 방향을 권장합니다.
+`--queries`는 comma-separated 값입니다. comma로 나누고, 앞뒤 공백을 제거하고, 빈 항목은 버립니다. query 안에 공백이 있으면 전체 값을 quote하세요.
+
+성공 시 query별 `seen_count`, `inserted_count`, `skipped_count`, `new_jobs`를 포함한 JSON summary를 출력합니다. 중간 query가 실패하면 fail-fast로 non-zero exit 하며, 이미 완료된 query ingest는 유지됩니다.
+
+## 서버 설치 / 주기 실행
+
+앱 내부 daemon scheduler는 없습니다. 주기 실행은 OS scheduler가 one-shot CLI를 호출하는 방식입니다. Linux 서버에서는 `systemd --user` timer를 권장합니다.
+
+현재 서버 설치 계획의 기본 경로:
+
+```text
+repo: /home/ubuntu/upwork
+runtime: /home/ubuntu/upwork-data
+secret env: /home/ubuntu/upwork-data/config/upwork.env
+systemd units: ~/.config/systemd/user/upwork-collector.{service,timer}
+```
+
+상세 설치 절차와 systemd unit 예시는 `docs/server-install.md`와 `deploy/systemd/`를 참고하세요.
+
+기본 주기 권장값은 15분, `--max-pages 1`, `--page-size 50`입니다. rate-limit/block evidence가 보이면 query/page를 늘리기 전에 30분으로 낮추세요.
 
 ## OpenClaw에서 쓰는 방식
 
@@ -224,7 +267,7 @@ OpenClaw는 이 repo를 직접 구현체로 확장하기보다, CLI를 호출하
 
 ```text
 skills/upwork-cycle              # one-shot collect -> ingest -> new_jobs 확인
-skills/upwork-scheduler-setup    # cron/launchd/systemd 설정 도움
+CLI/systemd timer                  # 서버의 주기 수집 설정
 skills/upwork-cycle-status       # 최근 실행 로그/DB 증가 확인
 skills/upwork-query              # DB 조회를 자연어 UI로 감싸기
 skills/upwork-new-job-recommend  # 신규 공고 추천
@@ -262,7 +305,7 @@ cli                  stable command surface for OpenClaw and local batch usage
 - SQLite에는 중복 없는 `jobs`와 `job_skills`만 저장합니다. 수집 run 이력, raw payload archive, observation log는 저장하지 않습니다.
 - analytics는 SQLite read-only입니다.
 - ranking, auto-apply, message generation, notification, report delivery는 이 데이터 엔진 범위 밖입니다. 추천/랭킹은 OpenClaw skill 레이어에서 다룹니다.
-- scheduler는 앱 내부 책임이 아닙니다. OpenClaw 또는 OS scheduler(cron/launchd/systemd 등)가 CLI 명령을 호출하는 방식으로 운영합니다.
+- scheduler는 앱 내부 daemon이 아닙니다. CLI가 one-shot 수집 명령과 systemd/OS scheduler 설정 표면을 제공하고, 실제 반복 실행은 OS scheduler가 담당합니다.
 
 ## 검증
 
@@ -285,6 +328,8 @@ Live smoke는 명시적으로 opt-in할 때만 실행합니다.
 make live-smoke QUERY="python"
 make collect-live-once QUERY="python" APP_DB=./data/upwork.sqlite
 ```
+
+Live 결과는 Upwork/session/network 상태에 따라 달라질 수 있으므로 fixture/local contract 검증과 분리해서 보고하세요. 기본 품질 게이트는 `make quality`, `make smoke`, `make e2e-smoke`입니다.
 
 ## LLM/agent quick context
 

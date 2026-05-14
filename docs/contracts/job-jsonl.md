@@ -10,6 +10,8 @@
 
 The Upwork integration layer does not own durable state or SQLite. Ingestion adds collection-time metadata and persists records to SQLite.
 
+Live visitor GraphQL responses may include nested `jobTile.job` fields, `ontologySkills.prefLabel`, and numeric budget values encoded as strings. The collector normalizes those response-shape details into this JSONL contract; downstream code should not consume scraper-specific SQLite rows, raw GraphQL envelopes, or live snapshots.
+
 ## Required fields
 
 ```json

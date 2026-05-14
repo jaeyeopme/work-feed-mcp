@@ -32,6 +32,9 @@ upwork-session*
 upwork-cookie*
 
 # Forbidden runtime/state outputs for this collector core
+data/
+logs/
+*.log
 *.sqlite
 *.sqlite3
 snapshot-*.json

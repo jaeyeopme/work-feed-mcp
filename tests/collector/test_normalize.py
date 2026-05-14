@@ -104,3 +104,16 @@ def test_raw_id_without_ciphertext_fails_closed() -> None:
 
     with pytest.raises(UpstreamSchemaOrTemporaryError):
         normalize_response(response)
+
+
+def test_legacy_live_job_tile_shape_maps_details() -> None:
+    job = normalize_response(load_fixture("live_job_tile_response.json"))[0]
+
+    assert job.id == "~022053400105465582222"
+    assert job.skills == ["Python", "API Integration"]
+    assert job.job_type == "HOURLY"
+    assert job.hourly_min == 25.0
+    assert job.hourly_max == 45.0
+    assert job.fixed_amount == 500.0
+    assert job.posted_at == "2026-05-01T00:00:00Z"
+    assert job.contractor_tier == "INTERMEDIATE"

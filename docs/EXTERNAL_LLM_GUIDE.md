@@ -22,7 +22,7 @@ Product intent:
 - Stable, deduplicated job storage for later external LLM/OpenClaw selection.
 - OpenClaw acts as UI/orchestrator/recommendation layer.
 - Not Upwork application automation.
-- No auto-apply, proposal/message generation, backend ranking, app-native scheduler, or report delivery in the core data engine.
+- No auto-apply, proposal/message generation, backend ranking, app-native scheduler daemon, or report delivery in the core data engine. OS schedulers may call one-shot CLI commands.
 
 Hard boundaries:
 - Keep Upwork collection dumb and secret-safe.
@@ -73,6 +73,16 @@ One-shot live collect + ingest helper:
 make collect-live-once QUERY="python" APP_DB=./data/upwork.sqlite
 ```
 
+Scheduled multi-query one-shot CLI for OS schedulers:
+
+```bash
+UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
+  --db ./data/upwork.sqlite \
+  --queries "python,scraping" \
+  --max-pages 1 \
+  --page-size 50
+```
+
 ## Verification commands
 
 ```bash
@@ -94,7 +104,7 @@ Live smoke is explicit opt-in only:
 make live-smoke QUERY="python"
 ```
 
-Live evidence must be reported separately from fixture/local contract evidence.
+Default live smoke asks Upwork for 50 jobs in one visitor GraphQL page, matching the observed legacy scraper request shape. Success means normalized JSONL output from this data engine, not scraper-owned SQLite rows or raw snapshots. Live evidence must be reported separately from fixture/local contract evidence. Do not add proxy acquisition, access-control bypass, or raw snapshot persistence guidance to this repo.
 
 ## Common wrong assumptions to correct
 

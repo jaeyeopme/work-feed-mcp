@@ -7,7 +7,7 @@ import sys
 from collections.abc import Sequence
 from typing import Never
 
-from upwork_app.cli.args import bounded_positive_int
+from upwork_app.cli.args import add_live_paging_arguments
 from upwork_app.cli.output import emit_jsonl
 from upwork_app.integrations.upwork.credentials import redact
 from upwork_app.integrations.upwork.errors import CollectorError, UsageError, exit_code_for_error
@@ -24,12 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fixture")
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--query")
-    parser.add_argument(
-        "--max-pages", type=lambda value: bounded_positive_int(value, maximum=5), default=1
-    )
-    parser.add_argument(
-        "--page-size", type=lambda value: bounded_positive_int(value, maximum=50), default=50
-    )
+    add_live_paging_arguments(parser)
     return parser
 
 

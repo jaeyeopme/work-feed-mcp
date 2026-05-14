@@ -1,0 +1,34 @@
+{
+  "data": {
+    "search": {
+      "universalSearchNuxt": {
+        "visitorJobSearchV1": {
+          "paging": {"total": 1, "offset": 0, "count": 50},
+          "results": [
+            {
+              "id": "2053400105465582222",
+              "title": "Live Rich Shape",
+              "description": "Current visitor search result shape.",
+              "ontologySkills": [
+                {"prefLabel": "Python"},
+                {"prefLabel": "API Integration"}
+              ],
+              "jobTile": {
+                "job": {
+                  "id": "2053400105465582222",
+                  "ciphertext": "~022053400105465582222",
+                  "jobType": "HOURLY",
+                  "hourlyBudgetMin": "25.0",
+                  "hourlyBudgetMax": "45.0",
+                  "contractorTier": "INTERMEDIATE",
+                  "publishTime": "2026-05-01T00:00:00Z",
+                  "fixedPriceAmount": {"amount": "500.0"}
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

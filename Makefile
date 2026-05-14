@@ -28,10 +28,10 @@ e2e-smoke:
 	uv run --extra dev upwork-app-analytics clients --db $(E2E_DB)
 
 live-smoke:
-	UPWORK_COLLECTOR_LIVE=1 uv run --extra dev upwork-app-collect --live $(if $(QUERY),--query "$(QUERY)",) --max-pages $(MAX_PAGES) --page-size $(PAGE_SIZE)
+	@UPWORK_COLLECTOR_LIVE=1 uv run --extra dev upwork-app-collect --live $(if $(QUERY),--query "$(QUERY)",) --max-pages $(MAX_PAGES) --page-size $(PAGE_SIZE)
 
 collect-live-once:
-	QUERY="$(QUERY)" APP_DB="$(APP_DB)" MAX_PAGES="$(MAX_PAGES)" PAGE_SIZE="$(PAGE_SIZE)" ./scripts/collect_live_once.sh
+	@QUERY="$(QUERY)" APP_DB="$(APP_DB)" MAX_PAGES="$(MAX_PAGES)" PAGE_SIZE="$(PAGE_SIZE)" ./scripts/collect_live_once.sh
 
 clean:
 	rm -rf .pytest_cache .mypy_cache .ruff_cache src/*.egg-info

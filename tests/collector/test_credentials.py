@@ -83,3 +83,24 @@ def test_redacts_multi_value_cookie_and_session_headers() -> None:
     assert "secret3" not in redacted
     assert "secret4" not in redacted
     assert redacted.count("<redacted>") == 2
+
+
+def test_redacts_live_diagnostic_material_from_error_text(tmp_path: Path) -> None:
+    cookie_file = tmp_path / "cookie.txt"
+    cookie_file.write_text(
+        "visitor_gql_token=secret-token; session=secret-session", encoding="utf-8"
+    )
+    env = {
+        "UPWORK_COLLECTOR_COOKIE_FILE": str(cookie_file),
+        "UPWORK_COLLECTOR_PROXY_URL": "http://user:pass@example.test:8080",
+    }
+
+    redacted = redact(
+        "upstream network failure: Cookie: visitor_gql_token=secret-token; "
+        "proxy=http://user:pass@example.test:8080 Bearer secret-token",
+        env,
+    )
+
+    assert "secret-token" not in redacted
+    assert "secret-session" not in redacted
+    assert "user:pass" not in redacted

@@ -29,6 +29,7 @@ Upwork fixture/live response
   -> SQLite `jobs` and `job_skills` tables
   -> services.analytics / repositories.analytics
   -> CLI JSON output for OpenClaw/agent consumption
+  -> optional one-shot scheduled collection CLI invoked by OS scheduler
 ```
 
 Ingestion is deduplicating and jobs-only: existing `job_id` values are skipped, newly inserted jobs are returned as downstream selection candidates, and no run/observation/raw-record history is persisted.
@@ -39,8 +40,8 @@ Ingestion is deduplicating and jobs-only: existing `job_id` values are skipped, 
 - Do not store upstream GraphQL/private payloads, observation logs, or collection run history.
 - Do not run live Upwork collection unless the user explicitly opts in.
 - Analytics reads SQLite only.
-- Scheduler/background execution is outside the app core; OpenClaw or OS scheduler should call CLI commands.
-- Ranking, reporting, notification, UI, scheduler installation, proposal/message generation, and auto-apply are out of this repo's core data-engine scope.
+- Scheduler/background execution is outside the app core; OS scheduler should call one-shot CLI commands such as `collect-scheduled`. The repo may provide CLI contracts/templates for OS scheduler setup, but not an app-native daemon.
+- Ranking, reporting, notification, UI, app-native scheduler daemon, proposal/message generation, and auto-apply are out of this repo's core data-engine scope.
 - Recommendation/ranking belongs in OpenClaw skills unless explicitly promoted later.
 
 ## Verification

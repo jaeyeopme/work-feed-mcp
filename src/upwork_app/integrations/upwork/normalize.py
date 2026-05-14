@@ -19,6 +19,11 @@ def _first_text(*values: object) -> str | None:
 def _number(value: object) -> float | None:
     if isinstance(value, int | float) and not isinstance(value, bool):
         return float(value)
+    if isinstance(value, str) and value.strip():
+        try:
+            return float(value.strip())
+        except ValueError:
+            return None
     return None
 
 
@@ -30,7 +35,9 @@ def _skills(raw: object) -> list[str]:
         if isinstance(item, str) and item.strip():
             names.append(item.strip())
         elif isinstance(item, dict):
-            name = _first_text(item.get("name"), item.get("prettyName"), item.get("skill"))
+            name = _first_text(
+                item.get("name"), item.get("prettyName"), item.get("skill"), item.get("prefLabel")
+            )
             if name:
                 names.append(name)
     return names
@@ -47,7 +54,11 @@ def _budget_amount(raw: object, *keys: str) -> float | None:
 
 
 def normalize_result(raw: dict[str, Any]) -> Job:
-    job = raw.get("job") if isinstance(raw.get("job"), dict) else {}
+    job_tile = raw.get("jobTile") if isinstance(raw.get("jobTile"), dict) else {}
+    assert isinstance(job_tile, dict)
+    tile_job = job_tile.get("job") if isinstance(job_tile.get("job"), dict) else {}
+    assert isinstance(tile_job, dict)
+    job = raw.get("job") if isinstance(raw.get("job"), dict) else tile_job
     assert isinstance(job, dict)
 
     raw_id = _first_text(raw.get("id"), raw.get("uid"), job.get("id"))
@@ -71,7 +82,12 @@ def normalize_result(raw: dict[str, Any]) -> Job:
     if not title or not description:
         raise UpstreamSchemaOrTemporaryError("job result missing title or description")
 
-    skills = _skills(raw.get("skills") if raw.get("skills") is not None else job.get("skills"))
+    skills_source = raw.get("skills")
+    if skills_source is None:
+        skills_source = job.get("skills")
+    if skills_source is None:
+        skills_source = raw.get("ontologySkills")
+    skills = _skills(skills_source)
     hourly = (
         raw.get("hourlyBudget") if raw.get("hourlyBudget") is not None else job.get("hourlyBudget")
     )
@@ -80,6 +96,12 @@ def normalize_result(raw: dict[str, Any]) -> Job:
         if raw.get("fixedPriceBudget") is not None
         else job.get("fixedPriceBudget")
     )
+    if hourly is None and (
+        job.get("hourlyBudgetMin") is not None or job.get("hourlyBudgetMax") is not None
+    ):
+        hourly = {"min": job.get("hourlyBudgetMin"), "max": job.get("hourlyBudgetMax")}
+    if fixed is None and isinstance(job.get("fixedPriceAmount"), dict):
+        fixed = job.get("fixedPriceAmount")
 
     return Job(
         source="upwork",
@@ -88,7 +110,9 @@ def normalize_result(raw: dict[str, Any]) -> Job:
         description=description,
         url=f"https://www.upwork.com/jobs/{job_id}",
         skills=skills,
-        posted_at=_first_text(raw.get("postedOn"), raw.get("posted_at"), job.get("postedOn")),
+        posted_at=_first_text(
+            raw.get("postedOn"), raw.get("posted_at"), job.get("postedOn"), job.get("publishTime")
+        ),
         job_type=_first_text(raw.get("jobType"), raw.get("job_type"), job.get("jobType")),
         contractor_tier=_first_text(
             raw.get("contractorTier"), raw.get("contractor_tier"), job.get("contractorTier")

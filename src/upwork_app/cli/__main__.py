@@ -3,7 +3,14 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 
-from upwork_app.cli import analytics, collect, collect_scheduled, ingest, scheduler_status
+from upwork_app.cli import (
+    analytics,
+    collect,
+    collect_scheduled,
+    ingest,
+    scheduler,
+    scheduler_status,
+)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -14,6 +21,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     subcommands.add_parser("analytics")
     subcommands.add_parser("collect-scheduled")
     subcommands.add_parser("scheduler-status")
+    subcommands.add_parser("scheduler")
     known, rest = parser.parse_known_args(argv)
     if known.command == "collect":
         return collect.main(rest)
@@ -25,6 +33,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return collect_scheduled.main(rest)
     if known.command == "scheduler-status":
         return scheduler_status.main(rest)
+    if known.command == "scheduler":
+        return scheduler.main(rest)
     return 2
 
 

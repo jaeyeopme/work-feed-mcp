@@ -51,6 +51,18 @@ See `docs/server-install.md` and `deploy/systemd/` for concrete unit files.
 
 macOS `launchd` and cron can still call the same one-shot CLI, but they are not the first-pass server target. Prefer Linux `systemd --user` for the current server install.
 
+
+CLI control wrapper:
+
+```bash
+uv run upwork-app scheduler timer-status
+uv run upwork-app scheduler restart-timer
+uv run upwork-app scheduler run-now
+uv run upwork-app scheduler logs --lines 100
+```
+
+The wrapper delegates to `systemctl --user` / `journalctl --user` so agents can use project CLI commands without memorizing host-specific systemd syntax.
+
 ## Safety notes
 
 - Live collection remains explicit opt-in through `UPWORK_COLLECTOR_LIVE=1`.

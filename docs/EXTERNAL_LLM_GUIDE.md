@@ -86,6 +86,18 @@ uv run upwork-app scheduler-status --db ./data/upwork.sqlite --limit 5
 
 Use `--queries "python,scraping"` only for manual or advanced filtered schedules.
 
+
+Scheduler control wrapper for Linux server agents:
+
+```bash
+uv run upwork-app scheduler timer-status
+uv run upwork-app scheduler restart-timer
+uv run upwork-app scheduler run-now
+uv run upwork-app scheduler logs --lines 100
+```
+
+Use `scheduler-status` for DB run history and `scheduler` for OS timer/service control.
+
 ## Verification commands
 
 ```bash

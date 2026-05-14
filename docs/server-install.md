@@ -111,6 +111,20 @@ systemctl --user list-timers --all | grep upwork-collector
 journalctl --user -u upwork-collector.service --no-pager -n 100
 ```
 
+
+CLI wrapper equivalents:
+
+```bash
+cd /home/ubuntu/upwork
+uv run upwork-app scheduler timer-status
+uv run upwork-app scheduler restart-timer
+uv run upwork-app scheduler run-now
+uv run upwork-app scheduler logs --lines 100
+uv run upwork-app scheduler-status --db /home/ubuntu/upwork-data/upwork.db --limit 5
+```
+
+`upwork-app scheduler` wraps `systemctl --user` and `journalctl --user`; `upwork-app scheduler-status` reads SQLite run history.
+
 Default cadence is 60 minutes with unfiltered/latest mode and `max-pages=5`. Back-to-back runs can trigger blocking, so verify scheduler-status and journal evidence before increasing cadence, explicit query count, or pages.
 
 

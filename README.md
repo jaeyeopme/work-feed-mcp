@@ -186,6 +186,39 @@ uv run --extra dev upwork-app scheduler-status --db ./data/upwork.sqlite --limit
 - `recent_runs`: 최근 run 목록
 - `recent_results`: 최근 run의 query별 결과. 기본 unfiltered 수집은 `query: null`
 
+
+### `upwork-app scheduler`
+
+Linux 서버에서 systemd 명령을 직접 외우지 않도록 감싼 OS scheduler 제어 CLI입니다. 내부적으로는 `systemctl --user` / `journalctl --user`를 호출합니다. 이 명령은 scheduler 제어 표면일 뿐이며, 앱 내부 daemon을 만들지 않습니다.
+
+```bash
+# 타이머 상태
+uv run upwork-app scheduler timer-status
+
+# 타이머 재시작
+uv run upwork-app scheduler restart-timer
+
+# 지금 즉시 1회 수집 실행
+uv run upwork-app scheduler run-now
+
+# 최근 service 로그
+uv run upwork-app scheduler logs --lines 100
+
+# DB 기준 최근 수집 상태
+uv run upwork-app scheduler-status --db /home/ubuntu/upwork-data/upwork.db --limit 5
+```
+
+주요 action:
+
+- `timer-status`: `upwork-collector.timer` 상태
+- `start-timer` / `restart-timer` / `stop-timer`
+- `enable-timer` / `disable-timer`
+- `run-now`: `upwork-collector.service`를 즉시 1회 start
+- `service-status`: service 상태
+- `logs`: service journal 조회
+
+기본은 user unit입니다. system unit을 제어해야 하면 `--system`을 붙입니다.
+
 ### `upwork-app-analytics`
 
 SQLite DB를 조회합니다.

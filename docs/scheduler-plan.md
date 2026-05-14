@@ -1,10 +1,15 @@
 # Upwork collection scheduler plan
 
+## Docker/MCP public runtime
+
+The primary public runtime is Docker Compose: `collector-worker` owns recurring live collection and `upwork-collector-mcp` exposes agent-facing MCP tools over the shared SQLite volume. The systemd plan below is retained as a native/legacy deployment path.
+
+
 Status: implementation planning / server install reference.
 
 ## Responsibility boundary
 
-The app does **not** run a long-lived internal scheduler daemon. Scheduled execution is handled by the OS scheduler, which calls a one-shot CLI command.
+For native/systemd deployment, the app does **not** run a long-lived internal scheduler daemon. Scheduled execution is handled by the OS scheduler, which calls a one-shot CLI command.
 
 Recommended one-shot command for the default server schedule:
 

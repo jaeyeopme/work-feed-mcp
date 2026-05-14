@@ -8,13 +8,90 @@ Upwork job discovery를 위한 **CLI-first 로컬 데이터 엔진**입니다.
 Upwork/fixture 수집
   -> normalized JSONL
   -> SQLite에 중복 없이 적재
-  -> CLI로 조회/분석
-  -> OpenClaw가 UI/오케스트레이션/추천 담당
+  -> MCP/CLI로 조회/분석
+  -> agent/OpenClaw가 UI/오케스트레이션/추천 담당
 ```
 
-이 저장소는 웹 애플리케이션이 아닙니다. FastAPI 서버는 제거되었고, OpenClaw나 사람이 호출하기 좋은 CLI 명령을 제공하는 것이 핵심입니다.
+이 저장소는 REST 웹 애플리케이션이 아닙니다. FastAPI 서버는 제거되었고, 공개 런타임은 Docker Compose + MCP를 우선합니다. 기존 CLI 명령은 로컬 개발/호환성/수동 운영 경로로 계속 유지됩니다.
 
 자동 지원, proposal/message 생성, auto-apply는 범위 밖입니다.
+
+## Docker + MCP quickstart (primary public path)
+
+Public/agent-first usage is now Docker Compose + MCP first. The compose stack runs two services from one image:
+
+```text
+collector-worker       live collection loop -> SQLite writes/run history
+upwork-collector-mcp   agent-facing MCP tools -> SQLite reads/control queue
+upwork-data volume     shared /data/upwork.sqlite
+```
+
+Start the runtime:
+
+```bash
+docker compose up -d
+```
+
+The Docker runtime is live by default because starting compose is the explicit opt-in boundary. Defaults are intentionally conservative and match the validated server baseline:
+
+- interval: 60 minutes
+- max pages: 5
+- page size: 50
+- query: unfiltered/latest
+
+Customize with `.env` or compose environment variables:
+
+```bash
+cp .env.example .env
+# edit UPWORK_COLLECTOR_INTERVAL_SECONDS, UPWORK_COLLECTOR_QUERIES, etc.
+docker compose up -d
+```
+
+MCP is exposed as a Streamable HTTP service on the local host port from `compose.yaml`. Agents should use MCP tools such as:
+
+- `jobs_recent`, `jobs_search`, `jobs_get`
+- `runs_recent`, `collector_status`
+- `config_get`, `config_update`
+- `collector_run_once`, `collector_pause`, `collector_resume`, `collector_command_status`
+
+The MCP service is not a recommendation engine and not a REST API. It exposes collected data and collector controls; ranking/recommendation remains agent-owned.
+
+### MCP v1 contract
+
+Control tools are enqueue-only. They return immediately with a command id; the worker applies commands between collection runs.
+
+```json
+{ "ok": true, "command_id": "...", "status": "queued" }
+```
+
+Poll completion with `collector_command_status(command_id)`. Terminal states are `applied` and `failed`; in-flight states are `queued` and `running`. `config_update` follows the same queue path and only accepts `interval_seconds`, `queries`, `max_pages`, `page_size`, and `paused`. `live` is intentionally not MCP-mutable.
+
+Config precedence is:
+
+```text
+1. worker startup seeds missing collector_config keys from Compose/.env
+2. existing persisted keys are preserved across restarts
+3. MCP config_update changes persisted keys through the command queue
+4. Docker live/mock mode remains an env/bootstrap setting
+```
+
+If the MCP server starts before the worker initializes SQLite, read/control tools return stable not-ready payloads instead of creating DB/schema from the read path:
+
+```json
+{ "ok": false, "error": "not_ready", "reason": "db_missing", "next_action": "start collector-worker" }
+```
+
+`reason` may be `db_missing` or `schema_missing`. An initialized DB with no rows is not an error; list tools return `{ "ok": true, "status": "empty", "rows": [] }`.
+
+For non-live/local smoke, run the worker with fixture mode instead of live mode:
+
+```bash
+UPWORK_COLLECTOR_LIVE=0 \
+UPWORK_COLLECTOR_FIXTURE=tests/fixtures/visitor_job_search_response.json \
+UPWORK_COLLECTOR_DB=/tmp/upwork-worker-smoke.sqlite \
+uv run --extra dev upwork-app worker --max-iterations 1
+```
+
 
 ## 설치 / 준비
 
@@ -144,7 +221,7 @@ OpenClaw 추천은 우선 `new_jobs`만 대상으로 돌리면 됩니다.
 
 ### `upwork-app collect-scheduled` / `upwork-app-collect-scheduled`
 
-OS scheduler가 호출하기 위한 one-shot live 수집+적재 명령입니다. 기본 서버 경로는 검색어 없이 최신 공고를 최대 250개(`--max-pages 5 --page-size 50`) 훑습니다. systemd/cron/launchd가 반복 실행을 담당하고, 앱 자체 daemon은 없습니다.
+레거시/native OS scheduler가 호출하기 위한 one-shot live 수집+적재 명령입니다. 기본 서버 경로는 검색어 없이 최신 공고를 최대 250개(`--max-pages 5 --page-size 50`) 훑습니다. native 설치에서는 systemd/cron/launchd가 반복 실행을 담당합니다. Docker 공개 런타임에서는 `collector-worker` 컨테이너가 반복 실행을 담당합니다.
 
 ```bash
 UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
@@ -189,7 +266,7 @@ uv run --extra dev upwork-app scheduler-status --db ./data/upwork.sqlite --limit
 
 ### `upwork-app scheduler`
 
-Linux 서버에서 systemd 명령을 직접 외우지 않도록 감싼 OS scheduler 제어 CLI입니다. 내부적으로는 `systemctl --user` / `journalctl --user`를 호출합니다. 이 명령은 scheduler 제어 표면일 뿐이며, 앱 내부 daemon을 만들지 않습니다.
+레거시/native Linux 서버에서 systemd 명령을 직접 외우지 않도록 감싼 OS scheduler 제어 CLI입니다. 내부적으로는 `systemctl --user` / `journalctl --user`를 호출합니다. 이 명령은 scheduler 제어 표면일 뿐이며, 앱 내부 daemon을 만들지 않습니다.
 
 ```bash
 # 타이머 상태
@@ -272,9 +349,9 @@ upwork-app-collect --live
 
 `collect-live-once`는 OpenClaw나 OS scheduler가 호출하기 좋은 현재의 one-shot primitive입니다.
 
-### scheduler용 live 수집 후 SQLite 적재
+### native/legacy scheduler용 live 수집 후 SQLite 적재
 
-서버 scheduler는 `collect-scheduled`를 호출하는 방식이 권장됩니다. 기본값은 검색어 없이 최신 공고 최대 250개를 수집합니다. 이 명령은 앱 내부 scheduler가 아니라 **one-shot CLI**입니다. 반복 실행은 systemd/cron/launchd 같은 OS scheduler가 담당합니다.
+Docker 공개 런타임에서는 `collector-worker` 컨테이너가 반복 수집을 담당합니다. 아래 `collect-scheduled` 명령은 Docker를 쓰지 않는 native/legacy 설치에서 OS scheduler가 호출하기 위한 **one-shot CLI**입니다. 기본값은 검색어 없이 최신 공고 최대 250개를 수집합니다.
 
 ```bash
 UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
@@ -301,11 +378,11 @@ UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
 uv run --extra dev upwork-app scheduler-status --db ./data/upwork.sqlite --limit 5
 ```
 
-## 서버 설치 / 주기 실행
+## Native/legacy 서버 설치 / 주기 실행
 
-앱 내부 daemon scheduler는 없습니다. 주기 실행은 OS scheduler가 one-shot CLI를 호출하는 방식입니다. Linux 서버에서는 `systemd --user` timer를 권장합니다.
+공개 기본 경로는 Docker Compose + MCP입니다. 이 섹션은 Docker를 사용하지 않는 native/legacy Linux 설치용입니다. 이 경로에서는 앱 내부 daemon scheduler가 없고, OS scheduler가 one-shot CLI를 호출합니다. Linux 서버에서는 `systemd --user` timer를 권장합니다.
 
-현재 서버 설치 계획의 기본 경로:
+legacy 서버 설치 계획의 기본 경로:
 
 ```text
 repo: /home/ubuntu/upwork
@@ -318,27 +395,21 @@ systemd units: ~/.config/systemd/user/upwork-collector.{service,timer}
 
 기본 주기 권장값은 60분, 검색어 없는 latest scan, `--max-pages 5`, `--page-size 50`입니다. 연속 실행은 block을 유발할 수 있으므로 query/page를 늘리기 전에 journal을 확인하세요.
 
-## OpenClaw에서 쓰는 방식
+## Agent/OpenClaw에서 쓰는 방식
 
-OpenClaw는 이 repo를 직접 구현체로 확장하기보다, CLI를 호출하는 UI/orchestrator로 사용하는 것이 목표입니다.
+기본 권장 방식은 MCP입니다. Agent/OpenClaw는 이 repo 안에 추천 엔진을 추가하지 않고, MCP 도구로 수집된 공고와 run/config 상태를 조회한 뒤 추천 후보를 자체 컨텍스트에서 판단합니다.
 
-권장 cycle:
-
-```text
-1. OS scheduler가 `collect-scheduled`를 주기 실행
-2. agent skill이 SQLite jobs/job_skills와 `scheduler-status` JSON을 조회
-3. 새 공고나 필터링된 공고를 추천 후보로 출력
-4. 추천/선호 memory는 OpenClaw skill 내부 파일에 저장
-5. 수집 자체의 반복 실행은 systemd/cron/launchd가 담당
-```
-
-권장 skill 순서:
+Docker/MCP 권장 cycle:
 
 ```text
-CLI/systemd timer                # 서버의 주기 수집 설정/실행
-upwork-app scheduler-status      # 최근 scheduled run 상태 JSON 조회
-skills/upwork-data-engine        # DB 조회/필터링/추천 후보 출력
+1. docker compose가 `collector-worker`와 `upwork-collector-mcp`를 실행
+2. collector-worker가 주기적으로 live 수집 후 SQLite에 저장
+3. agent가 MCP `jobs_*`, `runs_recent`, `collector_status`를 조회
+4. 필요하면 MCP `config_update`, `collector_run_once`, `collector_pause/resume`을 queue로 요청
+5. 추천/선호 memory와 최종 후보 출력은 agent/OpenClaw skill 책임
 ```
+
+Native/legacy cycle은 OS scheduler + one-shot CLI + SQLite 조회 skill을 사용할 수 있습니다.
 
 ## 현재 구조
 
@@ -372,13 +443,13 @@ cli                  stable command surface for OpenClaw and local batch usage
 - SQLite에는 중복 없는 `jobs`/`job_skills`와 scheduled collection 운영 요약(`collector_runs`, `collector_run_results`)만 저장합니다. raw payload archive나 per-job observation log는 저장하지 않습니다.
 - analytics는 SQLite read-only입니다.
 - ranking, auto-apply, message generation, notification, report delivery는 이 데이터 엔진 범위 밖입니다. 추천/랭킹은 OpenClaw skill 레이어에서 다룹니다.
-- scheduler는 앱 내부 daemon이 아닙니다. CLI가 one-shot 수집 명령과 systemd/OS scheduler 설정 표면을 제공하고, 실제 반복 실행은 OS scheduler가 담당합니다.
+- Docker 공개 런타임에서는 `collector-worker`가 반복 수집을 담당합니다. Native/legacy 경로에서는 one-shot CLI를 OS scheduler가 호출합니다.
 
 
 ## CI/CD
 
 - CI: `.github/workflows/quality.yml` runs `make quality`, `make smoke`, and `make e2e-smoke` on push/pull request. It does not run live collection.
-- CD: `.github/workflows/deploy-server.yml` is manual (`workflow_dispatch`) and deploys to the personal Linux server over SSH using repository secrets. It fast-forwards the server checkout, syncs the systemd user units, restarts the timer, and prints `scheduler-status` when the DB exists.
+- CD: `.github/workflows/deploy-server.yml` is manual (`workflow_dispatch`) and remains a native/legacy SSH + systemd deployment path. Docker/MCP registry or cloud deployment is intentionally deferred.
 
 Required CD secrets:
 

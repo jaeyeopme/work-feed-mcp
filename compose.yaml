@@ -1,0 +1,36 @@
+services:
+  collector-worker:
+    build: .
+    image: upwork-collector:local
+    command: ["upwork-app", "worker"]
+    restart: unless-stopped
+    environment:
+      UPWORK_COLLECTOR_LIVE: "${UPWORK_COLLECTOR_LIVE:-1}"
+      UPWORK_COLLECTOR_DB: "${UPWORK_COLLECTOR_DB:-/data/upwork.sqlite}"
+      UPWORK_COLLECTOR_INTERVAL_SECONDS: "${UPWORK_COLLECTOR_INTERVAL_SECONDS:-3600}"
+      UPWORK_COLLECTOR_MAX_PAGES: "${UPWORK_COLLECTOR_MAX_PAGES:-5}"
+      UPWORK_COLLECTOR_PAGE_SIZE: "${UPWORK_COLLECTOR_PAGE_SIZE:-50}"
+      UPWORK_COLLECTOR_QUERIES: "${UPWORK_COLLECTOR_QUERIES:-}"
+      UPWORK_COLLECTOR_LOG_LEVEL: "${UPWORK_COLLECTOR_LOG_LEVEL:-INFO}"
+    volumes:
+      - upwork-data:/data
+
+  upwork-collector-mcp:
+    build: .
+    image: upwork-collector:local
+    command: ["upwork-app", "mcp-server"]
+    restart: unless-stopped
+    environment:
+      UPWORK_COLLECTOR_DB: "${UPWORK_COLLECTOR_DB:-/data/upwork.sqlite}"
+      UPWORK_COLLECTOR_MCP_HOST: "${UPWORK_COLLECTOR_MCP_HOST:-0.0.0.0}"
+      UPWORK_COLLECTOR_MCP_PORT: "${UPWORK_COLLECTOR_MCP_PORT:-8000}"
+      UPWORK_COLLECTOR_MCP_TRANSPORT: "${UPWORK_COLLECTOR_MCP_TRANSPORT:-streamable-http}"
+    ports:
+      - "127.0.0.1:${UPWORK_COLLECTOR_MCP_PORT:-8000}:${UPWORK_COLLECTOR_MCP_PORT:-8000}"
+    volumes:
+      - upwork-data:/data
+    depends_on:
+      - collector-worker
+
+volumes:
+  upwork-data:

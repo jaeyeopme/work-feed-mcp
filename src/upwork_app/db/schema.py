@@ -69,6 +69,37 @@ CREATE INDEX IF NOT EXISTS idx_job_skills_skill ON job_skills(skill);
 CREATE INDEX IF NOT EXISTS idx_collector_runs_started_at ON collector_runs(started_at);
 CREATE INDEX IF NOT EXISTS idx_collector_run_results_run_id ON collector_run_results(run_id);
 CREATE INDEX IF NOT EXISTS idx_collector_run_results_query ON collector_run_results(query);
+
+
+CREATE TABLE IF NOT EXISTS collector_config (
+  key TEXT PRIMARY KEY,
+  value_json TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  updated_by TEXT NOT NULL DEFAULT 'worker'
+);
+
+CREATE TABLE IF NOT EXISTS collector_commands (
+  command_id TEXT PRIMARY KEY,
+  command_type TEXT NOT NULL CHECK (
+    command_type IN ('run_once', 'pause', 'resume', 'update_config')
+  ),
+  payload_json TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL CHECK (
+    status IN ('queued', 'running', 'applied', 'failed')
+  ),
+  created_at TEXT NOT NULL,
+  started_at TEXT NULL,
+  finished_at TEXT NULL,
+  requested_by TEXT NOT NULL DEFAULT 'mcp',
+  result_json TEXT NULL,
+  error_type TEXT NULL,
+  redacted_error TEXT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_collector_commands_status_created_at
+  ON collector_commands(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_collector_commands_created_at
+  ON collector_commands(created_at);
 """
 
 

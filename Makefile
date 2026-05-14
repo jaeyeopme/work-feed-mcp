@@ -1,4 +1,4 @@
-.PHONY: quality smoke e2e-smoke live-smoke collect-live-once clean
+.PHONY: quality smoke e2e-smoke docker-compose-config live-smoke collect-live-once clean
 
 QUERY ?=
 APP_DB ?= $(CURDIR)/data/upwork.sqlite
@@ -26,6 +26,9 @@ e2e-smoke:
 	uv run --extra dev upwork-app-analytics summary --db $(E2E_DB)
 	uv run --extra dev upwork-app-analytics skills --db $(E2E_DB)
 	uv run --extra dev upwork-app-analytics clients --db $(E2E_DB)
+
+docker-compose-config:
+	docker compose config >/tmp/upwork-compose-config.yaml
 
 live-smoke:
 	@UPWORK_COLLECTOR_LIVE=1 uv run --extra dev upwork-app-collect --live $(if $(QUERY),--query "$(QUERY)",) --max-pages $(MAX_PAGES) --page-size $(PAGE_SIZE)

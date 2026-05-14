@@ -40,8 +40,8 @@ Ingestion is deduplicating: existing `job_id` values are skipped and newly inser
 - Do not store upstream GraphQL/private payloads, raw snapshots, or per-job observation logs. Scheduled run history is limited to redacted operational summaries.
 - Do not run live Upwork collection unless the user explicitly opts in.
 - Analytics reads SQLite only.
-- Scheduler/background execution is outside the app core; OS scheduler should call one-shot CLI commands such as `collect-scheduled`. The repo may provide CLI contracts/templates for OS scheduler setup, but not an app-native daemon.
-- Ranking, reporting, notification, UI, app-native scheduler daemon, proposal/message generation, and auto-apply are out of this repo's core data-engine scope.
+- Public runtime is Docker Compose + MCP first: a `collector-worker` container owns recurring collection and an `upwork-collector-mcp` container exposes agent-facing MCP tools over the shared SQLite DB. Native/legacy scheduler execution remains outside the app core; OS schedulers may call one-shot CLI commands such as `collect-scheduled`.
+- Ranking, reporting, notification, UI, REST-first API, internal LLM recommendation, proposal/message generation, and auto-apply are out of this repo's core data-engine scope.
 - Recommendation/ranking belongs in OpenClaw skills unless explicitly promoted later.
 
 ## Verification

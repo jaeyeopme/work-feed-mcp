@@ -6,10 +6,9 @@ import sqlite3
 import uuid
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import Any
 
-from upwork_app.db.schema import initialize_schema
+from upwork_app.db.connection import connect_worker
 from upwork_app.domain.collector_record import CollectorRecord, validate_payload
 from upwork_app.integrations.upwork.credentials import redact
 from upwork_app.integrations.upwork.errors import CollectorError
@@ -71,13 +70,7 @@ def _records_from_jobs(jobs: list[Job]) -> list[CollectorRecord]:
 
 
 def _connect_for_write(db_path: str) -> sqlite3.Connection:
-    path = Path(db_path)
-    if path.parent != Path(""):
-        path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(path)
-    connection.row_factory = sqlite3.Row
-    initialize_schema(connection)
-    return connection
+    return connect_worker(db_path)
 
 
 def _error_type(error: BaseException) -> str:
@@ -130,6 +123,9 @@ def collect_scheduled(
     sleep: Sleep | None = None,
     jitter: Jitter | None = None,
     run_id_factory: Callable[[], str] | None = None,
+    trigger: str = "scheduled",
+    live: bool = True,
+    fixture: str | None = None,
 ) -> ScheduledCollectionResult:
     """Collect and ingest live queries sequentially with operational run history.
 
@@ -149,7 +145,7 @@ def collect_scheduled(
             connection,
             run_id=run_id,
             started_at=started_at,
-            trigger="scheduled",
+            trigger=trigger,
             query_count=len(resolved_queries),
         )
         connection.commit()
@@ -161,7 +157,8 @@ def collect_scheduled(
 
                 def collect_operation(query: QueryValue = query) -> list[Job]:
                     return collect_jobs(
-                        live=True,
+                        fixture=fixture,
+                        live=live,
                         query=query,
                         max_pages=max_pages,
                         page_size=page_size,

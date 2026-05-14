@@ -12,6 +12,7 @@ license = { text = "MIT" }
 authors = [{ name = "upwork-app maintainers" }]
 dependencies = [
     "curl-cffi>=0.15.0",
+    "mcp>=1.23.0",
 ]
 
 [project.scripts]
@@ -22,6 +23,8 @@ upwork-app-analytics = "upwork_app.cli.analytics:main"
 upwork-app-collect-scheduled = "upwork_app.cli.collect_scheduled:main"
 upwork-app-scheduler-status = "upwork_app.cli.scheduler_status:main"
 upwork-app-scheduler = "upwork_app.cli.scheduler:main"
+upwork-app-worker = "upwork_app.cli.worker:main"
+upwork-app-mcp-server = "upwork_app.cli.mcp_server:main"
 
 [project.optional-dependencies]
 dev = [

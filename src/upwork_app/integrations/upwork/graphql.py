@@ -42,7 +42,11 @@ query VisitorJobSearch($requestVariables: VisitorJobSearchV1Request!) {
 def build_request_payload(
     query: str | None = None, *, offset: int = 0, count: int = 50
 ) -> dict[str, Any]:
-    request: dict[str, Any] = {"paging": {"offset": offset, "count": count}}
+    request: dict[str, Any] = {
+        "sort": "recency",
+        "highlight": True,
+        "paging": {"offset": offset, "count": count},
+    }
     if query:
         request["userQuery"] = query
     return {"query": QUERY_DOCUMENT, "variables": {"requestVariables": request}}

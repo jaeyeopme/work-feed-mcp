@@ -20,10 +20,6 @@ from upwork_app.integrations.upwork.errors import (
 )
 from upwork_app.integrations.upwork.graphql import ENDPOINT, build_request_payload
 
-USER_AGENT = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-)
 HEADERS = {
     "Accept": "*/*",
     "Accept-Language": "en-US,en;q=0.9",
@@ -31,7 +27,6 @@ HEADERS = {
     "Referer": "https://www.upwork.com/nx/search/jobs/",
     "X-Upwork-Accept-Language": "en-US",
     "Content-Type": "application/json",
-    "User-Agent": USER_AGENT,
 }
 
 
@@ -69,10 +64,6 @@ def _proxy_mapping(proxy_url: str | None) -> dict[str, str] | None:
 def _bootstrap_visitor_token(*, proxies: dict[str, str] | None) -> str | None:
     response = curl_requests.get(
         "https://www.upwork.com/",
-        headers={
-            **HEADERS,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
         impersonate="chrome",
         proxies=cast(Any, proxies),
         timeout=30,

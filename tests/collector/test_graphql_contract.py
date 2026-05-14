@@ -15,7 +15,12 @@ def test_graphql_request_variables_contract() -> None:
     payload = build_request_payload("python", offset=10, count=5)
 
     assert payload["variables"] == {
-        "requestVariables": {"paging": {"offset": 10, "count": 5}, "userQuery": "python"}
+        "requestVariables": {
+            "sort": "recency",
+            "highlight": True,
+            "paging": {"offset": 10, "count": 5},
+            "userQuery": "python",
+        }
     }
     assert "budget" not in str(payload["variables"]).lower()
 
@@ -33,7 +38,13 @@ def test_graphql_query_includes_legacy_live_fields() -> None:
 def test_graphql_request_omits_empty_query() -> None:
     payload = build_request_payload(None, offset=0, count=10)
 
-    assert payload["variables"] == {"requestVariables": {"paging": {"offset": 0, "count": 10}}}
+    assert payload["variables"] == {
+        "requestVariables": {
+            "sort": "recency",
+            "highlight": True,
+            "paging": {"offset": 0, "count": 10},
+        }
+    }
 
 
 def test_extractor_reads_expected_results_path() -> None:

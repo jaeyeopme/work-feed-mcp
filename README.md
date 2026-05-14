@@ -109,7 +109,7 @@ uv run --extra dev upwork-app-collect --live --query "python" --max-pages 1 --pa
 
 - live 수집은 실제 Upwork에 접속합니다.
 - live 수집은 명시적 opt-in 상황에서만 실행하세요.
-- credential/session/proxy/token은 로그에 노출되지 않아야 합니다.
+- proxy/token은 로그에 노출되지 않아야 합니다.
 - 이 저장소는 proxy 획득, access-control 우회, scraper snapshot 저장을 안내하지 않습니다.
 
 ### `upwork-app-ingest`
@@ -230,7 +230,7 @@ UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
 
 `--queries`는 comma-separated 값입니다. comma로 나누고, 앞뒤 공백을 제거하고, 빈 항목은 버립니다. query 안에 공백이 있으면 전체 값을 quote하세요.
 
-성공 시 query별 `seen_count`, `inserted_count`, `skipped_count`, `new_jobs`를 포함한 JSON summary를 출력합니다. 중간 query가 실패하면 fail-fast로 non-zero exit 하며, 이미 완료된 query ingest는 유지됩니다.
+성공 시 query별 `seen_count`, `inserted_count`, `skipped_count`만 포함한 count-only JSON summary를 출력합니다. 중간 query가 실패하면 fail-fast로 non-zero exit 하며, 이미 완료된 query ingest는 유지됩니다.
 
 ## 서버 설치 / 주기 실행
 
@@ -300,7 +300,7 @@ cli                  stable command surface for OpenClaw and local batch usage
 중요한 경계:
 
 - Upwork integration은 normalized job record만 생산합니다.
-- credential/session/proxy/token은 diagnostics에서 redaction되어야 합니다.
+- proxy/token은 diagnostics에서 redaction되어야 합니다.
 - SQLite persistence는 ingestion/db/repository 계층 책임입니다.
 - SQLite에는 중복 없는 `jobs`와 `job_skills`만 저장합니다. 수집 run 이력, raw payload archive, observation log는 저장하지 않습니다.
 - analytics는 SQLite read-only입니다.
@@ -329,7 +329,7 @@ make live-smoke QUERY="python"
 make collect-live-once QUERY="python" APP_DB=./data/upwork.sqlite
 ```
 
-Live 결과는 Upwork/session/network 상태에 따라 달라질 수 있으므로 fixture/local contract 검증과 분리해서 보고하세요. 기본 품질 게이트는 `make quality`, `make smoke`, `make e2e-smoke`입니다.
+Live 결과는 Upwork/network 상태에 따라 달라질 수 있으므로 fixture/local contract 검증과 분리해서 보고하세요. 기본 품질 게이트는 `make quality`, `make smoke`, `make e2e-smoke`입니다.
 
 ## LLM/agent quick context
 

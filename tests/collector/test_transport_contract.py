@@ -8,23 +8,9 @@ from upwork_app.integrations.upwork.errors import (
     UpstreamSchemaOrTemporaryError,
 )
 from upwork_app.integrations.upwork.transport import (
-    _extract_visitor_token_from_cookie_header,
     _read_response_text,
     classify_http_status,
 )
-
-
-def test_extracts_visitor_token_from_supplied_cookie_header() -> None:
-    assert (
-        _extract_visitor_token_from_cookie_header(
-            "other=value; visitor_gql_token=visitor-token-value; x=y"
-        )
-        == "visitor-token-value"
-    )
-
-
-def test_missing_visitor_token_cookie_header_returns_none() -> None:
-    assert _extract_visitor_token_from_cookie_header("other=value") is None
 
 
 def test_success_status_does_not_scan_job_text_for_rate_limit_words() -> None:

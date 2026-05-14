@@ -40,15 +40,15 @@ touch /home/ubuntu/upwork-data/config/upwork.env
 chmod 600 /home/ubuntu/upwork-data/config/upwork.env
 ```
 
-Example keys only; do not commit this file:
+This file may be empty for the default visitor-token bootstrap path. The service unit already sets `UPWORK_COLLECTOR_LIVE=1`.
+
+Optional keys only; do not commit this file:
 
 ```env
-UPWORK_COLLECTOR_COOKIE_FILE=/home/ubuntu/upwork-data/config/upwork.cookie
-UPWORK_COLLECTOR_SESSION_FILE=/home/ubuntu/upwork-data/config/upwork.session
 # UPWORK_COLLECTOR_PROXY_URL is secret material if used.
 ```
 
-Cookie/session variables should point to files outside git. Proxy acquisition or bypass instructions are intentionally out of scope.
+Do not add proxy acquisition or bypass instructions here.
 
 ## 3. Clone and run
 

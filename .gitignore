@@ -17,19 +17,10 @@ venv/
 .env.*
 !.env.example
 
-# Local live/session material - never commit
-*.cookie
-*.cookies
-*.session
-*.sessions
+# Local live/proxy material - never commit
 *.proxy
 *.secrets
-session*.txt
-cookie*.txt
-cookies*.txt
 proxy*.txt
-upwork-session*
-upwork-cookie*
 
 # Forbidden runtime/state outputs for this collector core
 data/

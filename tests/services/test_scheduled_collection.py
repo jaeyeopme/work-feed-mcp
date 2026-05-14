@@ -63,7 +63,7 @@ def test_collect_scheduled_collects_and_ingests_each_query(
     assert result.query_count == 2
     assert [item.query for item in result.results] == ["python", "scraping"]
     assert [item.inserted_count for item in result.results] == [1, 1]
-    assert result.results[0].new_jobs[0]["title"] == "Python scraper"
+    assert result.results[0].seen_count == 1
 
 
 def test_collect_scheduled_fails_fast_and_keeps_completed_ingest(

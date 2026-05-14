@@ -29,14 +29,12 @@ def test_collect_scheduled_cli_outputs_summary(
                     seen_count=50,
                     inserted_count=10,
                     skipped_count=40,
-                    new_jobs=(),
                 ),
                 ScheduledQueryResult(
                     query="scraping",
                     seen_count=50,
                     inserted_count=8,
                     skipped_count=42,
-                    new_jobs=(),
                 ),
             ),
         )

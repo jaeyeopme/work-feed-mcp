@@ -46,6 +46,6 @@ macOS `launchd` and cron can still call the same one-shot CLI, but they are not 
 ## Safety notes
 
 - Live collection remains explicit opt-in through `UPWORK_COLLECTOR_LIVE=1`.
-- Credential/session/proxy/token material must stay outside git and logs.
+- Proxy/token material must stay outside git and logs.
 - Do not document proxy acquisition or access-control bypass.
 - If rate-limit/block evidence appears, switch from 15 minutes to 30 minutes before increasing query count/pages.

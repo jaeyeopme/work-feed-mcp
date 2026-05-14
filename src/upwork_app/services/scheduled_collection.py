@@ -17,7 +17,6 @@ class ScheduledQueryResult:
     seen_count: int
     inserted_count: int
     skipped_count: int
-    new_jobs: tuple[dict[str, Any], ...]
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -79,7 +78,6 @@ def collect_scheduled(
                 seen_count=ingest_result.seen_count,
                 inserted_count=ingest_result.inserted_count,
                 skipped_count=ingest_result.skipped_count,
-                new_jobs=ingest_result.new_jobs,
             )
         )
     return ScheduledCollectionResult(

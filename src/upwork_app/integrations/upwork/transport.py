@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import os
 import random
-import re
 import time
 from typing import Any, cast
 
@@ -25,8 +24,6 @@ USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 )
-_VISITOR_TOKEN_PATTERN = re.compile(r"(?i)(?:^|[;\s])visitor_gql_token=([^;\s]+)")
-
 HEADERS = {
     "Accept": "*/*",
     "Accept-Language": "en-US,en;q=0.9",
@@ -42,13 +39,6 @@ def require_live_enabled(env: dict[str, str] | None = None) -> None:
     source = os.environ if env is None else env
     if source.get("UPWORK_COLLECTOR_LIVE") != "1":
         raise CredentialRequiredError("live collection requires UPWORK_COLLECTOR_LIVE=1")
-
-
-def _extract_visitor_token_from_cookie_header(cookie_header: str = "") -> str | None:
-    match = _VISITOR_TOKEN_PATTERN.search(cookie_header)
-    if match:
-        return match.group(1)
-    return None
 
 
 def classify_http_status(status: int, body: str = "") -> None:
@@ -76,7 +66,7 @@ def _proxy_mapping(proxy_url: str | None) -> dict[str, str] | None:
     return {"http": proxy_url, "https": proxy_url}
 
 
-def _bootstrap_visitor_token(*, cookie_header: str, proxies: dict[str, str] | None) -> str | None:
+def _bootstrap_visitor_token(*, proxies: dict[str, str] | None) -> str | None:
     response = curl_requests.get(
         "https://www.upwork.com/",
         headers={
@@ -92,7 +82,7 @@ def _bootstrap_visitor_token(*, cookie_header: str, proxies: dict[str, str] | No
     token = response.cookies.get("visitor_gql_token")
     if isinstance(token, str) and token:
         return token
-    return _extract_visitor_token_from_cookie_header(cookie_header)
+    return None
 
 
 def _decode_graphql_response(response: curl_requests.Response) -> dict[str, Any]:
@@ -112,17 +102,11 @@ def collect_live(
 ) -> list[dict[str, Any]]:
     require_live_enabled()
     credentials = load_credential_references()
-    cookie_values = [
-        secret.value for secret in (credentials.cookie, credentials.session) if secret is not None
-    ]
-    cookie_header = "; ".join(cookie_values)
     proxies = _proxy_mapping(credentials.proxy_url.value if credentials.proxy_url else None)
     headers = dict(HEADERS)
-    if cookie_header:
-        headers["Cookie"] = cookie_header
 
     try:
-        visitor_token = _bootstrap_visitor_token(cookie_header=cookie_header, proxies=proxies)
+        visitor_token = _bootstrap_visitor_token(proxies=proxies)
         if not visitor_token:
             raise UpstreamSchemaOrTemporaryError("upstream visitor token bootstrap failed")
         headers["Authorization"] = f"Bearer {visitor_token}"

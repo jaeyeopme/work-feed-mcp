@@ -32,7 +32,7 @@ Default:
 repo: /home/ubuntu/upwork
 runtime: /home/ubuntu/upwork-data
 env file: /home/ubuntu/upwork-data/config/upwork.env
-cadence: every 15 minutes
+cadence: every 30 minutes
 max pages: 1
 page size: 50
 ```
@@ -48,4 +48,4 @@ macOS `launchd` and cron can still call the same one-shot CLI, but they are not 
 - Live collection remains explicit opt-in through `UPWORK_COLLECTOR_LIVE=1`.
 - Proxy/token material must stay outside git and logs.
 - Do not document proxy acquisition or access-control bypass.
-- If rate-limit/block evidence appears, switch from 15 minutes to 30 minutes before increasing query count/pages.
+- Keep the first pass at 30 minutes. If rate-limit/block evidence appears, reduce query count/pages before increasing cadence.

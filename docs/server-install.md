@@ -94,7 +94,8 @@ mkdir -p ~/.config/systemd/user
 cp /home/ubuntu/upwork/deploy/systemd/upwork-collector.service ~/.config/systemd/user/
 cp /home/ubuntu/upwork/deploy/systemd/upwork-collector.timer ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user enable --now upwork-collector.timer
+systemctl --user enable upwork-collector.timer
+systemctl --user start upwork-collector.timer
 ```
 
 Status and logs:
@@ -105,7 +106,7 @@ systemctl --user list-timers --all | grep upwork-collector
 journalctl --user -u upwork-collector.service --no-pager -n 100
 ```
 
-Default cadence is 15 minutes with `max-pages=1`. If rate-limit/block evidence appears, switch the timer to 30 minutes before increasing query count or pages.
+Default cadence is 30 minutes with `max-pages=1`. Back-to-back runs can trigger blocking, so verify journal evidence before increasing cadence, query count, or pages.
 
 ## 6. Remove scheduled collection
 

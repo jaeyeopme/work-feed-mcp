@@ -20,6 +20,7 @@ upwork-app-collect = "upwork_app.cli.collect:main"
 upwork-app-ingest = "upwork_app.cli.ingest:main"
 upwork-app-analytics = "upwork_app.cli.analytics:main"
 upwork-app-collect-scheduled = "upwork_app.cli.collect_scheduled:main"
+upwork-app-scheduler-status = "upwork_app.cli.scheduler_status:main"
 
 [project.optional-dependencies]
 dev = [

@@ -51,7 +51,8 @@ def test_ingest_cli_file_input_writes_jobs_and_skills_only(tmp_path: Path, capsy
     tables = {
         row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
     }
-    assert tables == {"jobs", "job_skills"}
+    assert {"jobs", "job_skills", "collector_runs", "collector_run_results"} <= tables
+    assert "raw_payloads" not in tables
 
 
 def test_repeated_ingest_skips_existing_jobs(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def]

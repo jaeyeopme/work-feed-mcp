@@ -32,12 +32,12 @@ Upwork fixture/live response
   -> optional one-shot scheduled collection CLI invoked by OS scheduler
 ```
 
-Ingestion is deduplicating and jobs-only: existing `job_id` values are skipped, newly inserted jobs are returned as downstream selection candidates, and no run/observation/raw-record history is persisted.
+Ingestion is deduplicating: existing `job_id` values are skipped and newly inserted jobs are returned as downstream selection candidates. Scheduled collection also stores operational summaries in `collector_runs` and `collector_run_results`; it does not store upstream raw payloads or per-job observation history.
 
 ## Boundaries
 
 - Keep Upwork collection dumb and secret-safe.
-- Do not store upstream GraphQL/private payloads, observation logs, or collection run history.
+- Do not store upstream GraphQL/private payloads, raw snapshots, or per-job observation logs. Scheduled run history is limited to redacted operational summaries.
 - Do not run live Upwork collection unless the user explicitly opts in.
 - Analytics reads SQLite only.
 - Scheduler/background execution is outside the app core; OS scheduler should call one-shot CLI commands such as `collect-scheduled`. The repo may provide CLI contracts/templates for OS scheduler setup, but not an app-native daemon.

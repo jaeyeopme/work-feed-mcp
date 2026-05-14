@@ -84,6 +84,32 @@ def _job_response(record: CollectorRecord) -> dict[str, Any]:
     }
 
 
+def ingest_records_into_connection(
+    connection: sqlite3.Connection,
+    records: list[CollectorRecord],
+    *,
+    db_path: str,
+    input_path: str | None,
+    source_query: str | None,
+) -> IngestResult:
+    """Insert collector records using an existing transaction owner."""
+
+    new_jobs: list[dict[str, Any]] = []
+    for record in records:
+        if ingestion_repository.insert_job_if_new(connection, record, utc_now()):
+            ingestion_repository.insert_skills(connection, record)
+            new_jobs.append(_job_response(record))
+    return IngestResult(
+        seen_count=len(records),
+        inserted_count=len(new_jobs),
+        skipped_count=len(records) - len(new_jobs),
+        new_jobs=tuple(new_jobs),
+        db_path=db_path,
+        input_path=input_path,
+        source_query=source_query,
+    )
+
+
 def ingest_records(
     records: list[CollectorRecord],
     *,
@@ -95,28 +121,22 @@ def ingest_records(
     if path.parent != Path(""):
         path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(path)
-    new_jobs: list[dict[str, Any]] = []
     try:
         initialize_schema(connection)
-        for record in records:
-            if ingestion_repository.insert_job_if_new(connection, record, utc_now()):
-                ingestion_repository.insert_skills(connection, record)
-                new_jobs.append(_job_response(record))
+        result = ingest_records_into_connection(
+            connection,
+            records,
+            db_path=str(path),
+            input_path=input_path,
+            source_query=source_query,
+        )
         connection.commit()
+        return result
     except Exception:
         connection.rollback()
         raise
     finally:
         connection.close()
-    return IngestResult(
-        seen_count=len(records),
-        inserted_count=len(new_jobs),
-        skipped_count=len(records) - len(new_jobs),
-        new_jobs=tuple(new_jobs),
-        db_path=str(path),
-        input_path=input_path,
-        source_query=source_query,
-    )
 
 
 def ingest_jsonl(*, db_path: str, input_path: str, source_query: str | None) -> IngestResult:

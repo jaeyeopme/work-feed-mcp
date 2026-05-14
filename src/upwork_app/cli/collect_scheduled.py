@@ -37,7 +37,7 @@ def _queries(value: str) -> tuple[str, ...]:
 def build_parser() -> argparse.ArgumentParser:
     parser = ScheduledCollectionArgumentParser(prog="upwork-app collect-scheduled")
     parser.add_argument("--db", required=True)
-    parser.add_argument("--queries", required=True, type=_queries)
+    parser.add_argument("--queries", type=_queries)
     add_live_paging_arguments(parser)
     return parser
 

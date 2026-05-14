@@ -63,21 +63,26 @@ uv run upwork-app --help
 
 If the server uses HTTPS GitHub auth, ensure `git remote -v` does not print credentials.
 
-## 4. Scheduled multi-query collection
+## 4. Scheduled default collection
 
-The one-shot command is:
+The default server one-shot command is an unfiltered/latest scan of up to 250 jobs:
 
 ```bash
 UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
   --db /home/ubuntu/upwork-data/upwork.db \
-  --queries "python,scraping" \
   --max-pages 5 \
   --page-size 50
 ```
 
-`--queries` is comma-separated: split on commas, trim whitespace, and drop empty entries. Quote the whole value when a query contains spaces.
+Use `--queries "python,scraping"` only for manual or advanced filtered schedules. `--queries` is comma-separated: split on commas, trim whitespace, and drop empty entries. Quote the whole value when a query contains spaces.
 
-The command is fail-fast: if a later query fails, already completed query ingests remain committed and the process exits non-zero with redacted diagnostics.
+The command records run/query summaries in SQLite. If a later explicit query fails, already completed query ingests and run history remain committed and the process exits non-zero with redacted diagnostics.
+
+Agent-readable status:
+
+```bash
+uv run upwork-app scheduler-status --db /home/ubuntu/upwork-data/upwork.db --limit 5
+```
 
 ## 5. systemd user timer
 
@@ -87,7 +92,7 @@ User linger is required and already verified on the target server:
 loginctl show-user ubuntu -p Linger
 ```
 
-Install unit files:
+Install or update unit files. Updating files in the repo does not mutate an already installed user unit; copy and reload explicitly:
 
 ```bash
 mkdir -p ~/.config/systemd/user
@@ -95,7 +100,7 @@ cp /home/ubuntu/upwork/deploy/systemd/upwork-collector.service ~/.config/systemd
 cp /home/ubuntu/upwork/deploy/systemd/upwork-collector.timer ~/.config/systemd/user/
 systemctl --user daemon-reload
 systemctl --user enable upwork-collector.timer
-systemctl --user start upwork-collector.timer
+systemctl --user restart upwork-collector.timer
 ```
 
 Status and logs:
@@ -106,7 +111,30 @@ systemctl --user list-timers --all | grep upwork-collector
 journalctl --user -u upwork-collector.service --no-pager -n 100
 ```
 
-Default cadence is 60 minutes with `max-pages=5`. Back-to-back runs can trigger blocking, so verify journal evidence before increasing cadence, query count, or pages.
+Default cadence is 60 minutes with unfiltered/latest mode and `max-pages=5`. Back-to-back runs can trigger blocking, so verify scheduler-status and journal evidence before increasing cadence, explicit query count, or pages.
+
+
+## GitHub Actions deployment
+
+CI is non-live and runs on push/pull request. Server deployment is a manual GitHub Actions workflow so production changes stay explicit and do not run live collection during CI.
+
+Required repository secrets:
+
+```text
+UPWORK_SERVER_HOST=100.82.127.29
+UPWORK_SERVER_USER=ubuntu
+UPWORK_SERVER_SSH_KEY=<private key with access to the server>
+```
+
+Manual deploy workflow:
+
+```text
+Actions -> deploy-server -> Run workflow
+ref: main
+restart_timer: true
+```
+
+The workflow SSHes to the server, fast-forwards `/home/ubuntu/upwork`, verifies `uv run upwork-app --help`, copies `deploy/systemd/upwork-collector.{service,timer}`, reloads the user systemd manager, enables/restarts only the timer, and prints `scheduler-status` if `/home/ubuntu/upwork-data/upwork.db` already exists. It does not run `make live-smoke` or force a live collection job.
 
 ## 6. Remove scheduled collection
 

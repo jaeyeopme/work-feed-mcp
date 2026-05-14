@@ -49,7 +49,7 @@ The jobs store adds these DB-managed fields:
 - `first_seen_at`
 - `created_at`
 
-The app does not persist per-job observation logs, raw normalized payload archives, or collection/run history.
+The app does not persist per-job observation logs or raw normalized payload archives. Scheduled collection may persist redacted operational run summaries separately from this JSONL contract.
 
 ## Client fields
 

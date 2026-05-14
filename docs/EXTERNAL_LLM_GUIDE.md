@@ -26,7 +26,7 @@ Product intent:
 
 Hard boundaries:
 - Keep Upwork collection dumb and secret-safe.
-- Store only deduplicated jobs and job skills, not upstream GraphQL/private payloads, run history, or observation logs.
+- Store only deduplicated jobs/job skills plus redacted scheduled-run summaries; do not store upstream GraphQL/private payloads, raw snapshots, or per-job observation logs.
 - SQLite persistence belongs in ingestion/db/repository layers.
 - Analytics reads SQLite only.
 - Client analytics must not infer missing client fields from title/description. If client columns are absent, return unknown/null.
@@ -73,15 +73,18 @@ One-shot live collect + ingest helper:
 make collect-live-once QUERY="python" APP_DB=./data/upwork.sqlite
 ```
 
-Scheduled multi-query one-shot CLI for OS schedulers:
+Scheduled one-shot CLI for OS schedulers. Default server mode is unfiltered/latest, up to 250 jobs:
 
 ```bash
 UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
   --db ./data/upwork.sqlite \
-  --queries "python,scraping" \
-  --max-pages 1 \
+  --max-pages 5 \
   --page-size 50
+
+uv run upwork-app scheduler-status --db ./data/upwork.sqlite --limit 5
 ```
+
+Use `--queries "python,scraping"` only for manual or advanced filtered schedules.
 
 ## Verification commands
 
@@ -110,7 +113,7 @@ Default live smoke asks Upwork for 50 jobs in one visitor GraphQL page, matching
 
 - “The project auto-applies to jobs.” Wrong. Auto-apply/message generation is out of scope.
 - “The project ranks jobs in backend code.” Wrong. Ranking belongs in OpenClaw skills unless explicitly promoted later.
-- “The project stores every collection run or observation.” Wrong. It stores only unique jobs and skills.
+- “The project stores raw collection payloads or per-job observations.” Wrong. It stores unique jobs/skills plus redacted scheduled-run summaries only.
 - “Analytics can infer client spend/country from text.” Wrong. Missing client fields become unknown/null.
 - “Fixture tests prove live Upwork works.” Wrong. Fixture/local tests prove contracts only; live smoke is separate opt-in evidence.
 - “New code should go under `packages/*`.” Wrong. New data-engine code should go under `src/upwork_app`.

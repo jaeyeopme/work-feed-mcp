@@ -1,0 +1,95 @@
+name: deploy-server
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to deploy"
+        required: false
+        default: "main"
+      restart_timer:
+        description: "Restart user timer after unit sync"
+        required: true
+        type: boolean
+        default: true
+
+concurrency:
+  group: upwork-server-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout selected ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.UPWORK_SERVER_SSH_KEY }}
+          SSH_HOST: ${{ secrets.UPWORK_SERVER_HOST }}
+          SSH_USER: ${{ secrets.UPWORK_SERVER_USER }}
+        run: |
+          test -n "$SSH_PRIVATE_KEY"
+          test -n "$SSH_HOST"
+          test -n "$SSH_USER"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/upwork_server
+          chmod 600 ~/.ssh/upwork_server
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host upwork-server
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/upwork_server
+            IdentitiesOnly yes
+            BatchMode yes
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Deploy repo and user units
+        env:
+          DEPLOY_REF: ${{ inputs.ref }}
+          RESTART_TIMER: ${{ inputs.restart_timer }}
+        run: |
+          ssh upwork-server bash -s -- "$DEPLOY_REF" "$RESTART_TIMER" <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_REF="$1"
+          RESTART_TIMER="$2"
+          repo=/home/ubuntu/upwork
+          data=/home/ubuntu/upwork-data
+          mkdir -p "$data/config" "$data/logs" ~/.config/systemd/user
+          chmod 700 "$data" "$data/config"
+          touch "$data/config/upwork.env"
+          chmod 600 "$data/config/upwork.env"
+
+          if [ ! -d "$repo/.git" ]; then
+            echo "missing repo checkout at $repo" >&2
+            exit 1
+          fi
+
+          cd "$repo"
+          git fetch --prune origin
+          git checkout "$DEPLOY_REF"
+          git pull --ff-only origin "$DEPLOY_REF"
+          uv run upwork-app --help >/dev/null
+
+          cp deploy/systemd/upwork-collector.service ~/.config/systemd/user/
+          cp deploy/systemd/upwork-collector.timer ~/.config/systemd/user/
+          systemctl --user daemon-reload
+          systemctl --user enable upwork-collector.timer
+          if [ "$RESTART_TIMER" = "true" ]; then
+            systemctl --user restart upwork-collector.timer
+          fi
+          systemctl --user status upwork-collector.timer --no-pager
+          REMOTE
+
+      - name: Read scheduler status if DB exists
+        run: |
+          ssh upwork-server 'if [ -f /home/ubuntu/upwork-data/upwork.db ]; then cd /home/ubuntu/upwork && uv run upwork-app scheduler-status --db /home/ubuntu/upwork-data/upwork.db --limit 5; else echo "upwork.db not found yet; deploy completed without live collection"; fi'

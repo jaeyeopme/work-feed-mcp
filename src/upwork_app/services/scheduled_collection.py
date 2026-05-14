@@ -2,21 +2,34 @@
 
 from __future__ import annotations
 
+import sqlite3
+import uuid
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any
 
+from upwork_app.db.schema import initialize_schema
 from upwork_app.domain.collector_record import CollectorRecord, validate_payload
+from upwork_app.integrations.upwork.credentials import redact
+from upwork_app.integrations.upwork.errors import CollectorError
 from upwork_app.integrations.upwork.models import Job
+from upwork_app.repositories import run_history
+from upwork_app.repositories.run_history import RunTotals
 from upwork_app.services.collector import collect_jobs
-from upwork_app.services.ingestion import ingest_records
+from upwork_app.services.ingestion import ingest_records_into_connection, utc_now
+from upwork_app.services.retry import Jitter, RetryExhausted, Sleep, collect_with_retry
+
+QueryValue = str | None
 
 
 @dataclass(frozen=True, slots=True)
 class ScheduledQueryResult:
-    query: str
+    query: str | None
     seen_count: int
     inserted_count: int
     skipped_count: int
+    attempts: int = 1
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -27,11 +40,13 @@ class ScheduledCollectionResult:
     db_path: str
     query_count: int
     results: tuple[ScheduledQueryResult, ...]
+    run_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "db_path": self.db_path,
             "query_count": self.query_count,
+            "run_id": self.run_id,
             "results": [result.to_dict() for result in self.results],
         }
 
@@ -45,43 +60,215 @@ def parse_queries(value: str) -> tuple[str, ...]:
     return queries
 
 
+def default_queries(queries: tuple[str, ...] | None) -> tuple[QueryValue, ...]:
+    if queries is None:
+        return (None,)
+    return queries
+
+
 def _records_from_jobs(jobs: list[Job]) -> list[CollectorRecord]:
     return [validate_payload(job.to_dict()) for job in jobs]
+
+
+def _connect_for_write(db_path: str) -> sqlite3.Connection:
+    path = Path(db_path)
+    if path.parent != Path(""):
+        path.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(path)
+    connection.row_factory = sqlite3.Row
+    initialize_schema(connection)
+    return connection
+
+
+def _error_type(error: BaseException) -> str:
+    return type(error).__name__
+
+
+def _record_failed_query(
+    connection: sqlite3.Connection,
+    *,
+    run_id: str,
+    query: QueryValue,
+    attempts: int,
+    totals: RunTotals,
+    error: BaseException,
+    started_at: str,
+    finished_at: str,
+) -> None:
+    redacted = redact(error)
+    error_type = _error_type(error)
+    run_history.insert_run_result(
+        connection,
+        run_id=run_id,
+        query=query,
+        status="failed",
+        attempts=attempts,
+        seen_count=0,
+        inserted_count=0,
+        skipped_count=0,
+        error_type=error_type,
+        redacted_error=redacted,
+        started_at=started_at,
+        finished_at=finished_at,
+    )
+    run_history.finish_run_failure(
+        connection,
+        run_id=run_id,
+        finished_at=finished_at,
+        totals=totals,
+        error_type=error_type,
+        redacted_error=redacted,
+    )
 
 
 def collect_scheduled(
     *,
     db_path: str,
-    queries: tuple[str, ...],
+    queries: tuple[str, ...] | None = None,
     max_pages: int = 1,
     page_size: int = 50,
+    sleep: Sleep | None = None,
+    jitter: Jitter | None = None,
+    run_id_factory: Callable[[], str] | None = None,
 ) -> ScheduledCollectionResult:
-    """Collect and ingest multiple live queries sequentially.
+    """Collect and ingest live queries sequentially with operational run history.
 
-    This is intentionally one-shot: systemd/cron owns recurrence. The function
-    fails fast on the first query error; previously completed query ingests stay
-    committed by the ingestion layer.
+    This is intentionally one-shot: systemd/cron owns recurrence. Completed query
+    ingests and result rows remain committed if a later query fails.
     """
 
+    resolved_queries = default_queries(queries)
+    run_id = (run_id_factory or (lambda: uuid.uuid4().hex))()
+    started_at = utc_now()
     results: list[ScheduledQueryResult] = []
-    for query in queries:
-        jobs = collect_jobs(live=True, query=query, max_pages=max_pages, page_size=page_size)
-        ingest_result = ingest_records(
-            _records_from_jobs(jobs),
+    totals = RunTotals()
+
+    connection = _connect_for_write(db_path)
+    try:
+        run_history.create_run(
+            connection,
+            run_id=run_id,
+            started_at=started_at,
+            trigger="scheduled",
+            query_count=len(resolved_queries),
+        )
+        connection.commit()
+
+        for query in resolved_queries:
+            query_started_at = utc_now()
+            attempts = 1
+            try:
+
+                def collect_operation(query: QueryValue = query) -> list[Job]:
+                    return collect_jobs(
+                        live=True,
+                        query=query,
+                        max_pages=max_pages,
+                        page_size=page_size,
+                    )
+
+                retry_kwargs: dict[str, Any] = {}
+                if sleep is not None:
+                    retry_kwargs["sleep"] = sleep
+                if jitter is not None:
+                    retry_kwargs["jitter"] = jitter
+                jobs, attempts = collect_with_retry(collect_operation, **retry_kwargs)
+                ingest_result = ingest_records_into_connection(
+                    connection,
+                    _records_from_jobs(jobs),
+                    db_path=db_path,
+                    input_path=None,
+                    source_query=query,
+                )
+                query_finished_at = utc_now()
+                run_history.insert_run_result(
+                    connection,
+                    run_id=run_id,
+                    query=query,
+                    status="success",
+                    attempts=attempts,
+                    seen_count=ingest_result.seen_count,
+                    inserted_count=ingest_result.inserted_count,
+                    skipped_count=ingest_result.skipped_count,
+                    error_type=None,
+                    redacted_error=None,
+                    started_at=query_started_at,
+                    finished_at=query_finished_at,
+                )
+                totals = totals.add(
+                    seen=ingest_result.seen_count,
+                    inserted=ingest_result.inserted_count,
+                    skipped=ingest_result.skipped_count,
+                )
+                results.append(
+                    ScheduledQueryResult(
+                        query=query,
+                        seen_count=ingest_result.seen_count,
+                        inserted_count=ingest_result.inserted_count,
+                        skipped_count=ingest_result.skipped_count,
+                        attempts=attempts,
+                    )
+                )
+                connection.commit()
+            except RetryExhausted as exc:
+                query_finished_at = utc_now()
+                _record_failed_query(
+                    connection,
+                    run_id=run_id,
+                    query=query,
+                    attempts=exc.attempts,
+                    totals=totals,
+                    error=exc.error,
+                    started_at=query_started_at,
+                    finished_at=query_finished_at,
+                )
+                connection.commit()
+                raise exc.error from exc
+            except CollectorError as exc:
+                query_finished_at = utc_now()
+                _record_failed_query(
+                    connection,
+                    run_id=run_id,
+                    query=query,
+                    attempts=1,
+                    totals=totals,
+                    error=exc,
+                    started_at=query_started_at,
+                    finished_at=query_finished_at,
+                )
+                connection.commit()
+                raise
+            except Exception as exc:
+                query_finished_at = utc_now()
+                _record_failed_query(
+                    connection,
+                    run_id=run_id,
+                    query=query,
+                    attempts=attempts,
+                    totals=totals,
+                    error=exc,
+                    started_at=query_started_at,
+                    finished_at=query_finished_at,
+                )
+                connection.commit()
+                raise
+
+        finished_at = utc_now()
+        run_history.finish_run_success(
+            connection,
+            run_id=run_id,
+            finished_at=finished_at,
+            totals=totals,
+        )
+        connection.commit()
+        return ScheduledCollectionResult(
             db_path=db_path,
-            input_path=None,
-            source_query=query,
+            query_count=len(resolved_queries),
+            results=tuple(results),
+            run_id=run_id,
         )
-        results.append(
-            ScheduledQueryResult(
-                query=query,
-                seen_count=ingest_result.seen_count,
-                inserted_count=ingest_result.inserted_count,
-                skipped_count=ingest_result.skipped_count,
-            )
-        )
-    return ScheduledCollectionResult(
-        db_path=db_path,
-        query_count=len(queries),
-        results=tuple(results),
-    )
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()

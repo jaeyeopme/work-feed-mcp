@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import tomllib
@@ -123,6 +124,11 @@ def test_architecture_d2_and_svg_are_present() -> None:
     assert "work-feed-worker" in text
     assert "work-feed-mcp" in text
     assert "SQLite" in text
+    match = re.search(r'viewBox="0 0 (?P<width>\d+) (?P<height>\d+)"', text)
+    assert match is not None
+    width = int(match.group("width"))
+    height = int(match.group("height"))
+    assert width / height < 1.6
 
 
 def test_architecture_svg_is_reproducible() -> None:

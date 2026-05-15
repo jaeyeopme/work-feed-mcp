@@ -1,6 +1,6 @@
-# Server install guide
+# Legacy native server install guide
 
-This guide installs the CLI-first Upwork data engine on the personal Tailscale Linux server.
+This guide installs the legacy native/systemd Upwork data engine on the personal Tailscale Linux server. It is retained for non-Docker deployments and historical server operations. The primary user/runtime path is Docker Compose + MCP from `README.md`.
 
 Target server facts:
 

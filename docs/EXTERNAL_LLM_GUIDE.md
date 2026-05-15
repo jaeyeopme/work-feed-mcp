@@ -2,12 +2,12 @@
 
 이 문서는 ChatGPT, Claude, Gemini 같은 외부 LLM에게 이 프로젝트를 설명하고 작업을 맡길 때 붙여넣기 좋은 가이드입니다.
 
-목표는 외부 LLM이 이 저장소를 **지원 자동화 도구**나 웹 백엔드로 오해하지 않고, 현재 구현된 **수집 → SQLite 저장 → 기본 분석 → CLI 제공** 흐름을 올바르게 사용/확장하도록 만드는 것입니다.
+목표는 외부 LLM이 이 저장소를 **지원 자동화 도구**나 웹 백엔드로 오해하지 않고, 현재 구현된 **Docker worker 수집 → SQLite 저장 → MCP 제공** 흐름을 올바르게 사용/확장하도록 만드는 것입니다.
 
 ## Copy-paste project brief
 
 ```text
-You are helping with a CLI-first Upwork job discovery data engine.
+You are helping with a Docker/MCP-first Upwork job discovery data engine.
 
 Current structure:
 - src/upwork_app/services: collect, ingest, and analytics use cases.
@@ -15,14 +15,16 @@ Current structure:
 - src/upwork_app/db: SQLite schema/connection helpers.
 - src/upwork_app/domain: collector-record validation/domain types.
 - src/upwork_app/integrations/upwork: Upwork transport, credentials, GraphQL, normalization.
-- src/upwork_app/cli: local batch CLIs for agent/OpenClaw usage.
+- src/upwork_app/runtime: Docker worker runtime for recurring collection.
+- src/upwork_app/mcp_server: Streamable HTTP MCP server for agent usage.
+- src/upwork_app/cli: local/debug and legacy native CLIs.
 - tests: CLI/service tests and fixtures.
 
 Product intent:
-- Stable, deduplicated job storage for later external LLM/OpenClaw selection.
-- OpenClaw acts as UI/orchestrator/recommendation layer.
+- Stable, deduplicated job storage for later external agent selection.
+- Agents consume MCP tools for job lookup, status reads, and collector control.
 - Not Upwork application automation.
-- No auto-apply, proposal/message generation, backend ranking, app-native scheduler daemon, or report delivery in the core data engine. OS schedulers may call one-shot CLI commands.
+- No auto-apply, proposal/message generation, backend ranking, or report delivery in the core data engine. Docker Compose is the primary runtime; OS schedulers are legacy/native compatibility paths only.
 
 Hard boundaries:
 - Keep Upwork collection dumb and secret-safe.
@@ -43,60 +45,43 @@ Use these docs as source of truth:
 The project can run this local flow:
 
 ```text
-fixture or live collector input
+Docker worker live collector input
   -> normalized job records/JSONL
   -> SQLite jobs/job_skills database
   -> basic JSON analytics queries
-  -> CLI responses for OpenClaw/agent usage
+  -> MCP tools for agent usage
 ```
 
-Local fixture E2E example:
+Primary Docker/MCP user flow:
 
 ```bash
-uv run --extra dev upwork-app-collect \
-  --fixture tests/fixtures/visitor_job_search_response.json \
-  > /tmp/upwork-e2e.jsonl
-
-uv run --extra dev upwork-app-ingest \
-  --db /tmp/upwork-e2e.sqlite \
-  --input /tmp/upwork-e2e.jsonl \
-  --query python
-
-uv run --extra dev upwork-app-analytics summary --db /tmp/upwork-e2e.sqlite
-uv run --extra dev upwork-app-analytics skills --db /tmp/upwork-e2e.sqlite
-uv run --extra dev upwork-app-analytics clients --db /tmp/upwork-e2e.sqlite
+cp .env.example .env
+docker compose up -d
+docker compose ps
 ```
 
-One-shot live collect + ingest helper:
+MCP endpoint for agents:
 
-```bash
-make collect-live-once QUERY="python" APP_DB=./data/upwork.sqlite
+```text
+http://127.0.0.1:8000/mcp
 ```
 
-Scheduled one-shot CLI for OS schedulers. Default server mode is unfiltered/latest, up to 250 jobs:
+Core MCP tools:
+
+```text
+jobs_recent, jobs_search, jobs_get, runs_recent, collector_status,
+config_get, config_update, collector_run_once, collector_pause,
+collector_resume, collector_command_status
+```
+
+Local/debug CLI commands still exist, but they are not the primary user onboarding path:
 
 ```bash
-UPWORK_COLLECTOR_LIVE=1 uv run upwork-app collect-scheduled \
-  --db ./data/upwork.sqlite \
-  --max-pages 5 \
-  --page-size 50
-
+uv run upwork-app --help
 uv run upwork-app scheduler-status --db ./data/upwork.sqlite --limit 5
 ```
 
-Use `--queries "python,scraping"` only for manual or advanced filtered schedules.
-
-
-Scheduler control wrapper for Linux server agents:
-
-```bash
-uv run upwork-app scheduler timer-status
-uv run upwork-app scheduler restart-timer
-uv run upwork-app scheduler run-now
-uv run upwork-app scheduler logs --lines 100
-```
-
-Use `scheduler-status` for DB run history and `scheduler` for OS timer/service control.
+Legacy native scheduler wrappers may remain for non-Docker deployments. Do not present them as the default Docker/MCP user path.
 
 ## Verification commands
 
@@ -119,12 +104,12 @@ Live smoke is explicit opt-in only:
 make live-smoke QUERY="python"
 ```
 
-Default live smoke asks Upwork for 50 jobs in one visitor GraphQL page, matching the observed legacy scraper request shape. Success means normalized JSONL output from this data engine, not scraper-owned SQLite rows or raw snapshots. Live evidence must be reported separately from fixture/local contract evidence. Do not add proxy acquisition, access-control bypass, or raw snapshot persistence guidance to this repo.
+Default live smoke asks Upwork for 50 jobs in one visitor GraphQL page. Success means normalized output from this data engine, not scraper-owned SQLite rows or raw snapshots. Live evidence must be reported separately from local contract evidence. Do not add proxy acquisition, access-control bypass, or raw snapshot persistence guidance to this repo.
 
 ## Common wrong assumptions to correct
 
 - “The project auto-applies to jobs.” Wrong. Auto-apply/message generation is out of scope.
-- “The project ranks jobs in backend code.” Wrong. Ranking belongs in OpenClaw skills unless explicitly promoted later.
+- “The project ranks jobs in backend code.” Wrong. Ranking belongs in the consuming agent layer unless explicitly promoted later.
 - “The project stores raw collection payloads or per-job observations.” Wrong. It stores unique jobs/skills plus redacted scheduled-run summaries only.
 - “Analytics can infer client spend/country from text.” Wrong. Missing client fields become unknown/null.
 - “Fixture tests prove live Upwork works.” Wrong. Fixture/local tests prove contracts only; live smoke is separate opt-in evidence.

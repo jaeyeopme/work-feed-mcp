@@ -102,3 +102,21 @@ def test_mcp_client_setup_contract() -> None:
     lowered = docs.lower()
     assert not any(term.lower() in lowered for term in forbidden)
     assert "not an auto-apply" in docs
+
+
+def test_agent_context_docs_track_docker_mcp_runtime() -> None:
+    docs = {
+        "AGENTS.md": Path("AGENTS.md").read_text(),
+        "docs/LLM_CONTEXT.md": Path("docs/LLM_CONTEXT.md").read_text(),
+        "docs/EXTERNAL_LLM_GUIDE.md": Path("docs/EXTERNAL_LLM_GUIDE.md").read_text(),
+    }
+
+    for path, text in docs.items():
+        assert "Docker/MCP-first" in text, path
+        assert "MCP" in text, path
+        assert "CLI-first" not in text, path
+        assert "app-native scheduler daemon" not in text, path
+
+    external_guide = docs["docs/EXTERNAL_LLM_GUIDE.md"]
+    assert "http://127.0.0.1:8000/mcp" in external_guide
+    assert "Legacy native scheduler wrappers" in external_guide

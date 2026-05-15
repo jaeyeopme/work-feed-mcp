@@ -2,7 +2,7 @@
 
 ## Project summary
 
-This repository is a CLI-first local data engine for the Upwork job discovery pipeline. OpenClaw or another agent layer is expected to act as the user interface/orchestrator.
+This repository is a Docker/MCP-first local data engine for the Upwork job discovery pipeline. Agents are expected to use the MCP tools as the user-facing interface for collected job lookup, collector status, and safe collector control.
 
 Primary app path:
 
@@ -12,7 +12,9 @@ src/upwork_app/repositories/        SQLite query/persistence helpers
 src/upwork_app/db/                  SQLite schema/connection helpers
 src/upwork_app/domain/              domain validation/data types
 src/upwork_app/integrations/upwork/ Upwork transport + normalization
-src/upwork_app/cli/                 local CLI entrypoints
+src/upwork_app/runtime/             Docker worker runtime
+src/upwork_app/mcp_server/          agent-facing Streamable HTTP MCP server
+src/upwork_app/cli/                 local/debug and legacy native CLI entrypoints
 tests/                              CLI/service tests and fixtures
 scripts/                            local operational helpers
 ```
@@ -22,14 +24,13 @@ There is no longer a `packages/*` compatibility layer. New code should go under 
 ## Core flow
 
 ```text
-Upwork fixture/live response
+Upwork visitor collection
   -> integrations/upwork.normalize
-  -> normalized job JSONL
-  -> services.ingestion / repositories.ingestion / db.schema
+  -> services.scheduled_collection / services.ingestion
   -> SQLite `jobs` and `job_skills` tables
   -> services.analytics / repositories.analytics
-  -> CLI JSON output for OpenClaw/agent consumption
-  -> optional one-shot scheduled collection CLI invoked by OS scheduler
+  -> mcp_server tools for agent consumption
+  -> optional local/debug CLI commands
 ```
 
 Ingestion is deduplicating: existing `job_id` values are skipped and newly inserted jobs are returned as downstream selection candidates. Scheduled collection also stores operational summaries in `collector_runs` and `collector_run_results`; it does not store upstream raw payloads or per-job observation history.
@@ -40,9 +41,9 @@ Ingestion is deduplicating: existing `job_id` values are skipped and newly inser
 - Do not store upstream GraphQL/private payloads, raw snapshots, or per-job observation logs. Scheduled run history is limited to redacted operational summaries.
 - Do not run live Upwork collection unless the user explicitly opts in.
 - Analytics reads SQLite only.
-- Public runtime is Docker Compose + MCP first: a `collector-worker` container owns recurring collection and an `upwork-collector-mcp` container exposes agent-facing MCP tools over the shared SQLite DB. Native/legacy scheduler execution remains outside the app core; OS schedulers may call one-shot CLI commands such as `collect-scheduled`.
+- Public runtime is Docker Compose + MCP first: a `collector-worker` container owns recurring collection and an `upwork-collector-mcp` container exposes agent-facing MCP tools over the shared SQLite DB. Native/legacy scheduler execution is a compatibility/debug path; do not present OS scheduler setup as the primary user path.
 - Ranking, reporting, notification, UI, REST-first API, internal LLM recommendation, proposal/message generation, and auto-apply are out of this repo's core data-engine scope.
-- Recommendation/ranking belongs in OpenClaw skills unless explicitly promoted later.
+- Recommendation/ranking belongs in the consuming agent layer unless explicitly promoted later.
 
 ## Verification
 

@@ -79,7 +79,7 @@ If you override Compose env, derive it as:
 http://127.0.0.1:${WORK_FEED_MCP_PORT:-8000}${WORK_FEED_MCP_PATH:-/mcp}
 ```
 
-See [MCP client setup](docs/mcp-client-setup.md) for a generic Streamable HTTP MCP client config.
+See [MCP client setup](docs/mcp-client-setup.md) for Claude Code and Codex configuration examples.
 
 ## Operate the runtime
 

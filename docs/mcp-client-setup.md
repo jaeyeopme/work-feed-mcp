@@ -23,24 +23,59 @@ make status
 
 Docker health checks prove container readiness and HTTP transport reachability for `/mcp`. They do **not** run a full MCP protocol initialize / tools/list / tool-call smoke. Run a protocol-level smoke from your MCP client if you need that evidence.
 
-## Generic client config shape
+## Claude Code
 
-Exact config syntax varies by MCP client and version. Use the client's Streamable HTTP MCP server configuration and point it at the endpoint above.
+Use Claude Code's HTTP MCP transport. Local scope is usually best for a personal Docker runtime because it stays private to your machine and current project.
 
-Generic shape:
+```bash
+claude mcp add --transport http work-feed http://127.0.0.1:8000/mcp
+claude mcp list
+```
+
+Inside Claude Code, run:
+
+```text
+/mcp
+```
+
+If you want a project-scoped config instead, Claude Code can write a `.mcp.json` file:
+
+```bash
+claude mcp add --transport http --scope project work-feed http://127.0.0.1:8000/mcp
+```
+
+The equivalent JSON shape is:
 
 ```json
 {
   "mcpServers": {
     "work-feed": {
-      "transport": "streamable-http",
+      "type": "http",
       "url": "http://127.0.0.1:8000/mcp"
     }
   }
 }
 ```
 
-If your client uses a different field name, keep the same semantic values: server name `work-feed`, Streamable HTTP transport, and URL `http://127.0.0.1:8000/mcp`.
+Claude Code also accepts `streamable-http` as a JSON alias for `http`, but the CLI examples above use `http` because that is the documented Claude Code command syntax.
+
+## Codex
+
+Use Codex's streamable HTTP MCP support. The CLI writes the shared Codex config used by the CLI and IDE extension.
+
+```bash
+codex mcp add work-feed --url http://127.0.0.1:8000/mcp
+codex mcp list
+```
+
+The equivalent `~/.codex/config.toml` entry is:
+
+```toml
+[mcp_servers.work-feed]
+url = "http://127.0.0.1:8000/mcp"
+```
+
+Codex infers streamable HTTP from `url`; do not add Claude-style `type` or `transport` fields to the TOML entry.
 
 ## What agents can do
 

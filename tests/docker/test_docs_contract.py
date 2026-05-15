@@ -41,6 +41,7 @@ def test_readme_normal_user_contract() -> None:
     assert "not affiliated with, endorsed by, or sponsored by Upwork Inc." in _readme()
     assert "http://127.0.0.1:8000/mcp" in section
     assert section.count("docs/mcp-client-setup.md") == 1
+    assert "Claude Code and Codex configuration examples" in section
     assert "docker compose up -d" not in section
     assert "uv run" not in section
     assert not KOREAN_RE.search(section)
@@ -122,7 +123,13 @@ def test_mcp_client_setup_contract() -> None:
     assert "http://127.0.0.1:8000/mcp" in docs
     assert "Streamable HTTP MCP" in docs
     assert "not a REST API" in docs
-    assert "Exact config syntax varies by MCP client and version" in docs
+    assert "## Claude Code" in docs
+    assert "claude mcp add --transport http work-feed http://127.0.0.1:8000/mcp" in docs
+    assert '"type": "http"' in docs
+    assert "## Codex" in docs
+    assert "codex mcp add work-feed --url http://127.0.0.1:8000/mcp" in docs
+    assert "[mcp_servers.work-feed]" in docs
+    assert "Codex infers streamable HTTP from `url`" in docs
     assert "README MCP tools list" in docs
     assert "Docker health checks" in docs
     assert "do **not** run a full MCP protocol" in docs

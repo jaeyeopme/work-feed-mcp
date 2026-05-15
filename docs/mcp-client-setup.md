@@ -25,7 +25,7 @@ Docker health checks prove container readiness and HTTP transport reachability f
 
 ## Generic client config shape
 
-exact config syntax varies by MCP client and version. Use the client's Streamable HTTP MCP server configuration and point it at the endpoint above.
+Exact config syntax varies by MCP client and version. Use the client's Streamable HTTP MCP server configuration and point it at the endpoint above.
 
 Generic shape:
 
@@ -44,14 +44,4 @@ If your client uses a different field name, keep the same semantic values: serve
 
 ## What agents can do
 
-Use the README Docker + MCP quickstart tool list as the source of truth for available tools. The MCP surface exposes collected job reads, run/status reads, and collector control queueing. It is not a REST API, not a recommendation engine, and not an auto-apply/proposal system.
-
-## Optional live smoke
-
-Default verification is fixture/local. Live collection is separate opt-in evidence:
-
-```bash
-UPWORK_COLLECTOR_LIVE=1 MAX_PAGES=1 PAGE_SIZE=50 make live-smoke
-```
-
-After a live run, an agent can check high-level results with `collector_status` and `jobs_recent`. Keep live results separate from non-live test results.
+Use the README User guide tool list as the source of truth for available tools. The MCP surface exposes collected job reads, run/status reads, and collector control queueing. It is not a REST API, not a recommendation engine, and not an auto-apply/proposal system.

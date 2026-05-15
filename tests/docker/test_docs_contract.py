@@ -49,6 +49,9 @@ def test_readme_normal_user_contract() -> None:
     assert "codex mcp add work-feed --url http://127.0.0.1:8000/mcp" in section
     assert "[mcp_servers.work-feed]" in section
     assert "Codex infers streamable HTTP from `url`" in section
+    assert "jobs_recent" in section
+    assert "limit: 5" in section
+    assert "recreate the runtime" in section
     assert "Docker health checks" in section
     assert "do **not** run a full MCP protocol" in section
     assert "docker compose up -d" not in section
@@ -65,10 +68,10 @@ def test_readme_normal_user_contract() -> None:
         "WORK_FEED_MCP_HOST",
         "WORK_FEED_MCP_PORT",
         "WORK_FEED_MCP_PATH",
-        "WORK_FEED_MCP_TRANSPORT",
         "WORK_FEED_DB",
     ]:
         assert variable in section
+    assert "WORK_FEED_MCP_TRANSPORT" not in section
 
     for tool in [
         "jobs_recent",

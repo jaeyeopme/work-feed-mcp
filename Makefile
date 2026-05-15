@@ -16,7 +16,7 @@ down:
 	docker compose down
 
 restart:
-	docker compose restart
+	docker compose up -d --force-recreate
 
 status:
 	docker compose ps

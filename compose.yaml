@@ -31,7 +31,7 @@ services:
       WORK_FEED_MCP_HOST: "${WORK_FEED_MCP_HOST:-0.0.0.0}"
       WORK_FEED_MCP_PORT: "${WORK_FEED_MCP_PORT:-8000}"
       WORK_FEED_MCP_PATH: "${WORK_FEED_MCP_PATH:-/mcp}"
-      WORK_FEED_MCP_TRANSPORT: "${WORK_FEED_MCP_TRANSPORT:-streamable-http}"
+      WORK_FEED_MCP_TRANSPORT: "streamable-http"
     ports:
       - "127.0.0.1:${WORK_FEED_MCP_PORT:-8000}:${WORK_FEED_MCP_PORT:-8000}"
     volumes:

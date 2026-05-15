@@ -57,9 +57,8 @@ Configuration lives in `.env`. The defaults are conservative and work without cr
 | `WORK_FEED_MCP_HOST` | `0.0.0.0` | Container bind host for the MCP server. |
 | `WORK_FEED_MCP_PORT` | `8000` | Host port for the local MCP endpoint. |
 | `WORK_FEED_MCP_PATH` | `/mcp` | HTTP path for Streamable HTTP MCP. |
-| `WORK_FEED_MCP_TRANSPORT` | `streamable-http` | MCP transport used by the container. |
 
-By default each run collects up to 250 jobs: `5 pages * 50 jobs`. After changing `.env`, restart the runtime:
+By default each run collects up to 250 jobs: `5 pages * 50 jobs`. After changing `.env`, recreate the runtime so Docker applies the new environment:
 
 ```bash
 make restart
@@ -136,6 +135,8 @@ url = "http://127.0.0.1:8000/mcp"
 ```
 
 Codex infers streamable HTTP from `url`; do not add Claude-style `type` or `transport` fields to the TOML entry.
+
+After connecting, ask your agent to call `jobs_recent` with `limit: 5` to confirm the MCP server responds. An empty result is okay on a fresh database.
 
 ## Operate the runtime
 

@@ -17,6 +17,8 @@ def test_compose_contract() -> None:
     )
     assert "127.0.0.1:${UPWORK_COLLECTOR_MCP_PORT:-8000}" in compose
     assert compose.count("upwork-data:/data") == 2
+    assert '"upwork-app", "health", "--role", "worker"' in compose
+    assert '"upwork-app", "health", "--role", "mcp"' in compose
 
 
 def test_compose_uses_env_overrides() -> None:

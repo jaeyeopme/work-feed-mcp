@@ -7,6 +7,7 @@ from upwork_app.cli import (
     analytics,
     collect,
     collect_scheduled,
+    health,
     ingest,
     mcp_server,
     scheduler,
@@ -22,6 +23,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     subcommands.add_parser("ingest")
     subcommands.add_parser("analytics")
     subcommands.add_parser("collect-scheduled")
+    subcommands.add_parser("health")
     subcommands.add_parser("scheduler-status")
     subcommands.add_parser("scheduler")
     subcommands.add_parser("worker")
@@ -35,6 +37,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return analytics.main(rest)
     if known.command == "collect-scheduled":
         return collect_scheduled.main(rest)
+    if known.command == "health":
+        return health.main(rest)
     if known.command == "scheduler-status":
         return scheduler_status.main(rest)
     if known.command == "scheduler":

@@ -32,6 +32,14 @@ Start the runtime:
 docker compose up -d
 ```
 
+Check container readiness:
+
+```bash
+docker compose ps
+docker compose logs -f collector-worker
+uv run --extra dev upwork-app health --db /tmp/upwork-worker-smoke.sqlite
+```
+
 The Docker runtime is live by default because starting compose is the explicit opt-in boundary. Defaults are intentionally conservative and match the validated server baseline:
 
 - interval: 60 minutes
@@ -82,6 +90,8 @@ If the MCP server starts before the worker initializes SQLite, read/control tool
 ```
 
 `reason` may be `db_missing` or `schema_missing`. An initialized DB with no rows is not an error; list tools return `{ "ok": true, "status": "empty", "rows": [] }`.
+
+Docker services also use `upwork-app health` as their healthcheck. The health command verifies the SQLite file, schema, and seeded `collector_config` without creating schema from read paths.
 
 For non-live/local smoke, run the worker with fixture mode instead of live mode:
 

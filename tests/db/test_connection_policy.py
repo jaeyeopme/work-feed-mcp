@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from upwork_app.db.connection import connect_control, connect_readonly, connect_worker
-from upwork_app.services.collector_control import NotReadyError
-from upwork_app.services.run_status import run_status
+from work_feed_mcp.db.connection import connect_control, connect_readonly, connect_worker
+from work_feed_mcp.services.collector_control import NotReadyError
+from work_feed_mcp.services.run_status import run_status
 
 
 def test_worker_connection_initializes_schema_and_pragmas(tmp_path: Path) -> None:
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     connection = connect_worker(str(db))
     try:
         journal_mode = str(connection.execute("PRAGMA journal_mode").fetchone()[0]).lower()

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from upwork_app.mcp_server.server import build_server, configure_streamable_http_settings
-from upwork_app.runtime.config import RuntimeSettings
+from work_feed_mcp.mcp_server.server import build_server, configure_streamable_http_settings
+from work_feed_mcp.runtime.config import RuntimeSettings
 
 
 def test_streamable_http_path_is_explicitly_configured() -> None:

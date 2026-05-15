@@ -7,18 +7,18 @@ This repository is a Docker/MCP-first local data engine for the Upwork job disco
 Primary app path:
 
 ```text
-src/upwork_app/services/            orchestration/use cases
-src/upwork_app/repositories/        SQLite query/persistence helpers
-src/upwork_app/db/                  SQLite schema/connection helpers
-src/upwork_app/domain/              domain validation/data types
-src/upwork_app/integrations/upwork/ Upwork transport + normalization
-src/upwork_app/runtime/             Docker worker runtime
-src/upwork_app/mcp_server/          agent-facing Streamable HTTP MCP server
-src/upwork_app/cli/                 local/debug CLI entrypoints
+src/work_feed_mcp/services/            orchestration/use cases
+src/work_feed_mcp/repositories/        SQLite query/persistence helpers
+src/work_feed_mcp/db/                  SQLite schema/connection helpers
+src/work_feed_mcp/domain/              domain validation/data types
+src/work_feed_mcp/integrations/upwork/ Upwork transport + normalization
+src/work_feed_mcp/runtime/             Docker worker runtime
+src/work_feed_mcp/mcp_server/          agent-facing Streamable HTTP MCP server
+src/work_feed_mcp/cli/                 local/debug CLI entrypoints
 tests/                              CLI/service tests and fixtures
 ```
 
-There is no longer a `packages/*` compatibility layer. New code should go under `src/upwork_app`.
+There is no longer a `packages/*` compatibility layer. New code should go under `src/work_feed_mcp`.
 
 ## Core flow
 
@@ -40,7 +40,7 @@ Ingestion is deduplicating: existing `job_id` values are skipped and newly inser
 - Do not store upstream GraphQL/private payloads, raw snapshots, or per-job observation logs. Scheduled run history is limited to redacted operational summaries.
 - Do not run live Upwork collection unless the user explicitly opts in.
 - Analytics reads SQLite only.
-- Public runtime is Docker Compose + MCP first: a `collector-worker` container owns recurring collection and an `upwork-collector-mcp` container exposes agent-facing MCP tools over the shared SQLite DB.
+- Public runtime is Docker Compose + MCP first: a `work-feed-worker` container owns recurring collection and an `work-feed-mcp` container exposes agent-facing MCP tools over the shared SQLite DB.
 - Ranking, reporting, notification, UI, REST-first API, internal LLM recommendation, proposal/message generation, and auto-apply are out of this repo's core data-engine scope.
 - Recommendation/ranking belongs in the consuming agent layer unless explicitly promoted later.
 

@@ -4,8 +4,8 @@ import json
 import sqlite3
 from pathlib import Path
 
-from upwork_app.cli.analytics import main
-from upwork_app.repositories.analytics import budgets, jobs, skills, summary
+from work_feed_mcp.cli.analytics import main
+from work_feed_mcp.repositories.analytics import budgets, jobs, skills, summary
 
 
 def _seed_db(path: Path) -> None:
@@ -77,7 +77,7 @@ def _seed_db(path: Path) -> None:
 
 
 def test_query_helpers_return_basic_analytics(tmp_path: Path) -> None:
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     _seed_db(db)
     connection = sqlite3.connect(db)
     connection.row_factory = sqlite3.Row
@@ -89,7 +89,7 @@ def test_query_helpers_return_basic_analytics(tmp_path: Path) -> None:
 
 
 def test_cli_outputs_json_and_reads_sqlite_only(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def]
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     _seed_db(db)
 
     assert main(["skills", "--db", str(db)]) == 0

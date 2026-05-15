@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from upwork_app.integrations.upwork.errors import (
+from work_feed_mcp.integrations.upwork.errors import (
     RateLimitedError,
     UpstreamBlockedError,
     UpstreamSchemaOrTemporaryError,
 )
-from upwork_app.integrations.upwork.transport import (
+from work_feed_mcp.integrations.upwork.transport import (
     _read_response_text,
     classify_http_status,
 )

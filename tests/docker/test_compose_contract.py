@@ -7,21 +7,18 @@ import subprocess
 
 def test_compose_contract() -> None:
     compose = pathlib.Path("compose.yaml").read_text()
-    assert "collector-worker:" in compose
-    assert "upwork-collector-mcp:" in compose
-    assert 'UPWORK_COLLECTOR_LIVE: "${UPWORK_COLLECTOR_LIVE:-1}"' in compose
-    assert 'UPWORK_COLLECTOR_MAX_PAGES: "${UPWORK_COLLECTOR_MAX_PAGES:-5}"' in compose
-    assert 'UPWORK_COLLECTOR_MCP_PATH: "${UPWORK_COLLECTOR_MCP_PATH:-/mcp}"' in compose
-    assert (
-        'UPWORK_COLLECTOR_MCP_TRANSPORT: "${UPWORK_COLLECTOR_MCP_TRANSPORT:-streamable-http}"'
-        in compose
-    )
-    assert "127.0.0.1:${UPWORK_COLLECTOR_MCP_PORT:-8000}" in compose
-    assert compose.count("upwork-data:/data") == 2
-    assert '"upwork-app", "health", "--role", "worker"' in compose
-    assert "upwork-app health --role mcp" in compose
+    assert "work-feed-worker:" in compose
+    assert "work-feed-mcp:" in compose
+    assert 'WORK_FEED_LIVE: "${WORK_FEED_LIVE:-1}"' in compose
+    assert 'WORK_FEED_MAX_PAGES: "${WORK_FEED_MAX_PAGES:-5}"' in compose
+    assert 'WORK_FEED_MCP_PATH: "${WORK_FEED_MCP_PATH:-/mcp}"' in compose
+    assert 'WORK_FEED_MCP_TRANSPORT: "${WORK_FEED_MCP_TRANSPORT:-streamable-http}"' in compose
+    assert "127.0.0.1:${WORK_FEED_MCP_PORT:-8000}" in compose
+    assert compose.count("work-feed-data:/data") == 2
+    assert '"work-feed", "health", "--role", "worker"' in compose
+    assert "work-feed health --role mcp" in compose
     assert "--http-url http://127.0.0.1:" in compose
-    assert "$${UPWORK_COLLECTOR_MCP_PATH:-/mcp}" in compose
+    assert "$${WORK_FEED_MCP_PATH:-/mcp}" in compose
     assert "condition: service_healthy" in compose
 
 
@@ -29,20 +26,20 @@ def test_compose_uses_env_overrides() -> None:
     env = os.environ.copy()
     env.update(
         {
-            "UPWORK_COLLECTOR_INTERVAL_SECONDS": "1800",
-            "UPWORK_COLLECTOR_MAX_PAGES": "3",
-            "UPWORK_COLLECTOR_PAGE_SIZE": "25",
-            "UPWORK_COLLECTOR_QUERIES": "python,scraping",
-            "UPWORK_COLLECTOR_MCP_PORT": "8765",
-            "UPWORK_COLLECTOR_MCP_PATH": "/custom-mcp",
+            "WORK_FEED_INTERVAL_SECONDS": "1800",
+            "WORK_FEED_MAX_PAGES": "3",
+            "WORK_FEED_PAGE_SIZE": "25",
+            "WORK_FEED_QUERIES": "python,scraping",
+            "WORK_FEED_MCP_PORT": "8765",
+            "WORK_FEED_MCP_PATH": "/custom-mcp",
         }
     )
     rendered = subprocess.check_output(["docker", "compose", "config"], text=True, env=env)
-    assert 'UPWORK_COLLECTOR_INTERVAL_SECONDS: "1800"' in rendered
-    assert 'UPWORK_COLLECTOR_MAX_PAGES: "3"' in rendered
-    assert 'UPWORK_COLLECTOR_PAGE_SIZE: "25"' in rendered
-    assert "UPWORK_COLLECTOR_QUERIES: python,scraping" in rendered
-    assert "UPWORK_COLLECTOR_MCP_PATH: /custom-mcp" in rendered
+    assert 'WORK_FEED_INTERVAL_SECONDS: "1800"' in rendered
+    assert 'WORK_FEED_MAX_PAGES: "3"' in rendered
+    assert 'WORK_FEED_PAGE_SIZE: "25"' in rendered
+    assert "WORK_FEED_QUERIES: python,scraping" in rendered
+    assert "WORK_FEED_MCP_PATH: /custom-mcp" in rendered
     assert "host_ip: 127.0.0.1" in rendered
     assert "target: 8765" in rendered
     assert 'published: "8765"' in rendered

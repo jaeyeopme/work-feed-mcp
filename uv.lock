@@ -988,7 +988,7 @@ wheels = [
 ]
 
 [[package]]
-name = "upwork-app"
+name = "work-feed-mcp"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

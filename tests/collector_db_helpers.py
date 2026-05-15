@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from upwork_app.db.connection import connect_worker
-from upwork_app.repositories import collector_control
-from upwork_app.runtime.config import RuntimeSettings
+from work_feed_mcp.db.connection import connect_worker
+from work_feed_mcp.repositories import collector_control
+from work_feed_mcp.runtime.config import RuntimeSettings
 
 
 def create_ready_runtime_db(db: Path) -> None:

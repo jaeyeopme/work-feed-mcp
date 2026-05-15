@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from upwork_app.integrations.upwork.credentials import (
+from work_feed_mcp.integrations.upwork.credentials import (
     SecretValue,
     load_credential_references,
     redact,
@@ -14,7 +14,7 @@ def test_fixture_style_paths_do_not_require_credentials() -> None:
 
 def test_proxy_reference_loads_without_printing_raw_value() -> None:
     refs = load_credential_references(
-        {"UPWORK_COLLECTOR_PROXY_URL": "https://" + "user:pass" + "@example.test:8080"}
+        {"WORK_FEED_PROXY_URL": "https://" + "user:pass" + "@example.test:8080"}
     )
 
     assert refs.proxy_url is not None
@@ -23,7 +23,7 @@ def test_proxy_reference_loads_without_printing_raw_value() -> None:
 
 
 def test_redacts_cookie_bearer_proxy_and_env_values() -> None:
-    env = {"UPWORK_COLLECTOR_PROXY_URL": "https://" + "user:pass" + "@example.test:8080"}
+    env = {"WORK_FEED_PROXY_URL": "https://" + "user:pass" + "@example.test:8080"}
     text = (
         "Bearer "
         + "abc.def_123"
@@ -59,7 +59,7 @@ def test_redacts_multi_value_cookie_and_session_headers() -> None:
 
 
 def test_redacts_live_diagnostic_material_from_error_text() -> None:
-    env = {"UPWORK_COLLECTOR_PROXY_URL": "http://user:pass@example.test:8080"}
+    env = {"WORK_FEED_PROXY_URL": "http://user:pass@example.test:8080"}
 
     redacted = redact(
         "upstream network failure: Cookie: visitor_gql_token=secret-token; "

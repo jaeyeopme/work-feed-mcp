@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import sqlite3
 
-from upwork_app.repositories import run_history
-from upwork_app.repositories.run_history import RunTotals
+from work_feed_mcp.repositories import run_history
+from work_feed_mcp.repositories.run_history import RunTotals
 
 
 def insert_success_run(

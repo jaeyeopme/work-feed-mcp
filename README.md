@@ -1,6 +1,10 @@
-# upwork
+# work-feed-mcp
 
-Docker/MCP-first local data engine for Upwork job discovery.
+Docker/MCP-first local data engine for collecting Upwork job listings into SQLite and exposing them to agents through MCP.
+
+This project is not affiliated with, endorsed by, or sponsored by Upwork Inc. Upwork is referenced only as the source platform for collected public job listings.
+
+![Architecture](docs/architecture.svg)
 
 ```text
 Upwork visitor collection
@@ -16,8 +20,8 @@ This is not a REST web app, application bot, proposal generator, auto-apply tool
 
 The normal user path is Docker Compose. It starts two services:
 
-- `collector-worker`: runs the live collection loop and writes to SQLite.
-- `upwork-collector-mcp`: exposes MCP tools over the same SQLite database.
+- `work-feed-worker`: runs the live collection loop and writes to SQLite.
+- `work-feed-mcp`: exposes MCP tools over the same SQLite database.
 
 ```bash
 cp .env.example .env
@@ -29,14 +33,17 @@ Configuration lives in `.env`. The defaults are conservative and work without cr
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `UPWORK_COLLECTOR_LIVE` | `1` | Enable visitor-mode live collection in Docker. Set to `0` only for local debugging. |
-| `UPWORK_COLLECTOR_INTERVAL_SECONDS` | `3600` | Wait time between worker collection runs. |
-| `UPWORK_COLLECTOR_MAX_PAGES` | `5` | Maximum pages per run. |
-| `UPWORK_COLLECTOR_PAGE_SIZE` | `50` | Jobs requested per page. |
-| `UPWORK_COLLECTOR_QUERIES` | empty | Optional comma-separated searches such as `python,scraping`; empty means unfiltered/latest. |
-| `UPWORK_COLLECTOR_LOG_LEVEL` | `INFO` | Worker log level. |
-| `UPWORK_COLLECTOR_MCP_PORT` | `8000` | Host port for the local MCP endpoint. |
-| `UPWORK_COLLECTOR_MCP_PATH` | `/mcp` | HTTP path for Streamable HTTP MCP. |
+| `WORK_FEED_LIVE` | `1` | Enable visitor-mode live collection in Docker. Set to `0` only for local debugging. |
+| `WORK_FEED_DB` | `/data/work-feed.sqlite` | SQLite path inside the Docker volume. |
+| `WORK_FEED_INTERVAL_SECONDS` | `3600` | Wait time between worker collection runs. |
+| `WORK_FEED_MAX_PAGES` | `5` | Maximum pages per run. |
+| `WORK_FEED_PAGE_SIZE` | `50` | Jobs requested per page. |
+| `WORK_FEED_QUERIES` | empty | Optional comma-separated searches such as `python,scraping`; empty means unfiltered/latest. |
+| `WORK_FEED_LOG_LEVEL` | `INFO` | Worker log level. |
+| `WORK_FEED_MCP_HOST` | `0.0.0.0` | Container bind host for the MCP server. |
+| `WORK_FEED_MCP_PORT` | `8000` | Host port for the local MCP endpoint. |
+| `WORK_FEED_MCP_PATH` | `/mcp` | HTTP path for Streamable HTTP MCP. |
+| `WORK_FEED_MCP_TRANSPORT` | `streamable-http` | MCP transport used by the container. |
 
 By default each run collects up to 250 jobs: `5 pages * 50 jobs`. After changing `.env`, restart the runtime:
 
@@ -55,7 +62,7 @@ http://127.0.0.1:8000/mcp
 If you override Compose env, derive it as:
 
 ```text
-http://127.0.0.1:${UPWORK_COLLECTOR_MCP_PORT:-8000}${UPWORK_COLLECTOR_MCP_PATH:-/mcp}
+http://127.0.0.1:${WORK_FEED_MCP_PORT:-8000}${WORK_FEED_MCP_PATH:-/mcp}
 ```
 
 See [MCP client setup](docs/mcp-client-setup.md) for a generic Streamable HTTP MCP client config.
@@ -108,7 +115,7 @@ Poll completion with `collector_command_status(command_id)`. Terminal states are
 - `page_size`
 - `paused`
 
-`live` is intentionally not MCP-mutable.
+Live collection mode is set by Docker/.env at startup. MCP tools can pause/resume the worker and update schedule, query, and page settings, but they cannot switch the runtime between live and non-live modes.
 
 Config precedence:
 
@@ -122,7 +129,7 @@ Config precedence:
 If MCP starts before the worker initializes SQLite, tools return stable `not_ready` payloads instead of creating schema from the read path:
 
 ```json
-{ "ok": false, "error": "not_ready", "reason": "db_missing", "next_action": "start collector-worker" }
+{ "ok": false, "error": "not_ready", "reason": "db_missing", "next_action": "start work-feed-worker" }
 ```
 
 `reason` may be `db_missing` or `schema_missing`. An initialized DB with no rows is not an error; list tools return `{ "ok": true, "status": "empty", "rows": [] }`.
@@ -139,15 +146,25 @@ If MCP starts before the worker initializes SQLite, tools return stable `not_rea
 
 ## Project structure
 
+Runtime flow:
+
 ```text
-src/upwork_app/integrations/upwork  Upwork visitor collection and normalization
-src/upwork_app/services             collection, ingestion, analytics, health use cases
-src/upwork_app/repositories         SQLite query/persistence helpers
-src/upwork_app/db                   SQLite schema/connection helpers
-src/upwork_app/domain               normalized collector contracts
-src/upwork_app/runtime              collector worker runtime
-src/upwork_app/mcp_server           agent-facing MCP tools
-src/upwork_app/cli                  local/debug CLI entrypoints
+Docker Compose
+  work-feed-worker  -> recurring visitor collection -> SQLite volume
+  work-feed-mcp     -> Streamable HTTP MCP tools -> agent client
+```
+
+Internal Python layout:
+
+```text
+src/work_feed_mcp/integrations/upwork  Upwork visitor collection and normalization
+src/work_feed_mcp/services             collection, ingestion, analytics, health use cases
+src/work_feed_mcp/repositories         SQLite query/persistence helpers
+src/work_feed_mcp/db                   SQLite schema/connection helpers
+src/work_feed_mcp/domain               normalized collector contracts
+src/work_feed_mcp/runtime              collector worker runtime
+src/work_feed_mcp/mcp_server           agent-facing MCP tools
+src/work_feed_mcp/cli                  local/debug CLI entrypoints
 ```
 
 Core flow:
@@ -173,9 +190,9 @@ make docker-compose-config
 Direct Python CLI entrypoints exist for local debugging, but they are not the normal user interface. Prefer Docker/MCP for normal use.
 
 ```bash
-uv run upwork-app --help
-uv run upwork-app worker --help
-uv run upwork-app mcp-server --help
+uv run work-feed --help
+uv run work-feed worker --help
+uv run work-feed mcp-server --help
 ```
 
 Live collection evidence should be reported separately from local contract checks.

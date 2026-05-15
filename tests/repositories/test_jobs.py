@@ -3,8 +3,8 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from upwork_app.db.connection import connect_worker
-from upwork_app.repositories import jobs
+from work_feed_mcp.db.connection import connect_worker
+from work_feed_mcp.repositories import jobs
 
 
 def _seed(connection: sqlite3.Connection) -> None:
@@ -61,7 +61,7 @@ def _seed(connection: sqlite3.Connection) -> None:
 
 
 def test_job_queries_return_detailed_json_safe_rows(tmp_path: Path) -> None:
-    connection = connect_worker(str(tmp_path / "upwork.sqlite"))
+    connection = connect_worker(str(tmp_path / "work-feed.sqlite"))
     try:
         _seed(connection)
         connection.commit()

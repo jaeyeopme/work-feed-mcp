@@ -5,13 +5,13 @@ from pathlib import Path
 
 from tests.run_history_helpers import insert_success_run
 
-from upwork_app.db.schema import initialize_schema
-from upwork_app.repositories import run_history
-from upwork_app.repositories.run_history import RunTotals
+from work_feed_mcp.db.schema import initialize_schema
+from work_feed_mcp.repositories import run_history
+from work_feed_mcp.repositories.run_history import RunTotals
 
 
 def test_initialize_schema_creates_run_history_idempotently(tmp_path: Path) -> None:
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     connection = sqlite3.connect(db)
     try:
         initialize_schema(connection)
@@ -26,7 +26,7 @@ def test_initialize_schema_creates_run_history_idempotently(tmp_path: Path) -> N
 
 
 def test_run_history_records_success_and_failure(tmp_path: Path) -> None:
-    connection = sqlite3.connect(tmp_path / "upwork.sqlite")
+    connection = sqlite3.connect(tmp_path / "work-feed.sqlite")
     connection.row_factory = sqlite3.Row
     try:
         initialize_schema(connection)

@@ -3,10 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from upwork_app.db.connection import connect_worker
-from upwork_app.repositories import collector_control, run_history
-from upwork_app.runtime.config import RuntimeSettings, load_runtime_settings
-from upwork_app.runtime.worker import WorkerRuntime
+from work_feed_mcp.db.connection import connect_worker
+from work_feed_mcp.repositories import collector_control, run_history
+from work_feed_mcp.runtime.config import RuntimeSettings, load_runtime_settings
+from work_feed_mcp.runtime.worker import WorkerRuntime
 
 
 class FakeResult:
@@ -24,7 +24,7 @@ def test_worker_invokes_collection_with_defaults(tmp_path: Path) -> None:
         calls.append(kwargs)
         return FakeResult(str(kwargs["trigger"]))
 
-    settings = RuntimeSettings(db_path=str(tmp_path / "upwork.sqlite"))
+    settings = RuntimeSettings(db_path=str(tmp_path / "work-feed.sqlite"))
     runtime = WorkerRuntime(settings=settings, collect_once=fake_collect_once)
     runtime.run(max_iterations=1)
 
@@ -48,7 +48,7 @@ def test_run_once_executes_while_paused(tmp_path: Path) -> None:
         calls.append(kwargs)
         return FakeResult(str(kwargs["trigger"]))
 
-    settings = RuntimeSettings(db_path=str(tmp_path / "upwork.sqlite"), paused=True)
+    settings = RuntimeSettings(db_path=str(tmp_path / "work-feed.sqlite"), paused=True)
     with connect_worker(settings.db_path) as connection:
         collector_control.seed_config(connection, settings.persisted_defaults())
         collector_control.enqueue_command(connection, "run_once", command_id="cmd-1")
@@ -66,7 +66,7 @@ def test_run_once_executes_while_paused(tmp_path: Path) -> None:
 
 def test_pause_skips_scheduled_run(tmp_path: Path) -> None:
     calls: list[dict[str, Any]] = []
-    settings = RuntimeSettings(db_path=str(tmp_path / "upwork.sqlite"), paused=True)
+    settings = RuntimeSettings(db_path=str(tmp_path / "work-feed.sqlite"), paused=True)
     runtime = WorkerRuntime(settings=settings, collect_once=lambda **kwargs: calls.append(kwargs))
     runtime.run(max_iterations=1)
     assert calls == []
@@ -75,7 +75,7 @@ def test_pause_skips_scheduled_run(tmp_path: Path) -> None:
 def test_collect_scheduled_accepts_trigger(tmp_path: Path) -> None:
     # Regression anchor for worker-triggered run history. Use direct run_history helper to
     # verify trigger vocabulary can be stored independently of worker wording.
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     with connect_worker(str(db)) as connection:
         run_history.create_run(
             connection,
@@ -91,7 +91,7 @@ def test_collect_scheduled_accepts_trigger(tmp_path: Path) -> None:
 
 
 def test_worker_applies_update_config_command(tmp_path: Path) -> None:
-    settings = RuntimeSettings(db_path=str(tmp_path / "upwork.sqlite"), paused=True)
+    settings = RuntimeSettings(db_path=str(tmp_path / "work-feed.sqlite"), paused=True)
     with connect_worker(settings.db_path) as connection:
         collector_control.seed_config(connection, settings.persisted_defaults())
         collector_control.enqueue_command(
@@ -114,15 +114,15 @@ def test_worker_applies_update_config_command(tmp_path: Path) -> None:
 
 
 def test_worker_bootstraps_env_overrides_into_persisted_config(tmp_path: Path) -> None:
-    db_path = str(tmp_path / "upwork.sqlite")
+    db_path = str(tmp_path / "work-feed.sqlite")
     settings = load_runtime_settings(
         {
-            "UPWORK_COLLECTOR_DB": db_path,
-            "UPWORK_COLLECTOR_INTERVAL_SECONDS": "1800",
-            "UPWORK_COLLECTOR_MAX_PAGES": "3",
-            "UPWORK_COLLECTOR_PAGE_SIZE": "25",
-            "UPWORK_COLLECTOR_QUERIES": "python,scraping",
-            "UPWORK_COLLECTOR_PAUSED": "1",
+            "WORK_FEED_DB": db_path,
+            "WORK_FEED_INTERVAL_SECONDS": "1800",
+            "WORK_FEED_MAX_PAGES": "3",
+            "WORK_FEED_PAGE_SIZE": "25",
+            "WORK_FEED_QUERIES": "python,scraping",
+            "WORK_FEED_PAUSED": "1",
         }
     )
 

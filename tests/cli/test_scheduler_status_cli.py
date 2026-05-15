@@ -6,15 +6,15 @@ from pathlib import Path
 
 from tests.run_history_helpers import insert_success_run
 
-from upwork_app.cli import __main__, scheduler_status
-from upwork_app.db.schema import initialize_schema
+from work_feed_mcp.cli import __main__, scheduler_status
+from work_feed_mcp.db.schema import initialize_schema
 
 
 def test_scheduler_status_empty_db_returns_agent_readable_json(
     tmp_path: Path,
     capsys,
 ) -> None:  # type: ignore[no-untyped-def]
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     connection = sqlite3.connect(db)
     initialize_schema(connection)
     connection.close()
@@ -29,7 +29,7 @@ def test_scheduler_status_empty_db_returns_agent_readable_json(
 
 
 def test_scheduler_status_outputs_latest_run_and_results(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def]
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     connection = sqlite3.connect(db)
     connection.row_factory = sqlite3.Row
     initialize_schema(connection)

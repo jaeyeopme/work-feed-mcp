@@ -6,9 +6,12 @@ from typing import Any
 
 import pytest
 
-from upwork_app.cli import __main__, collect_scheduled
-from upwork_app.integrations.upwork.errors import UpstreamBlockedError
-from upwork_app.services.scheduled_collection import ScheduledCollectionResult, ScheduledQueryResult
+from work_feed_mcp.cli import __main__, collect_scheduled
+from work_feed_mcp.integrations.upwork.errors import UpstreamBlockedError
+from work_feed_mcp.services.scheduled_collection import (
+    ScheduledCollectionResult,
+    ScheduledQueryResult,
+)
 
 
 def _result(
@@ -48,7 +51,7 @@ def test_collect_scheduled_cli_outputs_summary(
     tmp_path: Path,
 ) -> None:
     result = _result(
-        db_path=str(tmp_path / "upwork.sqlite"),
+        db_path=str(tmp_path / "work-feed.sqlite"),
         query_count=2,
         run_id="run-1",
         results=(
@@ -60,7 +63,7 @@ def test_collect_scheduled_cli_outputs_summary(
         monkeypatch,
         [
             "--db",
-            str(tmp_path / "upwork.sqlite"),
+            str(tmp_path / "work-feed.sqlite"),
             "--queries",
             "python, scraping",
             "--max-pages",
@@ -84,14 +87,14 @@ def test_collect_scheduled_cli_defaults_to_unfiltered_collection(
     tmp_path: Path,
 ) -> None:
     result = _result(
-        db_path=str(tmp_path / "upwork.sqlite"),
+        db_path=str(tmp_path / "work-feed.sqlite"),
         query_count=1,
         run_id="run-default",
         results=(ScheduledQueryResult(None, 250, 17, 233),),
     )
     seen = _run_collect_scheduled_with_fake(
         monkeypatch,
-        ["--db", str(tmp_path / "upwork.sqlite"), "--max-pages", "5", "--page-size", "50"],
+        ["--db", str(tmp_path / "work-feed.sqlite"), "--max-pages", "5", "--page-size", "50"],
         result,
     )
 
@@ -141,7 +144,7 @@ def test_top_level_cli_dispatches_collect_scheduled(
 def test_top_level_cli_dispatches_scheduler_status(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from upwork_app.cli import scheduler_status
+    from work_feed_mcp.cli import scheduler_status
 
     called: list[list[str]] = []
 

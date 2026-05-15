@@ -4,7 +4,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-from upwork_app.cli.ingest import main
+from work_feed_mcp.cli.ingest import main
 
 
 def _record(job_id: str = "~021111", *, title: str = "Python data pipeline") -> dict[str, object]:
@@ -31,7 +31,7 @@ def _write_jsonl(path: Path, records: list[dict[str, object]]) -> None:
 
 def test_ingest_cli_file_input_writes_jobs_and_skills_only(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def]
     jsonl = tmp_path / "jobs.jsonl"
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     _write_jsonl(jsonl, [_record(), _record("~022222", title="React UI")])
 
     assert main(["--db", str(db), "--input", str(jsonl), "--query", "python"]) == 0
@@ -57,7 +57,7 @@ def test_ingest_cli_file_input_writes_jobs_and_skills_only(tmp_path: Path, capsy
 
 def test_repeated_ingest_skips_existing_jobs(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def]
     jsonl = tmp_path / "jobs.jsonl"
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     _write_jsonl(jsonl, [_record()])
 
     assert main(["--db", str(db), "--input", str(jsonl)]) == 0
@@ -75,7 +75,7 @@ def test_repeated_ingest_skips_existing_jobs(tmp_path: Path, capsys) -> None:  #
 
 def test_schema_uses_jobs_only_indexes(tmp_path: Path) -> None:
     jsonl = tmp_path / "jobs.jsonl"
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     _write_jsonl(jsonl, [_record()])
     assert main(["--db", str(db), "--input", str(jsonl)]) == 0
 

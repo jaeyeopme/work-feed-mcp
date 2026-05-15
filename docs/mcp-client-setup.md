@@ -11,7 +11,7 @@ http://127.0.0.1:8000/mcp
 If you override Compose env, derive the endpoint as:
 
 ```text
-http://127.0.0.1:${UPWORK_COLLECTOR_MCP_PORT:-8000}${UPWORK_COLLECTOR_MCP_PATH:-/mcp}
+http://127.0.0.1:${WORK_FEED_MCP_PORT:-8000}${WORK_FEED_MCP_PATH:-/mcp}
 ```
 
 ## Start and check the runtime
@@ -32,7 +32,7 @@ Generic shape:
 ```json
 {
   "mcpServers": {
-    "upwork-collector": {
+    "work-feed": {
       "transport": "streamable-http",
       "url": "http://127.0.0.1:8000/mcp"
     }
@@ -40,7 +40,7 @@ Generic shape:
 }
 ```
 
-If your client uses a different field name, keep the same semantic values: server name `upwork-collector`, Streamable HTTP transport, and URL `http://127.0.0.1:8000/mcp`.
+If your client uses a different field name, keep the same semantic values: server name `work-feed`, Streamable HTTP transport, and URL `http://127.0.0.1:8000/mcp`.
 
 ## What agents can do
 

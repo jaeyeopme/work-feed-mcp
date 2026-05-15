@@ -1,0 +1,36 @@
+direction: right
+
+user: "Human operator" {
+  shape: person
+}
+agent: "Agent / MCP client" {
+  shape: person
+}
+
+compose: "Docker Compose runtime" {
+  shape: rectangle
+
+  worker: "work-feed-worker\nrecurring collector" {
+    shape: rectangle
+  }
+
+  mcp: "work-feed-mcp\nStreamable HTTP MCP" {
+    shape: rectangle
+  }
+
+  db: "SQLite volume\nwork-feed-data" {
+    shape: cylinder
+  }
+}
+
+upwork: "Upwork job search\nvisitor requests" {
+  shape: cloud
+}
+
+user -> compose.worker: "configure .env\nmake up / restart"
+compose.worker -> upwork: "collect public listings"
+upwork -> compose.worker: "job search responses"
+compose.worker -> compose.db: "normalize + deduplicate"
+compose.mcp -> compose.db: "read jobs, runs, config"
+agent -> compose.mcp: "MCP tools\njobs_recent, config_update, pause/resume"
+compose.mcp -> compose.worker: "queued control commands\napplied between runs"

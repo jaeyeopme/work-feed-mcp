@@ -5,7 +5,7 @@ from pathlib import Path
 from tests.collector_db_helpers import create_ready_runtime_db
 from tests.http_helpers import reachable_http_url
 
-from upwork_app.services.health import health_check
+from work_feed_mcp.services.health import health_check
 
 
 def test_health_reports_missing_db(tmp_path: Path) -> None:
@@ -16,7 +16,7 @@ def test_health_reports_missing_db(tmp_path: Path) -> None:
 
 
 def test_health_reports_ready_after_worker_bootstrap(tmp_path: Path) -> None:
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     create_ready_runtime_db(db)
 
     result = health_check(str(db), role="mcp")
@@ -27,7 +27,7 @@ def test_health_reports_ready_after_worker_bootstrap(tmp_path: Path) -> None:
 
 
 def test_mcp_health_reports_unreachable_http(tmp_path: Path) -> None:
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     create_ready_runtime_db(db)
 
     result = health_check(str(db), role="mcp", http_url="http://127.0.0.1:9/mcp", http_timeout=0.2)
@@ -41,7 +41,7 @@ def test_mcp_health_reports_unreachable_http(tmp_path: Path) -> None:
 
 
 def test_mcp_health_reports_reachable_http(tmp_path: Path) -> None:
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     create_ready_runtime_db(db)
 
     with reachable_http_url(status=404) as url:

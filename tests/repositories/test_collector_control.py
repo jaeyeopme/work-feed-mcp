@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from upwork_app.db.connection import connect_worker
-from upwork_app.repositories import collector_control
+from work_feed_mcp.db.connection import connect_worker
+from work_feed_mcp.repositories import collector_control
 
 
 def test_schema_contains_control_tables_and_indexes(tmp_path: Path) -> None:
-    connection = connect_worker(str(tmp_path / "upwork.sqlite"))
+    connection = connect_worker(str(tmp_path / "work-feed.sqlite"))
     try:
         names = {
             str(row[0])
@@ -26,7 +26,7 @@ def test_schema_contains_control_tables_and_indexes(tmp_path: Path) -> None:
 
 
 def test_seed_config_preserves_existing_values(tmp_path: Path) -> None:
-    connection = connect_worker(str(tmp_path / "upwork.sqlite"))
+    connection = connect_worker(str(tmp_path / "work-feed.sqlite"))
     try:
         collector_control.seed_config(connection, {"interval_seconds": 3600, "page_size": 50})
         collector_control.update_config(connection, {"interval_seconds": 120}, updated_by="mcp")
@@ -39,7 +39,7 @@ def test_seed_config_preserves_existing_values(tmp_path: Path) -> None:
 
 
 def test_update_config_rejects_unsupported_keys(tmp_path: Path) -> None:
-    connection = connect_worker(str(tmp_path / "upwork.sqlite"))
+    connection = connect_worker(str(tmp_path / "work-feed.sqlite"))
     try:
         with pytest.raises(ValueError):
             collector_control.update_config(connection, {"live": False})
@@ -48,7 +48,7 @@ def test_update_config_rejects_unsupported_keys(tmp_path: Path) -> None:
 
 
 def test_command_lifecycle(tmp_path: Path) -> None:
-    connection = connect_worker(str(tmp_path / "upwork.sqlite"))
+    connection = connect_worker(str(tmp_path / "work-feed.sqlite"))
     try:
         queued = collector_control.enqueue_command(connection, "run_once", command_id="cmd-1")
         assert queued == {"ok": True, "command_id": "cmd-1", "status": "queued"}

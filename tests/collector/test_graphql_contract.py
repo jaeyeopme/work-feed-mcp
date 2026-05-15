@@ -3,8 +3,12 @@ from __future__ import annotations
 import pytest
 from tests.conftest import load_fixture
 
-from upwork_app.integrations.upwork.errors import UpstreamSchemaOrTemporaryError
-from upwork_app.integrations.upwork.graphql import ENDPOINT, build_request_payload, extract_results
+from work_feed_mcp.integrations.upwork.errors import UpstreamSchemaOrTemporaryError
+from work_feed_mcp.integrations.upwork.graphql import (
+    ENDPOINT,
+    build_request_payload,
+    extract_results,
+)
 
 
 def test_graphql_endpoint_contract() -> None:

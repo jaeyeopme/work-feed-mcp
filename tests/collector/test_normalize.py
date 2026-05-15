@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 from tests.conftest import load_fixture
 
-from upwork_app.integrations.upwork.errors import UpstreamSchemaOrTemporaryError
-from upwork_app.integrations.upwork.normalize import normalize_response
+from work_feed_mcp.integrations.upwork.errors import UpstreamSchemaOrTemporaryError
+from work_feed_mcp.integrations.upwork.normalize import normalize_response
 
 
 def test_normalizes_representative_graphql_response() -> None:

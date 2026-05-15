@@ -8,14 +8,14 @@ Use this guide when handing the repository to another LLM or coding agent. The g
 You are helping with a Docker/MCP-first Upwork job discovery data engine.
 
 Current structure:
-- src/upwork_app/services: collect, ingest, and analytics use cases.
-- src/upwork_app/repositories: SQLite query/persistence helpers.
-- src/upwork_app/db: SQLite schema/connection helpers.
-- src/upwork_app/domain: collector-record validation/domain types.
-- src/upwork_app/integrations/upwork: Upwork transport, credentials, GraphQL, normalization.
-- src/upwork_app/runtime: Docker worker runtime for recurring collection.
-- src/upwork_app/mcp_server: Streamable HTTP MCP server for agent usage.
-- src/upwork_app/cli: local/debug CLIs.
+- src/work_feed_mcp/services: collect, ingest, and analytics use cases.
+- src/work_feed_mcp/repositories: SQLite query/persistence helpers.
+- src/work_feed_mcp/db: SQLite schema/connection helpers.
+- src/work_feed_mcp/domain: collector-record validation/domain types.
+- src/work_feed_mcp/integrations/upwork: Upwork transport, credentials, GraphQL, normalization.
+- src/work_feed_mcp/runtime: Docker worker runtime for recurring collection.
+- src/work_feed_mcp/mcp_server: Streamable HTTP MCP server for agent usage.
+- src/work_feed_mcp/cli: local/debug CLIs.
 - tests: CLI/service tests and fixtures.
 
 Product intent:
@@ -105,7 +105,7 @@ Default live smoke asks Upwork for 50 jobs in one visitor GraphQL page. Success 
 - “The project stores raw collection payloads or per-job observations.” Wrong. It stores unique jobs/skills plus redacted scheduled-run summaries only.
 - “Analytics can infer client spend/country from text.” Wrong. Missing client fields become unknown/null.
 - “Fixture tests prove live Upwork works.” Wrong. Fixture/local tests prove contracts only; live smoke is separate opt-in evidence.
-- “New code should go under `packages/*`.” Wrong. New data-engine code should go under `src/upwork_app`.
+- “New code should go under `packages/*`.” Wrong. New data-engine code should go under `src/work_feed_mcp`.
 
 ## Minimal context bundle to attach
 
@@ -113,6 +113,6 @@ Default live smoke asks Upwork for 50 jobs in one visitor GraphQL page. Success 
 2. `docs/LLM_CONTEXT.md`
 3. `docs/EXTERNAL_LLM_GUIDE.md`
 4. `docs/contracts/job-jsonl.md`
-5. Relevant source/tests under `src/upwork_app` and `tests`.
+5. Relevant source/tests under `src/work_feed_mcp` and `tests`.
 
 Do not paste `.omx/logs`, `.omx/state`, or runtime traces unless the question is specifically about OMX execution.

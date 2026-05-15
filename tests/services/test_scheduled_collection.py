@@ -5,10 +5,10 @@ from typing import Any
 
 import pytest
 
-from upwork_app.integrations.upwork.errors import UpstreamBlockedError
-from upwork_app.integrations.upwork.models import Job
-from upwork_app.services import scheduled_collection
-from upwork_app.services.scheduled_collection import collect_scheduled, parse_queries
+from work_feed_mcp.integrations.upwork.errors import UpstreamBlockedError
+from work_feed_mcp.integrations.upwork.models import Job
+from work_feed_mcp.services import scheduled_collection
+from work_feed_mcp.services.scheduled_collection import collect_scheduled, parse_queries
 
 
 def _job(job_id: str, *, title: str = "Python scraper") -> Job:
@@ -53,7 +53,7 @@ def test_collect_scheduled_collects_and_ingests_each_query(
     monkeypatch.setattr(scheduled_collection, "collect_jobs", fake_collect_jobs)
 
     result = collect_scheduled(
-        db_path=str(tmp_path / "upwork.sqlite"),
+        db_path=str(tmp_path / "work-feed.sqlite"),
         queries=("python", "scraping"),
         max_pages=1,
         page_size=50,
@@ -69,7 +69,7 @@ def test_collect_scheduled_collects_and_ingests_each_query(
 def test_collect_scheduled_fails_fast_and_keeps_completed_ingest(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     calls: list[str | None] = []
 
     def fake_collect_jobs(**kwargs: Any) -> list[Job]:
@@ -103,7 +103,7 @@ def test_collect_scheduled_fails_fast_and_keeps_completed_ingest(
 def test_collect_scheduled_defaults_to_unfiltered_run_history(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     calls: list[str | None] = []
 
     def fake_collect_jobs(**kwargs: Any) -> list[Job]:
@@ -145,9 +145,9 @@ def test_collect_scheduled_defaults_to_unfiltered_run_history(
 def test_collect_scheduled_records_retry_attempt_count(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from upwork_app.integrations.upwork.errors import UpstreamSchemaOrTemporaryError
+    from work_feed_mcp.integrations.upwork.errors import UpstreamSchemaOrTemporaryError
 
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     calls = 0
     delays: list[float] = []
 
@@ -190,7 +190,7 @@ def test_collect_scheduled_records_retry_attempt_count(
 def test_collect_scheduled_partial_failure_records_redacted_history(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
 
     def fake_collect_jobs(**kwargs: Any) -> list[Job]:
         if kwargs["query"] == "scraping":
@@ -233,9 +233,9 @@ def test_collect_scheduled_partial_failure_records_redacted_history(
 def test_collect_scheduled_records_ingest_failure_without_retry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from upwork_app.core.errors import ValidationError
+    from work_feed_mcp.core.errors import ValidationError
 
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     collect_calls: list[str | None] = []
     ingest_calls = 0
     real_ingest = scheduled_collection.ingest_records_into_connection

@@ -1,12 +1,12 @@
 # Job JSONL contract
 
-This document defines the normalized job JSONL contract produced by `src/upwork_app/integrations/upwork`. Downstream code must consume this contract, not Upwork transport internals.
+This document defines the normalized job JSONL contract produced by `src/work_feed_mcp/integrations/upwork`. Downstream code must consume this contract, not Upwork transport internals.
 
 ## Producer and consumer
 
-- Producer: `src/upwork_app/integrations/upwork` and `upwork-app-collect`
+- Producer: `src/work_feed_mcp/integrations/upwork` and `work-feed collect`
 - Output: one JSON object per line when using CLI JSONL output
-- Consumer: `src/upwork_app/services/ingestion`
+- Consumer: `src/work_feed_mcp/services/ingestion`
 
 The Upwork integration layer does not own durable state or SQLite. Ingestion adds collection-time metadata and persists records to SQLite.
 
@@ -41,7 +41,7 @@ Live visitor GraphQL responses may include nested `jobTile.job` fields, `ontolog
 
 ## Current downstream behavior
 
-`src/upwork_app/services/ingestion` validates collector JSONL/job objects and inserts only jobs whose `job_id` is not already present. Existing jobs are skipped rather than updated for observation history.
+`src/work_feed_mcp/services/ingestion` validates collector JSONL/job objects and inserts only jobs whose `job_id` is not already present. Existing jobs are skipped rather than updated for observation history.
 
 The jobs store adds these DB-managed fields:
 
@@ -55,7 +55,7 @@ The app does not persist per-job observation logs or raw normalized payload arch
 
 The current collector contract has no rich client fields.
 
-Therefore `src/upwork_app/repositories/client_analytics.py` aggregates client-related dimensions only when those columns exist in SQLite `jobs`. Missing dimensions return `unknown`/`null`; the app must not infer client country/spend/payment status from title or description text.
+Therefore `src/work_feed_mcp/repositories/client_analytics.py` aggregates client-related dimensions only when those columns exist in SQLite `jobs`. Missing dimensions return `unknown`/`null`; the app must not infer client country/spend/payment status from title or description text.
 
 ## Future additions
 

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from upwork_app.integrations.upwork.errors import (
+from work_feed_mcp.integrations.upwork.errors import (
     RateLimitedError,
     UpstreamBlockedError,
     UpstreamSchemaOrTemporaryError,
 )
-from upwork_app.services.retry import RetryExhausted, collect_with_retry
+from work_feed_mcp.services.retry import RetryExhausted, collect_with_retry
 
 
 def _constant_jitter(low: float, high: float) -> float:

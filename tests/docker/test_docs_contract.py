@@ -22,7 +22,7 @@ def _section(heading: str) -> str:
 def _normal_user_docs() -> str:
     readme = _readme()
     match = re.search(
-        r"^# upwork\n(?P<section>.*?)(?=^## Developer reference)", readme, flags=re.M | re.S
+        r"^# work-feed-mcp\n(?P<section>.*?)(?=^## Developer reference)", readme, flags=re.M | re.S
     )
     assert match is not None
     return match.group("section")
@@ -35,6 +35,9 @@ def test_readme_normal_user_contract() -> None:
     assert "make logs" in section
     assert "make restart" in section
     assert "make down" in section
+    assert "# work-feed-mcp" in _readme()
+    assert "docs/architecture.svg" in _readme()
+    assert "not affiliated with, endorsed by, or sponsored by Upwork Inc." in _readme()
     assert "http://127.0.0.1:8000/mcp" in section
     assert section.count("docs/mcp-client-setup.md") == 1
     assert "docker compose up -d" not in section
@@ -42,14 +45,17 @@ def test_readme_normal_user_contract() -> None:
     assert not KOREAN_RE.search(section)
 
     for variable in [
-        "UPWORK_COLLECTOR_LIVE",
-        "UPWORK_COLLECTOR_INTERVAL_SECONDS",
-        "UPWORK_COLLECTOR_MAX_PAGES",
-        "UPWORK_COLLECTOR_PAGE_SIZE",
-        "UPWORK_COLLECTOR_QUERIES",
-        "UPWORK_COLLECTOR_LOG_LEVEL",
-        "UPWORK_COLLECTOR_MCP_PORT",
-        "UPWORK_COLLECTOR_MCP_PATH",
+        "WORK_FEED_LIVE",
+        "WORK_FEED_INTERVAL_SECONDS",
+        "WORK_FEED_MAX_PAGES",
+        "WORK_FEED_PAGE_SIZE",
+        "WORK_FEED_QUERIES",
+        "WORK_FEED_LOG_LEVEL",
+        "WORK_FEED_MCP_HOST",
+        "WORK_FEED_MCP_PORT",
+        "WORK_FEED_MCP_PATH",
+        "WORK_FEED_MCP_TRANSPORT",
+        "WORK_FEED_DB",
     ]:
         assert variable in section
 
@@ -79,6 +85,8 @@ def test_readme_normal_user_contract() -> None:
         "db_missing",
         "schema_missing",
         "Config precedence",
+        "Live collection mode is set by Docker/.env at startup",
+        "cannot switch the runtime between live and non-live modes",
     ]:
         assert expected in section
 
@@ -90,7 +98,7 @@ def test_readme_normal_user_contract() -> None:
         "make quality",
         "CI/CD",
         "GitHub Actions",
-        "/tmp/upwork-worker-smoke.sqlite",
+        "/tmp/work-feed-worker-smoke.sqlite",
         "/tmp/",
     ]
     lowered = section.lower()
@@ -160,13 +168,14 @@ def test_agent_context_docs_track_docker_mcp_runtime() -> None:
 def test_removed_legacy_public_artifacts_stay_removed() -> None:
     removed_paths = [
         ".github/workflows/deploy-server.yml",
-        "deploy/systemd/upwork-collector.service",
-        "deploy/systemd/upwork-collector.timer",
+        "deploy/systemd/work-feed.service",
+        "deploy/systemd/work-feed.timer",
         "docs/scheduler-plan.md",
         "docs/server-install.md",
         "scripts/collect_live_once.sh",
-        "src/upwork_app/cli/scheduler.py",
-        "src/upwork_app/services/system_scheduler.py",
+        "src/work_feed_mcp/cli/scheduler.py",
+        "src/work_feed_mcp/services/system_scheduler.py",
+        "src/" + "upwork" + "_app",
     ]
     for path in removed_paths:
         assert not Path(path).exists(), path

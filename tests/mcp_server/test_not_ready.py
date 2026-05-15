@@ -3,9 +3,9 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from upwork_app.db.connection import connect_worker
-from upwork_app.mcp_server import tools
-from upwork_app.runtime.config import RuntimeSettings
+from work_feed_mcp.db.connection import connect_worker
+from work_feed_mcp.mcp_server import tools
+from work_feed_mcp.runtime.config import RuntimeSettings
 
 
 def test_missing_db_returns_not_ready(tmp_path: Path) -> None:
@@ -28,7 +28,7 @@ def test_schema_missing_returns_not_ready_without_initializing(tmp_path: Path) -
 
 
 def test_empty_schema_returns_ok_empty(tmp_path: Path) -> None:
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     connection = connect_worker(str(db))
     connection.close()
     settings = RuntimeSettings(db_path=str(db))

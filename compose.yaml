@@ -1,50 +1,50 @@
 services:
-  collector-worker:
+  work-feed-worker:
     build: .
-    image: upwork-collector:local
-    command: ["upwork-app", "worker"]
+    image: work-feed-mcp:local
+    command: ["work-feed", "worker"]
     restart: unless-stopped
     environment:
-      UPWORK_COLLECTOR_LIVE: "${UPWORK_COLLECTOR_LIVE:-1}"
-      UPWORK_COLLECTOR_DB: "${UPWORK_COLLECTOR_DB:-/data/upwork.sqlite}"
-      UPWORK_COLLECTOR_INTERVAL_SECONDS: "${UPWORK_COLLECTOR_INTERVAL_SECONDS:-3600}"
-      UPWORK_COLLECTOR_MAX_PAGES: "${UPWORK_COLLECTOR_MAX_PAGES:-5}"
-      UPWORK_COLLECTOR_PAGE_SIZE: "${UPWORK_COLLECTOR_PAGE_SIZE:-50}"
-      UPWORK_COLLECTOR_QUERIES: "${UPWORK_COLLECTOR_QUERIES:-}"
-      UPWORK_COLLECTOR_LOG_LEVEL: "${UPWORK_COLLECTOR_LOG_LEVEL:-INFO}"
+      WORK_FEED_LIVE: "${WORK_FEED_LIVE:-1}"
+      WORK_FEED_DB: "${WORK_FEED_DB:-/data/work-feed.sqlite}"
+      WORK_FEED_INTERVAL_SECONDS: "${WORK_FEED_INTERVAL_SECONDS:-3600}"
+      WORK_FEED_MAX_PAGES: "${WORK_FEED_MAX_PAGES:-5}"
+      WORK_FEED_PAGE_SIZE: "${WORK_FEED_PAGE_SIZE:-50}"
+      WORK_FEED_QUERIES: "${WORK_FEED_QUERIES:-}"
+      WORK_FEED_LOG_LEVEL: "${WORK_FEED_LOG_LEVEL:-INFO}"
     volumes:
-      - upwork-data:/data
+      - work-feed-data:/data
     healthcheck:
-      test: ["CMD", "upwork-app", "health", "--role", "worker", "--db", "/data/upwork.sqlite"]
+      test: ["CMD", "work-feed", "health", "--role", "worker", "--db", "/data/work-feed.sqlite"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 30s
 
-  upwork-collector-mcp:
+  work-feed-mcp:
     build: .
-    image: upwork-collector:local
-    command: ["upwork-app", "mcp-server"]
+    image: work-feed-mcp:local
+    command: ["work-feed", "mcp-server"]
     restart: unless-stopped
     environment:
-      UPWORK_COLLECTOR_DB: "${UPWORK_COLLECTOR_DB:-/data/upwork.sqlite}"
-      UPWORK_COLLECTOR_MCP_HOST: "${UPWORK_COLLECTOR_MCP_HOST:-0.0.0.0}"
-      UPWORK_COLLECTOR_MCP_PORT: "${UPWORK_COLLECTOR_MCP_PORT:-8000}"
-      UPWORK_COLLECTOR_MCP_PATH: "${UPWORK_COLLECTOR_MCP_PATH:-/mcp}"
-      UPWORK_COLLECTOR_MCP_TRANSPORT: "${UPWORK_COLLECTOR_MCP_TRANSPORT:-streamable-http}"
+      WORK_FEED_DB: "${WORK_FEED_DB:-/data/work-feed.sqlite}"
+      WORK_FEED_MCP_HOST: "${WORK_FEED_MCP_HOST:-0.0.0.0}"
+      WORK_FEED_MCP_PORT: "${WORK_FEED_MCP_PORT:-8000}"
+      WORK_FEED_MCP_PATH: "${WORK_FEED_MCP_PATH:-/mcp}"
+      WORK_FEED_MCP_TRANSPORT: "${WORK_FEED_MCP_TRANSPORT:-streamable-http}"
     ports:
-      - "127.0.0.1:${UPWORK_COLLECTOR_MCP_PORT:-8000}:${UPWORK_COLLECTOR_MCP_PORT:-8000}"
+      - "127.0.0.1:${WORK_FEED_MCP_PORT:-8000}:${WORK_FEED_MCP_PORT:-8000}"
     volumes:
-      - upwork-data:/data
+      - work-feed-data:/data
     depends_on:
-      collector-worker:
+      work-feed-worker:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "upwork-app health --role mcp --db /data/upwork.sqlite --http-url http://127.0.0.1:$${UPWORK_COLLECTOR_MCP_PORT:-8000}$${UPWORK_COLLECTOR_MCP_PATH:-/mcp}"]
+      test: ["CMD-SHELL", "work-feed health --role mcp --db /data/work-feed.sqlite --http-url http://127.0.0.1:$${WORK_FEED_MCP_PORT:-8000}$${WORK_FEED_MCP_PATH:-/mcp}"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 30s
 
 volumes:
-  upwork-data:
+  work-feed-data:

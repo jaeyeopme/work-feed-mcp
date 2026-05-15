@@ -6,11 +6,11 @@ from pathlib import Path
 from tests.collector_db_helpers import create_ready_runtime_db
 from tests.http_helpers import reachable_http_url
 
-from upwork_app.cli import __main__, health
+from work_feed_mcp.cli import __main__, health
 
 
 def test_health_cli_ready(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def]
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     create_ready_runtime_db(db)
 
     assert health.main(["--db", str(db), "--role", "worker"]) == 0
@@ -20,7 +20,7 @@ def test_health_cli_ready(tmp_path: Path, capsys) -> None:  # type: ignore[no-un
 
 
 def test_health_cli_mcp_unreachable_http(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def]
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     create_ready_runtime_db(db)
 
     exit_code = health.main(
@@ -44,7 +44,7 @@ def test_health_cli_mcp_unreachable_http(tmp_path: Path, capsys) -> None:  # typ
 
 
 def test_health_cli_mcp_reachable_http(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def]
-    db = tmp_path / "upwork.sqlite"
+    db = tmp_path / "work-feed.sqlite"
     create_ready_runtime_db(db)
 
     with reachable_http_url() as url:
@@ -65,7 +65,7 @@ def test_health_cli_mcp_reachable_http(tmp_path: Path, capsys) -> None:  # type:
 
 
 def test_top_level_cli_dispatches_health(monkeypatch) -> None:  # type: ignore[no-untyped-def]
-    from upwork_app.cli import health as health_module
+    from work_feed_mcp.cli import health as health_module
 
     calls: list[list[str]] = []
 

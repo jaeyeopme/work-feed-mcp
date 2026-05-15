@@ -1,4 +1,4 @@
-"""One-shot scheduled collection orchestration for OS schedulers."""
+"""One-shot collection orchestration for the worker and debug CLIs."""
 
 from __future__ import annotations
 
@@ -129,7 +129,7 @@ def collect_scheduled(
 ) -> ScheduledCollectionResult:
     """Collect and ingest live queries sequentially with operational run history.
 
-    This is intentionally one-shot: systemd/cron owns recurrence. Completed query
+    This is intentionally one-shot: the Docker worker owns recurrence. Completed query
     ingests and result rows remain committed if a later query fails.
     """
 

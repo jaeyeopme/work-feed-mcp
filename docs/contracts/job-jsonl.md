@@ -1,6 +1,6 @@
 # Job JSONL contract
 
-이 문서는 `src/upwork_app/integrations/upwork`가 생산하는 normalized job JSONL contract입니다. Downstream code는 Upwork transport internals가 아니라 이 contract를 소비해야 합니다.
+This document defines the normalized job JSONL contract produced by `src/upwork_app/integrations/upwork`. Downstream code must consume this contract, not Upwork transport internals.
 
 ## Producer and consumer
 

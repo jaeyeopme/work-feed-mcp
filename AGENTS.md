@@ -9,7 +9,7 @@ This repository is a Docker/MCP-first local data engine for the Upwork job disco
 - `src/upwork_app/repositories` and `src/upwork_app/db`: SQLite persistence, schema, and query helpers.
 - `src/upwork_app/domain`: collector-record validation and canonical data contracts.
 - `src/upwork_app/runtime` and `src/upwork_app/mcp_server`: Docker worker runtime and agent-facing MCP server.
-- `src/upwork_app/cli`: stable local/debug commands and legacy native operations.
+- `src/upwork_app/cli`: stable local/debug commands.
 
 The implemented app path is `integrations/upwork → services/scheduled_collection → SQLite → mcp_server`, with CLI commands kept as local/debug and native-operation entrypoints.
 
@@ -23,7 +23,7 @@ Keep Upwork collection dumb and secret-safe:
 - recommendation/ranking belongs in the consuming agent layer unless explicitly promoted later.
 - no proxy acquisition docs or access-control bypass playbooks.
 
-SQLite persistence belongs in ingestion/db/repository code. Analytics and MCP reads SQLite only. Docker Compose is the primary runtime: the worker owns recurring collection and the MCP server exposes agent-facing tools. Native OS scheduler wrappers are compatibility/debug paths, not the primary user onboarding path.
+SQLite persistence belongs in ingestion/db/repository code. Analytics and MCP reads SQLite only. Docker Compose is the primary runtime: the worker owns recurring collection and the MCP server exposes agent-facing tools.
 
 Use `docs/LLM_CONTEXT.md` and `docs/contracts/job-jsonl.md` for detailed context.
 

@@ -35,9 +35,5 @@ snapshot-*.json
 .idea/
 .vscode/
 
-# OMX runtime noise; keep .omx/context and .omx/plans available as provenance
-.omx/logs/
-.omx/state/
-.omx/metrics.json
-.omx/tmux-hook.json
-.omx
+# OMX runtime/planning artifacts - never commit
+.omx/

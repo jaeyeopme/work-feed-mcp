@@ -1,4 +1,4 @@
-.PHONY: quality smoke e2e-smoke docker-compose-config live-smoke collect-live-once clean
+.PHONY: up down restart status logs config quality smoke e2e-smoke docker-compose-config live-smoke clean
 
 QUERY ?=
 APP_DB ?= $(CURDIR)/data/upwork.sqlite
@@ -8,6 +8,23 @@ FIXTURE ?= tests/fixtures/visitor_job_search_response.json
 SMOKE_OUT ?= /tmp/upwork-app-fixture.jsonl
 E2E_DB ?= /tmp/upwork-e2e.sqlite
 E2E_JSONL ?= /tmp/upwork-e2e.jsonl
+
+up:
+	docker compose up -d
+
+down:
+	docker compose down
+
+restart:
+	docker compose restart
+
+status:
+	docker compose ps
+
+logs:
+	docker compose logs -f collector-worker upwork-collector-mcp
+
+config: docker-compose-config
 
 quality:
 	uv run --extra dev ruff format --check .
@@ -33,8 +50,6 @@ docker-compose-config:
 live-smoke:
 	@UPWORK_COLLECTOR_LIVE=1 uv run --extra dev upwork-app-collect --live $(if $(QUERY),--query "$(QUERY)",) --max-pages $(MAX_PAGES) --page-size $(PAGE_SIZE)
 
-collect-live-once:
-	@QUERY="$(QUERY)" APP_DB="$(APP_DB)" MAX_PAGES="$(MAX_PAGES)" PAGE_SIZE="$(PAGE_SIZE)" ./scripts/collect_live_once.sh
 
 clean:
 	rm -rf .pytest_cache .mypy_cache .ruff_cache src/*.egg-info

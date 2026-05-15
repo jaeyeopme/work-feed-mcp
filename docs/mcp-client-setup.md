@@ -17,8 +17,8 @@ http://127.0.0.1:${UPWORK_COLLECTOR_MCP_PORT:-8000}${UPWORK_COLLECTOR_MCP_PATH:-
 ## Start and check the runtime
 
 ```bash
-docker compose up -d
-docker compose ps
+make up
+make status
 ```
 
 Docker health checks prove container readiness and HTTP transport reachability for `/mcp`. They do **not** run a full MCP protocol initialize / tools/list / tool-call smoke. Run a protocol-level smoke from your MCP client if you need that evidence.
@@ -44,4 +44,4 @@ If your client uses a different field name, keep the same semantic values: serve
 
 ## What agents can do
 
-Use the README User guide tool list as the source of truth for available tools. The MCP surface exposes collected job reads, run/status reads, and collector control queueing. It is not a REST API, not a recommendation engine, and not an auto-apply/proposal system.
+Use the README MCP tools list as the source of truth for available tools. The MCP surface exposes collected job reads, run/status reads, and collector control queueing. It is not a REST API, not a recommendation engine, and not an auto-apply/proposal system.

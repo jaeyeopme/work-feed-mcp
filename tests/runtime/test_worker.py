@@ -74,7 +74,7 @@ def test_pause_skips_scheduled_run(tmp_path: Path) -> None:
 
 def test_collect_scheduled_accepts_trigger(tmp_path: Path) -> None:
     # Regression anchor for worker-triggered run history. Use direct run_history helper to
-    # verify trigger vocabulary can be stored independently of systemd scheduler wording.
+    # verify trigger vocabulary can be stored independently of worker wording.
     db = tmp_path / "upwork.sqlite"
     with connect_worker(str(db)) as connection:
         run_history.create_run(

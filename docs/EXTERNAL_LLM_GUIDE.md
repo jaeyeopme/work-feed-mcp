@@ -1,8 +1,6 @@
 # External LLM Guide: using the Upwork data engine
 
-이 문서는 ChatGPT, Claude, Gemini 같은 외부 LLM에게 이 프로젝트를 설명하고 작업을 맡길 때 붙여넣기 좋은 가이드입니다.
-
-목표는 외부 LLM이 이 저장소를 **지원 자동화 도구**나 웹 백엔드로 오해하지 않고, 현재 구현된 **Docker worker 수집 → SQLite 저장 → MCP 제공** 흐름을 올바르게 사용/확장하도록 만드는 것입니다.
+Use this guide when handing the repository to another LLM or coding agent. The goal is to keep the agent focused on the implemented Docker worker -> SQLite -> MCP flow, not on support automation, web backend work, or proposal generation.
 
 ## Copy-paste project brief
 
@@ -17,14 +15,14 @@ Current structure:
 - src/upwork_app/integrations/upwork: Upwork transport, credentials, GraphQL, normalization.
 - src/upwork_app/runtime: Docker worker runtime for recurring collection.
 - src/upwork_app/mcp_server: Streamable HTTP MCP server for agent usage.
-- src/upwork_app/cli: local/debug and legacy native CLIs.
+- src/upwork_app/cli: local/debug CLIs.
 - tests: CLI/service tests and fixtures.
 
 Product intent:
 - Stable, deduplicated job storage for later external agent selection.
 - Agents consume MCP tools for job lookup, status reads, and collector control.
 - Not Upwork application automation.
-- No auto-apply, proposal/message generation, backend ranking, or report delivery in the core data engine. Docker Compose is the primary runtime; OS schedulers are legacy/native compatibility paths only.
+- No auto-apply, proposal/message generation, backend ranking, or report delivery in the core data engine. Docker Compose is the primary runtime.
 
 Hard boundaries:
 - Keep Upwork collection dumb and secret-safe.
@@ -56,8 +54,8 @@ Primary Docker/MCP user flow:
 
 ```bash
 cp .env.example .env
-docker compose up -d
-docker compose ps
+make up
+make status
 ```
 
 MCP endpoint for agents:
@@ -74,14 +72,8 @@ config_get, config_update, collector_run_once, collector_pause,
 collector_resume, collector_command_status
 ```
 
-Local/debug CLI commands still exist, but they are not the primary user onboarding path:
+Local/debug Python CLI commands still exist, but they are not the primary user onboarding path. Normal users should operate the Docker runtime through `make up`, `make status`, `make logs`, `make restart`, and `make down`.
 
-```bash
-uv run upwork-app --help
-uv run upwork-app scheduler-status --db ./data/upwork.sqlite --limit 5
-```
-
-Legacy native scheduler wrappers may remain for non-Docker deployments. Do not present them as the default Docker/MCP user path.
 
 ## Verification commands
 

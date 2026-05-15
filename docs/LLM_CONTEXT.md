@@ -14,9 +14,8 @@ src/upwork_app/domain/              domain validation/data types
 src/upwork_app/integrations/upwork/ Upwork transport + normalization
 src/upwork_app/runtime/             Docker worker runtime
 src/upwork_app/mcp_server/          agent-facing Streamable HTTP MCP server
-src/upwork_app/cli/                 local/debug and legacy native CLI entrypoints
+src/upwork_app/cli/                 local/debug CLI entrypoints
 tests/                              CLI/service tests and fixtures
-scripts/                            local operational helpers
 ```
 
 There is no longer a `packages/*` compatibility layer. New code should go under `src/upwork_app`.
@@ -41,7 +40,7 @@ Ingestion is deduplicating: existing `job_id` values are skipped and newly inser
 - Do not store upstream GraphQL/private payloads, raw snapshots, or per-job observation logs. Scheduled run history is limited to redacted operational summaries.
 - Do not run live Upwork collection unless the user explicitly opts in.
 - Analytics reads SQLite only.
-- Public runtime is Docker Compose + MCP first: a `collector-worker` container owns recurring collection and an `upwork-collector-mcp` container exposes agent-facing MCP tools over the shared SQLite DB. Native/legacy scheduler execution is a compatibility/debug path; do not present OS scheduler setup as the primary user path.
+- Public runtime is Docker Compose + MCP first: a `collector-worker` container owns recurring collection and an `upwork-collector-mcp` container exposes agent-facing MCP tools over the shared SQLite DB.
 - Ranking, reporting, notification, UI, REST-first API, internal LLM recommendation, proposal/message generation, and auto-apply are out of this repo's core data-engine scope.
 - Recommendation/ranking belongs in the consuming agent layer unless explicitly promoted later.
 

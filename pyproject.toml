@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "upwork-app"
 version = "0.1.0"
-description = "CLI-first data engine for the Upwork job discovery pipeline."
+description = "Docker/MCP-first data engine for the Upwork job discovery pipeline."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -23,7 +23,6 @@ upwork-app-analytics = "upwork_app.cli.analytics:main"
 upwork-app-collect-scheduled = "upwork_app.cli.collect_scheduled:main"
 upwork-app-health = "upwork_app.cli.health:main"
 upwork-app-scheduler-status = "upwork_app.cli.scheduler_status:main"
-upwork-app-scheduler = "upwork_app.cli.scheduler:main"
 upwork-app-worker = "upwork_app.cli.worker:main"
 upwork-app-mcp-server = "upwork_app.cli.mcp_server:main"
 

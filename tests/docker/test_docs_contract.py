@@ -40,8 +40,17 @@ def test_readme_normal_user_contract() -> None:
     assert "sequenceDiagram" in _readme()
     assert "not affiliated with, endorsed by, or sponsored by Upwork Inc." in _readme()
     assert "http://127.0.0.1:8000/mcp" in section
-    assert section.count("docs/mcp-client-setup.md") == 1
-    assert "Claude Code and Codex configuration examples" in section
+    assert "docs/mcp-client-setup.md" not in section
+    assert "## Connect an MCP client" in _readme()
+    assert "### Claude Code" in section
+    assert "claude mcp add --transport http work-feed http://127.0.0.1:8000/mcp" in section
+    assert '"type": "http"' in section
+    assert "### Codex" in section
+    assert "codex mcp add work-feed --url http://127.0.0.1:8000/mcp" in section
+    assert "[mcp_servers.work-feed]" in section
+    assert "Codex infers streamable HTTP from `url`" in section
+    assert "Docker health checks" in section
+    assert "do **not** run a full MCP protocol" in section
     assert "docker compose up -d" not in section
     assert "uv run" not in section
     assert not KOREAN_RE.search(section)
@@ -116,42 +125,6 @@ def test_readme_whole_document_boundaries() -> None:
     assert "cookie/session setup" not in readme.lower()
     assert "auto-apply instructions" not in readme.lower()
     assert "proposal instructions" not in readme.lower()
-
-
-def test_mcp_client_setup_contract() -> None:
-    docs = Path("docs/mcp-client-setup.md").read_text()
-    assert "http://127.0.0.1:8000/mcp" in docs
-    assert "Streamable HTTP MCP" in docs
-    assert "not a REST API" in docs
-    assert "## Claude Code" in docs
-    assert "claude mcp add --transport http work-feed http://127.0.0.1:8000/mcp" in docs
-    assert '"type": "http"' in docs
-    assert "## Codex" in docs
-    assert "codex mcp add work-feed --url http://127.0.0.1:8000/mcp" in docs
-    assert "[mcp_servers.work-feed]" in docs
-    assert "Codex infers streamable HTTP from `url`" in docs
-    assert "README MCP tools list" in docs
-    assert "Docker health checks" in docs
-    assert "do **not** run a full MCP protocol" in docs
-    assert "make up" in docs
-    assert "make status" in docs
-    assert "docker compose up -d" not in docs
-    assert not KOREAN_RE.search(docs)
-    forbidden = [
-        "fixture",
-        "mock",
-        "live-smoke",
-        "make live-smoke",
-        "CI/CD",
-        "proxy acquisition",
-        "bypass",
-        "cookie/session",
-        "auto-apply instructions",
-        "proposal instructions",
-    ]
-    lowered = docs.lower()
-    assert not any(term.lower() in lowered for term in forbidden)
-    assert "not an auto-apply" in docs
 
 
 def test_agent_context_docs_track_docker_mcp_runtime() -> None:

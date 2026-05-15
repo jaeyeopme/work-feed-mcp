@@ -68,8 +68,11 @@ def test_runtime_env_names() -> None:
 
 def test_mcp_server_name_is_work_feed() -> None:
     server = Path("src/work_feed_mcp/mcp_server/server.py").read_text()
+    readme = Path("README.md").read_text()
     assert 'FastMCP("work-feed")' in server
-    assert '"work-feed"' in Path("docs/mcp-client-setup.md").read_text()
+    assert '"work-feed"' in readme
+    assert "docs/mcp-client-setup.md" not in readme
+    assert not Path("docs/mcp-client-setup.md").exists()
 
 
 def test_allowlisted_stale_name_contract() -> None:

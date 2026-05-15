@@ -19,6 +19,7 @@ def test_compose_contract() -> None:
     assert compose.count("upwork-data:/data") == 2
     assert '"upwork-app", "health", "--role", "worker"' in compose
     assert '"upwork-app", "health", "--role", "mcp"' in compose
+    assert "condition: service_healthy" in compose
 
 
 def test_compose_uses_env_overrides() -> None:

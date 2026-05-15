@@ -40,6 +40,8 @@ docker compose logs -f collector-worker
 uv run --extra dev upwork-app health --db /tmp/upwork-worker-smoke.sqlite
 ```
 
+The MCP service waits for the worker healthcheck with Compose `condition: service_healthy`, so `docker compose ps` should show both services as healthy after worker bootstrap completes.
+
 The Docker runtime is live by default because starting compose is the explicit opt-in boundary. Defaults are intentionally conservative and match the validated server baseline:
 
 - interval: 60 minutes

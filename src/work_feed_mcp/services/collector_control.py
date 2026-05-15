@@ -8,12 +8,13 @@ from pathlib import Path
 from typing import Any, Literal
 
 from work_feed_mcp.db.connection import connect_control, connect_readonly, schema_has_tables
+from work_feed_mcp.db.schema import UnsupportedSchemaVersionError, assert_supported_schema_version
 from work_feed_mcp.repositories import collector_control
 
 CONTROL_TABLES = {"collector_config", "collector_commands"}
 BASE_TABLES = {"jobs", "job_skills", "collector_runs", "collector_run_results"}
 
-NotReadyReason = Literal["db_missing", "schema_missing"]
+NotReadyReason = Literal["db_missing", "schema_missing", "unsupported_schema"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,11 +22,16 @@ class NotReadyError(Exception):
     reason: NotReadyReason
 
     def to_dict(self) -> dict[str, Any]:
+        next_action = (
+            "upgrade work-feed or migrate the database"
+            if self.reason == "unsupported_schema"
+            else "start work-feed-worker"
+        )
         return {
             "ok": False,
             "error": "not_ready",
             "reason": self.reason,
-            "next_action": "start work-feed-worker",
+            "next_action": next_action,
         }
 
 
@@ -37,6 +43,11 @@ def ensure_ready_read(db_path: str) -> sqlite3.Connection:
     if not Path(db_path).exists():
         raise NotReadyError("db_missing")
     connection = connect_readonly(db_path)
+    try:
+        assert_supported_schema_version(connection)
+    except UnsupportedSchemaVersionError as exc:
+        connection.close()
+        raise NotReadyError("unsupported_schema") from exc
     if not schema_has_tables(connection, BASE_TABLES | CONTROL_TABLES):
         connection.close()
         raise NotReadyError("schema_missing")
@@ -47,6 +58,11 @@ def ensure_ready_control(db_path: str) -> sqlite3.Connection:
     if not Path(db_path).exists():
         raise NotReadyError("db_missing")
     connection = connect_control(db_path)
+    try:
+        assert_supported_schema_version(connection)
+    except UnsupportedSchemaVersionError as exc:
+        connection.close()
+        raise NotReadyError("unsupported_schema") from exc
     if not schema_has_tables(connection, BASE_TABLES | CONTROL_TABLES):
         connection.close()
         raise NotReadyError("schema_missing")

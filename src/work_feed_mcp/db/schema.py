@@ -3,6 +3,31 @@
 from __future__ import annotations
 
 import sqlite3
+from dataclasses import dataclass
+
+SCHEMA_VERSION = 1
+
+
+@dataclass(frozen=True, slots=True)
+class UnsupportedSchemaVersionError(Exception):
+    found: int
+    supported: int = SCHEMA_VERSION
+
+    def __str__(self) -> str:
+        return f"unsupported schema version: found {self.found}, supported <= {self.supported}"
+
+
+def schema_version(connection: sqlite3.Connection) -> int:
+    row = connection.execute("PRAGMA user_version").fetchone()
+    return int(row[0]) if row is not None else 0
+
+
+def assert_supported_schema_version(connection: sqlite3.Connection) -> int:
+    version = schema_version(connection)
+    if version > SCHEMA_VERSION:
+        raise UnsupportedSchemaVersionError(version)
+    return version
+
 
 SCHEMA_SQL = """
 PRAGMA foreign_keys = ON;
@@ -104,5 +129,8 @@ CREATE INDEX IF NOT EXISTS idx_collector_commands_created_at
 
 
 def initialize_schema(connection: sqlite3.Connection) -> None:
+    current_version = assert_supported_schema_version(connection)
     connection.executescript(SCHEMA_SQL)
     connection.execute("PRAGMA foreign_keys = ON")
+    if current_version < SCHEMA_VERSION:
+        connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")

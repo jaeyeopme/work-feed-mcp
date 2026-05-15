@@ -136,7 +136,23 @@ url = "http://127.0.0.1:8000/mcp"
 
 Codex infers streamable HTTP from `url`; do not add Claude-style `type` or `transport` fields to the TOML entry.
 
-After connecting, ask your agent to call `jobs_recent` with `limit: 5` to confirm the MCP server responds. An empty result is okay on a fresh database.
+After connecting, ask your agent to call `jobs_recent` with `limit: 5` to confirm the MCP server responds. An empty result is okay on a fresh database. For a protocol-level check against a running MCP server, run:
+
+```bash
+make mcp-smoke
+```
+
+## Codex skill for collected jobs
+
+This repository ships a project-local Codex skill at `skills/work-feed-jobs`. Use it when an agent should read and summarize already-collected Upwork jobs through the work-feed MCP tools. Typical prompts include:
+
+- `show recent collected jobs`
+- `find python jobs`
+- `pick recommendation candidates`
+- `work-feed jobs`
+- `Upwork collected jobs`
+
+The skill also contains localized trigger examples for agent discovery. It is read-only over collected data. It prefers `jobs_recent`, `jobs_search`, `jobs_get`, `runs_recent`, and `collector_status`; it does not run live collection, configure schedules, operate Docker, write proposals/messages, auto-apply, or provide cookie/session/proxy/bypass guidance.
 
 ## Operate the runtime
 
@@ -203,7 +219,7 @@ If MCP starts before the worker initializes SQLite, tools return stable `not_rea
 { "ok": false, "error": "not_ready", "reason": "db_missing", "next_action": "start work-feed-worker" }
 ```
 
-`reason` may be `db_missing` or `schema_missing`. An initialized DB with no rows is not an error; list tools return `{ "ok": true, "status": "empty", "rows": [] }`.
+`reason` may be `db_missing`, `schema_missing`, or `unsupported_schema`. For `unsupported_schema`, upgrade work-feed or migrate the database before reading or controlling the runtime. An initialized DB with no rows is not an error; list tools return `{ "ok": true, "status": "empty", "rows": [] }`.
 
 ## What this does not do
 

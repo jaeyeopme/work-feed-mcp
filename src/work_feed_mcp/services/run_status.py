@@ -6,18 +6,22 @@ from typing import Any
 
 from work_feed_mcp.repositories import collector_control, run_history
 from work_feed_mcp.services.collector_control import ensure_ready_read
+from work_feed_mcp.services.limits import validate_limit
 
 
 def run_status(db_path: str, *, limit: int = 5) -> dict[str, Any]:
+    resolved_limit = validate_limit(limit)
     connection = ensure_ready_read(db_path)
     try:
         last_run = run_history.latest_run(connection)
-        recent_runs = run_history.recent_runs(connection, limit=limit)
-        recent_commands = collector_control.recent_commands(connection, limit=limit)
+        recent_runs = run_history.recent_runs(connection, limit=resolved_limit)
+        recent_commands = collector_control.recent_commands(connection, limit=resolved_limit)
         config = collector_control.get_config(connection)
         run_id = str(last_run["run_id"]) if last_run else None
         recent_results = (
-            run_history.recent_results(connection, run_id=run_id, limit=limit) if run_id else []
+            run_history.recent_results(connection, run_id=run_id, limit=resolved_limit)
+            if run_id
+            else []
         )
         return {
             "ok": True,

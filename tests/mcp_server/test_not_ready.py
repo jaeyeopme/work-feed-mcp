@@ -36,3 +36,47 @@ def test_empty_schema_returns_ok_empty(tmp_path: Path) -> None:
     assert result["ok"] is True
     assert result["status"] == "empty"
     assert result["rows"] == []
+
+
+def test_newer_schema_returns_not_ready_without_downgrade(tmp_path: Path) -> None:
+    db = tmp_path / "newer.sqlite"
+    connection = sqlite3.connect(db)
+    try:
+        connection.execute("PRAGMA user_version = 999")
+        connection.commit()
+    finally:
+        connection.close()
+
+    settings = RuntimeSettings(db_path=str(db))
+    result = tools.jobs_recent(settings=settings)
+    assert result["reason"] == "unsupported_schema"
+    assert result["next_action"] == "upgrade work-feed or migrate the database"
+
+    connection = sqlite3.connect(db)
+    try:
+        assert int(connection.execute("PRAGMA user_version").fetchone()[0]) == 999
+        assert list(connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")) == []
+    finally:
+        connection.close()
+
+
+def test_newer_schema_control_tool_returns_not_ready_without_downgrade(tmp_path: Path) -> None:
+    db = tmp_path / "newer-control.sqlite"
+    connection = sqlite3.connect(db)
+    try:
+        connection.execute("PRAGMA user_version = 999")
+        connection.commit()
+    finally:
+        connection.close()
+
+    settings = RuntimeSettings(db_path=str(db))
+    result = tools.collector_run_once(settings=settings)
+    assert result["reason"] == "unsupported_schema"
+    assert result["next_action"] == "upgrade work-feed or migrate the database"
+
+    connection = sqlite3.connect(db)
+    try:
+        assert int(connection.execute("PRAGMA user_version").fetchone()[0]) == 999
+        assert list(connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")) == []
+    finally:
+        connection.close()

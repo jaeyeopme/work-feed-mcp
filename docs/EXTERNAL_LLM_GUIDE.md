@@ -36,6 +36,9 @@ Use these docs as source of truth:
 - README.md
 - docs/LLM_CONTEXT.md
 - docs/contracts/job-jsonl.md
+
+Project-local Codex skill:
+- skills/work-feed-jobs for read-only collected job lookup, filtering, and candidate summaries through MCP tools.
 ```
 
 ## What the current project can do
@@ -71,6 +74,8 @@ jobs_recent, jobs_search, jobs_get, runs_recent, collector_status,
 config_get, config_update, collector_run_once, collector_pause,
 collector_resume, collector_command_status
 ```
+
+For Codex agents, prefer the bundled `skills/work-feed-jobs` skill for read-only job discovery prompts such as recent jobs, skill searches, collected job lookup, and candidate summaries.
 
 Local/debug Python CLI commands still exist, but they are not the primary user onboarding path. Normal users should operate the Docker runtime through `make up`, `make status`, `make logs`, `make restart`, and `make down`.
 
@@ -113,6 +118,7 @@ Default live smoke asks Upwork for 50 jobs in one visitor GraphQL page. Success 
 2. `docs/LLM_CONTEXT.md`
 3. `docs/EXTERNAL_LLM_GUIDE.md`
 4. `docs/contracts/job-jsonl.md`
-5. Relevant source/tests under `src/work_feed_mcp` and `tests`.
+5. `skills/work-feed-jobs/SKILL.md` for Codex job lookup behavior
+6. Relevant source/tests under `src/work_feed_mcp` and `tests`.
 
 Do not paste `.omx/logs`, `.omx/state`, or runtime traces unless the question is specifically about OMX execution.

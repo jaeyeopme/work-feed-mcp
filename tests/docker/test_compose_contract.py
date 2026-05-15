@@ -64,7 +64,18 @@ def test_dockerfile_uses_locked_uv_runtime() -> None:
 
 def test_dockerignore_excludes_local_runtime_artifacts() -> None:
     dockerignore = pathlib.Path(".dockerignore").read_text().splitlines()
-    for pattern in [".venv", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".omx"]:
+    for pattern in [".venv", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".omx", "skills"]:
         assert pattern in dockerignore
     for pattern in ["*.sqlite", "*.db", "__pycache__", "*.py[cod]", "data"]:
         assert pattern in dockerignore
+
+
+def test_makefile_exposes_mcp_protocol_smoke() -> None:
+    makefile = pathlib.Path("Makefile").read_text()
+    cli = pathlib.Path("src/work_feed_mcp/cli/__main__.py").read_text()
+    smoke = pathlib.Path("src/work_feed_mcp/cli/mcp_smoke.py").read_text()
+    assert "mcp-smoke:" in makefile
+    assert "work-feed mcp-smoke --url $(MCP_URL)" in makefile
+    assert 'subcommands.add_parser("mcp-smoke", add_help=False)' in cli
+    assert "streamable_http_client" in smoke
+    assert "jobs_recent" in smoke

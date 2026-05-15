@@ -34,6 +34,10 @@ Upwork visitor collection
 
 Ingestion is deduplicating: existing `job_id` values are skipped and newly inserted jobs are returned as downstream selection candidates. Scheduled collection also stores operational summaries in `collector_runs` and `collector_run_results`; it does not store upstream raw payloads or per-job observation history.
 
+## Agent skill
+
+Project-local Codex skill: `skills/work-feed-jobs`. Use it for agent-facing lookup and short candidate summaries over already-collected jobs via MCP tools. It routes recent-job requests to `jobs_recent`, keyword/skill searches to `jobs_search`, specific ids to `jobs_get`, and collector status questions to `collector_status` / `runs_recent`. The skill is not a collector, scheduler, Docker operator, proposal writer, auto-apply flow, or backend ranking engine.
+
 ## Boundaries
 
 - Keep Upwork collection dumb and secret-safe.

@@ -10,6 +10,7 @@ from work_feed_mcp.cli import (
     health,
     ingest,
     mcp_server,
+    mcp_smoke,
     scheduler_status,
     worker,
 )
@@ -27,6 +28,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     subcommands.add_parser("scheduler-status", add_help=False)
     subcommands.add_parser("worker", add_help=False)
     subcommands.add_parser("mcp-server", add_help=False)
+    subcommands.add_parser("mcp-smoke", add_help=False)
     namespace, rest = parser.parse_known_args(args)
     command = namespace.command
     if command == "collect":
@@ -45,6 +47,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return worker.main(rest)
     if command == "mcp-server":
         return mcp_server.main(rest)
+    if command == "mcp-smoke":
+        return mcp_smoke.main(rest)
     return 2
 
 

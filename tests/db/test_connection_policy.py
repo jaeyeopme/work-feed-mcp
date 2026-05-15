@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from work_feed_mcp.db.connection import connect_control, connect_readonly, connect_worker
+from work_feed_mcp.db.schema import SCHEMA_VERSION, UnsupportedSchemaVersionError, initialize_schema
 from work_feed_mcp.services.collector_control import NotReadyError
 from work_feed_mcp.services.run_status import run_status
 
@@ -18,6 +19,7 @@ def test_worker_connection_initializes_schema_and_pragmas(tmp_path: Path) -> Non
         busy_timeout = int(connection.execute("PRAGMA busy_timeout").fetchone()[0])
         foreign_keys = int(connection.execute("PRAGMA foreign_keys").fetchone()[0])
         synchronous = int(connection.execute("PRAGMA synchronous").fetchone()[0])
+        schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
         tables = {
             str(row[0])
             for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
@@ -29,6 +31,7 @@ def test_worker_connection_initializes_schema_and_pragmas(tmp_path: Path) -> Non
     assert busy_timeout == 10_000
     assert foreign_keys == 1
     assert synchronous == 1
+    assert schema_version == SCHEMA_VERSION
     assert {"collector_config", "collector_commands", "jobs", "collector_runs"} <= tables
 
 
@@ -58,3 +61,15 @@ def test_run_status_read_path_does_not_initialize_schema(tmp_path: Path) -> None
     finally:
         connection.close()
     assert tables == []
+
+
+def test_initialize_schema_rejects_newer_database_version(tmp_path: Path) -> None:
+    db = tmp_path / "newer.sqlite"
+    connection = sqlite3.connect(db)
+    try:
+        connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION + 1}")
+        with pytest.raises(UnsupportedSchemaVersionError):
+            initialize_schema(connection)
+        assert int(connection.execute("PRAGMA user_version").fetchone()[0]) == SCHEMA_VERSION + 1
+    finally:
+        connection.close()

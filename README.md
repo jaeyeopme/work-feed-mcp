@@ -4,14 +4,28 @@ Docker/MCP-first local data engine for collecting Upwork job listings into SQLit
 
 This project is not affiliated with, endorsed by, or sponsored by Upwork Inc. Upwork is referenced only as the source platform for collected public job listings.
 
-![Architecture](docs/architecture.svg)
+```mermaid
+sequenceDiagram
+    participant U as Upwork job search
+    participant W as work-feed-worker
+    participant DB as SQLite volume
+    participant M as work-feed-mcp
+    participant A as Agent / MCP client
 
-```text
-Upwork visitor collection
-  -> normalized records
-  -> deduplicated SQLite storage
-  -> MCP tools for lookup and collector control
-  -> your agent handles UI, ranking, and decisions
+    W->>U: Collect public listings
+    U-->>W: Job search responses
+    W->>W: Normalize and deduplicate
+    W->>DB: Store jobs and run summaries
+
+    A->>M: jobs_recent / jobs_search / jobs_get
+    M->>DB: Read collected jobs
+    DB-->>M: Rows
+    M-->>A: MCP tool result
+
+    A->>M: config_update / collector_pause / collector_run_once
+    M->>DB: Enqueue command
+    W->>DB: Poll command queue
+    W->>W: Apply between collection runs
 ```
 
 This is not a REST web app, application bot, proposal generator, auto-apply tool, or built-in recommendation engine.

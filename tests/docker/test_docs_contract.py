@@ -36,7 +36,8 @@ def test_readme_normal_user_contract() -> None:
     assert "make restart" in section
     assert "make down" in section
     assert "# work-feed-mcp" in _readme()
-    assert "docs/architecture.svg" in _readme()
+    assert "```mermaid" in _readme()
+    assert "sequenceDiagram" in _readme()
     assert "not affiliated with, endorsed by, or sponsored by Upwork Inc." in _readme()
     assert "http://127.0.0.1:8000/mcp" in section
     assert section.count("docs/mcp-client-setup.md") == 1

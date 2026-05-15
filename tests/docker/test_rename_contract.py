@@ -1,12 +1,7 @@
 from __future__ import annotations
 
-import re
-import shutil
-import subprocess
 import tomllib
 from pathlib import Path
-
-import pytest
 
 SCAN_PATHS = [
     Path("README.md"),
@@ -116,26 +111,12 @@ def test_allowlisted_stale_name_contract() -> None:
     assert not violations
 
 
-def test_architecture_d2_and_svg_are_present() -> None:
-    assert Path("docs/architecture.d2").is_file()
-    svg = Path("docs/architecture.svg")
-    assert svg.is_file()
-    text = svg.read_text()
-    assert "work-feed-worker" in text
-    assert "work-feed-mcp" in text
-    assert "SQLite" in text
-    match = re.search(r'viewBox="0 0 (?P<width>\d+) (?P<height>\d+)"', text)
-    assert match is not None
-    width = int(match.group("width"))
-    height = int(match.group("height"))
-    assert width / height < 1.6
-
-
-def test_architecture_svg_is_reproducible() -> None:
-    d2 = shutil.which("d2") or "/opt/homebrew/bin/d2"
-    if not Path(d2).exists():
-        pytest.skip("d2 binary is not installed")
-    before = Path("docs/architecture.svg").read_text()
-    subprocess.run([d2, "docs/architecture.d2", "docs/architecture.svg"], check=True)
-    after = Path("docs/architecture.svg").read_text()
-    assert after == before
+def test_readme_uses_mermaid_sequence_diagram() -> None:
+    readme = Path("README.md").read_text()
+    assert "```mermaid" in readme
+    assert "sequenceDiagram" in readme
+    assert "work-feed-worker" in readme
+    assert "work-feed-mcp" in readme
+    assert "SQLite volume" in readme
+    assert not Path("docs/architecture.d2").exists()
+    assert not Path("docs/architecture.svg").exists()

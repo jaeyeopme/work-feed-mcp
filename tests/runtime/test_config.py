@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from upwork_app.runtime.config import load_runtime_settings
+from upwork_app.runtime.config import DEFAULT_MCP_PATH, load_runtime_settings
 
 
 def test_worker_defaults_are_container_defaults() -> None:
@@ -10,3 +10,10 @@ def test_worker_defaults_are_container_defaults() -> None:
     assert settings.page_size == 50
     assert settings.queries is None
     assert settings.live is True
+    assert DEFAULT_MCP_PATH == "/mcp"
+    assert settings.mcp_path == "/mcp"
+
+
+def test_mcp_path_env_override() -> None:
+    settings = load_runtime_settings({"UPWORK_COLLECTOR_MCP_PATH": "/custom-mcp"})
+    assert settings.mcp_path == "/custom-mcp"

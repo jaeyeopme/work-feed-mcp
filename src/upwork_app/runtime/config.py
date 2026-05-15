@@ -13,6 +13,7 @@ DEFAULT_MAX_PAGES = 5
 DEFAULT_PAGE_SIZE = 50
 DEFAULT_MCP_HOST = "127.0.0.1"
 DEFAULT_MCP_PORT = 8000
+DEFAULT_MCP_PATH = "/mcp"
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +27,7 @@ class RuntimeSettings:
     live: bool = True
     mcp_host: str = DEFAULT_MCP_HOST
     mcp_port: int = DEFAULT_MCP_PORT
+    mcp_path: str = DEFAULT_MCP_PATH
     mcp_transport: str = "streamable-http"
     log_level: str = "INFO"
     fixture_path: str | None = None
@@ -54,6 +56,7 @@ def load_runtime_settings(env: Mapping[str, str] | None = None) -> RuntimeSettin
         live=source.get("UPWORK_COLLECTOR_LIVE", "1") == "1",
         mcp_host=source.get("UPWORK_COLLECTOR_MCP_HOST", DEFAULT_MCP_HOST),
         mcp_port=_int(source.get("UPWORK_COLLECTOR_MCP_PORT"), DEFAULT_MCP_PORT),
+        mcp_path=_path(source.get("UPWORK_COLLECTOR_MCP_PATH"), DEFAULT_MCP_PATH),
         mcp_transport=source.get("UPWORK_COLLECTOR_MCP_TRANSPORT", "streamable-http"),
         log_level=source.get("UPWORK_COLLECTOR_LOG_LEVEL", "INFO"),
         fixture_path=source.get("UPWORK_COLLECTOR_FIXTURE") or None,
@@ -80,3 +83,12 @@ def _queries(value: str | None) -> tuple[str, ...] | None:
         return None
     parsed = tuple(part.strip() for part in value.split(",") if part.strip())
     return parsed or None
+
+
+def _path(value: str | None, default: str) -> str:
+    if value is None or not value.strip():
+        return default
+    parsed = value.strip()
+    if not parsed.startswith("/"):
+        raise ValueError("runtime path settings must start with '/'")
+    return parsed

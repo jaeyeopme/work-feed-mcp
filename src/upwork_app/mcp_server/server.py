@@ -85,12 +85,17 @@ def build_server(settings: RuntimeSettings | None = None) -> FastMCP:
     return mcp
 
 
+def configure_streamable_http_settings(server: FastMCP, settings: RuntimeSettings) -> None:
+    server.settings.host = settings.mcp_host
+    server.settings.port = settings.mcp_port
+    server.settings.streamable_http_path = settings.mcp_path
+
+
 def run_server(settings: RuntimeSettings | None = None) -> None:
     resolved = settings or load_runtime_settings()
     server = build_server(resolved)
     if resolved.mcp_transport == "stdio":
         server.run(transport="stdio")
     else:
-        server.settings.host = resolved.mcp_host
-        server.settings.port = resolved.mcp_port
+        configure_streamable_http_settings(server, resolved)
         server.run(transport="streamable-http")

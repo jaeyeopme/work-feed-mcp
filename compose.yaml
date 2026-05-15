@@ -30,6 +30,7 @@ services:
       UPWORK_COLLECTOR_DB: "${UPWORK_COLLECTOR_DB:-/data/upwork.sqlite}"
       UPWORK_COLLECTOR_MCP_HOST: "${UPWORK_COLLECTOR_MCP_HOST:-0.0.0.0}"
       UPWORK_COLLECTOR_MCP_PORT: "${UPWORK_COLLECTOR_MCP_PORT:-8000}"
+      UPWORK_COLLECTOR_MCP_PATH: "${UPWORK_COLLECTOR_MCP_PATH:-/mcp}"
       UPWORK_COLLECTOR_MCP_TRANSPORT: "${UPWORK_COLLECTOR_MCP_TRANSPORT:-streamable-http}"
     ports:
       - "127.0.0.1:${UPWORK_COLLECTOR_MCP_PORT:-8000}:${UPWORK_COLLECTOR_MCP_PORT:-8000}"
@@ -39,7 +40,7 @@ services:
       collector-worker:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "upwork-app", "health", "--role", "mcp", "--db", "/data/upwork.sqlite"]
+      test: ["CMD-SHELL", "upwork-app health --role mcp --db /data/upwork.sqlite --http-url http://127.0.0.1:$${UPWORK_COLLECTOR_MCP_PORT:-8000}$${UPWORK_COLLECTOR_MCP_PATH:-/mcp}"]
       interval: 30s
       timeout: 5s
       retries: 3

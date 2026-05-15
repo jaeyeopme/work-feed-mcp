@@ -57,7 +57,13 @@ cp .env.example .env
 docker compose up -d
 ```
 
-MCP is exposed as a Streamable HTTP service on the local host port from `compose.yaml`. Agents should use MCP tools such as:
+MCP is exposed as a Streamable HTTP service at `http://127.0.0.1:${UPWORK_COLLECTOR_MCP_PORT:-8000}${UPWORK_COLLECTOR_MCP_PATH:-/mcp}`. With defaults, use:
+
+```text
+http://127.0.0.1:8000/mcp
+```
+
+See [MCP client setup](docs/mcp-client-setup.md) for copy-paste agent client examples. Agents should use MCP tools such as:
 
 - `jobs_recent`, `jobs_search`, `jobs_get`
 - `runs_recent`, `collector_status`
@@ -93,7 +99,7 @@ If the MCP server starts before the worker initializes SQLite, read/control tool
 
 `reason` may be `db_missing` or `schema_missing`. An initialized DB with no rows is not an error; list tools return `{ "ok": true, "status": "empty", "rows": [] }`.
 
-Docker services also use `upwork-app health` as their healthcheck. The health command verifies the SQLite file, schema, and seeded `collector_config` without creating schema from read paths.
+Docker services also use `upwork-app health` as their healthcheck. Worker health verifies the SQLite file, schema, and seeded `collector_config` without creating schema from read paths. MCP health additionally checks fast HTTP transport reachability for the configured Streamable HTTP endpoint; it is not a full MCP initialize/tools/list protocol smoke.
 
 For non-live/local smoke, run the worker with fixture mode instead of live mode:
 
@@ -103,6 +109,14 @@ UPWORK_COLLECTOR_FIXTURE=tests/fixtures/visitor_job_search_response.json \
 UPWORK_COLLECTOR_DB=/tmp/upwork-worker-smoke.sqlite \
 uv run --extra dev upwork-app worker --max-iterations 1
 ```
+
+Optional live smoke is separate from default tests and must be explicitly requested:
+
+```bash
+UPWORK_COLLECTOR_LIVE=1 MAX_PAGES=1 PAGE_SIZE=50 make live-smoke
+```
+
+After live collection, agents can inspect high-level status through MCP tools such as `collector_status` and `jobs_recent`. Report live evidence separately from fixture/local test evidence.
 
 
 ## 설치 / 준비

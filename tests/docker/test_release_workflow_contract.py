@@ -1,0 +1,59 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+
+def _workflow() -> str:
+    return Path(".github/workflows/release.yml").read_text()
+
+
+def test_release_workflow_publishes_github_release_and_ghcr_image() -> None:
+    workflow = _workflow()
+
+    assert "name: release" in workflow
+    assert "tags:" in workflow
+    assert '"v*.*.*"' in workflow
+    assert "workflow_dispatch:" in workflow
+    assert "contents: write" in workflow
+    assert "packages: write" in workflow
+    assert "actions/checkout@v6" in workflow
+    assert "docker login ghcr.io" in workflow
+    assert "docker build" in workflow
+    assert "docker push" in workflow
+    assert "gh release create" in workflow
+
+
+def test_release_workflow_uses_versioned_ghcr_tags_and_metadata() -> None:
+    workflow = _workflow()
+
+    assert "ghcr.io/${REPOSITORY,,}" in workflow
+    assert '"${IMAGE}:${TAG}"' in workflow
+    assert '"${IMAGE}:${VERSION}"' in workflow
+    assert '"${IMAGE}:latest"' in workflow
+    assert "org.opencontainers.image.source" in workflow
+    assert "org.opencontainers.image.description" in workflow
+    assert "org.opencontainers.image.licenses=MIT" in workflow
+    assert "org.opencontainers.image.revision" in workflow
+
+
+def test_release_workflow_validates_tags_and_avoids_live_or_deploy_side_effects() -> None:
+    workflow = _workflow()
+
+    assert "release tags must look like vMAJOR.MINOR.PATCH" in workflow
+    assert "^v[0-9]+\\.[0-9]+\\.[0-9]+" in workflow
+    assert "make live-smoke" not in workflow
+    assert "WORK_FEED_LIVE=1" not in workflow
+    assert "ssh oracle-work-feed" not in workflow
+    assert "docker compose up" not in workflow
+    assert "ORACLE_SSH" not in workflow
+
+
+def test_releasing_docs_describe_tag_driven_release() -> None:
+    docs = Path("docs/RELEASING.md").read_text()
+
+    assert "git tag v0.1.0" in docs
+    assert "ghcr.io/jaeyeopme/work-feed-mcp:v0.1.0" in docs
+    assert "GitHub Release" in docs
+    assert "does not publish to PyPI" in docs
+    assert "does not deploy to Oracle Cloud" in docs
+    assert "does not run live Upwork collection" in docs

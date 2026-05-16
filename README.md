@@ -51,18 +51,18 @@ make status
 
 Configuration lives in `.env`. The defaults are conservative and work without credentials or cookies.
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `WORK_FEED_LIVE` | `1` | Enable visitor-mode live collection in Docker. Set to `0` only for local debugging. |
-| `WORK_FEED_DB` | `/data/work-feed.sqlite` | SQLite path inside the Docker volume. |
-| `WORK_FEED_INTERVAL_SECONDS` | `3600` | Wait time between worker collection runs. |
-| `WORK_FEED_MAX_PAGES` | `5` | Maximum pages per run. |
-| `WORK_FEED_PAGE_SIZE` | `50` | Jobs requested per page. |
-| `WORK_FEED_QUERIES` | empty | Optional comma-separated searches such as `python,scraping`; empty means unfiltered/latest. |
-| `WORK_FEED_LOG_LEVEL` | `INFO` | Worker log level. |
-| `WORK_FEED_MCP_HOST` | `0.0.0.0` | Container bind host for the MCP server. |
-| `WORK_FEED_MCP_PORT` | `8000` | Host port for the local MCP endpoint. |
-| `WORK_FEED_MCP_PATH` | `/mcp` | HTTP path for Streamable HTTP MCP. |
+| Variable                     | Default                  | Meaning                                                                                     |
+| ---------------------------- | ------------------------ | ------------------------------------------------------------------------------------------- |
+| `WORK_FEED_LIVE`             | `1`                      | Enable visitor-mode live collection in Docker. Set to `0` only for local debugging.         |
+| `WORK_FEED_DB`               | `/data/work-feed.sqlite` | SQLite path inside the Docker volume.                                                       |
+| `WORK_FEED_INTERVAL_SECONDS` | `3600`                   | Wait time between worker collection runs.                                                   |
+| `WORK_FEED_MAX_PAGES`        | `5`                      | Maximum pages per run.                                                                      |
+| `WORK_FEED_PAGE_SIZE`        | `50`                     | Jobs requested per page.                                                                    |
+| `WORK_FEED_QUERIES`          | empty                    | Optional comma-separated searches such as `python,scraping`; empty means unfiltered/latest. |
+| `WORK_FEED_LOG_LEVEL`        | `INFO`                   | Worker log level.                                                                           |
+| `WORK_FEED_MCP_HOST`         | `0.0.0.0`                | Container bind host for the MCP server.                                                     |
+| `WORK_FEED_MCP_PORT`         | `8000`                   | Host port for the local MCP endpoint.                                                       |
+| `WORK_FEED_MCP_PATH`         | `/mcp`                   | HTTP path for Streamable HTTP MCP.                                                          |
 
 By default each run collects up to 250 jobs: `5 pages * 50 jobs`. After changing `.env`, recreate the runtime so Docker applies the new environment:
 
@@ -228,7 +228,12 @@ Config precedence:
 If MCP starts before the worker initializes SQLite, tools return stable `not_ready` payloads instead of creating schema from the read path:
 
 ```json
-{ "ok": false, "error": "not_ready", "reason": "db_missing", "next_action": "start work-feed-worker" }
+{
+  "ok": false,
+  "error": "not_ready",
+  "reason": "db_missing",
+  "next_action": "start work-feed-worker"
+}
 ```
 
 `reason` may be `db_missing`, `schema_missing`, or `unsupported_schema`. For `unsupported_schema`, upgrade work-feed or migrate the database before reading or controlling the runtime. An initialized DB with no rows is not an error; list tools return `{ "ok": true, "status": "empty", "rows": [] }`.
@@ -288,15 +293,19 @@ Contributor and release references:
 
 ```bash
 make quality
+make architecture
+make coverage
 make smoke
 make e2e-smoke
 make docker-compose-config
 ```
 
-The `ci-cd` workflow runs the same quality, smoke, and e2e smoke checks on pull requests and pushes. To inspect local test coverage without publishing a badge, run:
+`make quality` runs formatting, linting, strict type checks, import architecture contracts, and tests. `make architecture` runs only the import-boundary contracts. `make coverage` enforces the current conservative coverage gate at 80% without publishing a badge or using an external service.
+
+The `ci-cd` workflow runs the same quality, coverage, smoke, and e2e smoke checks on pull requests and pushes. To inspect local test coverage directly, run:
 
 ```bash
-uv run --extra dev --with pytest-cov pytest --cov=work_feed_mcp --cov-report=term-missing -q
+make coverage
 ```
 
 Direct Python CLI entrypoints exist for local debugging, but they are not the normal user interface. Prefer Docker/MCP for normal use.

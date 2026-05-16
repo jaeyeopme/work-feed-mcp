@@ -4,10 +4,28 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from types import TracebackType
+from typing import Literal
 
 from work_feed_mcp.db.schema import initialize_schema
 
 BUSY_TIMEOUT_MS = 10_000
+
+
+class ClosingConnection(sqlite3.Connection):
+    """SQLite connection whose context manager also closes the handle."""
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> Literal[False]:
+        try:
+            super().__exit__(exc_type, exc_value, traceback)
+        finally:
+            self.close()
+        return False
 
 
 def _sqlite_uri(db_path: str, *, mode: str) -> str:
@@ -21,7 +39,11 @@ def _prepare_parent(db_path: str) -> None:
 
 
 def _base_connection(db_path: str, *, mode: str) -> sqlite3.Connection:
-    connection = sqlite3.connect(_sqlite_uri(db_path, mode=mode), uri=True)
+    connection = sqlite3.connect(
+        _sqlite_uri(db_path, mode=mode),
+        uri=True,
+        factory=ClosingConnection,
+    )
     connection.row_factory = sqlite3.Row
     connection.execute(f"PRAGMA busy_timeout = {BUSY_TIMEOUT_MS}")
     return connection

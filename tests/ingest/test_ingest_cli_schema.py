@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 from work_feed_mcp.cli.ingest import main
@@ -42,17 +43,20 @@ def test_ingest_cli_file_input_writes_jobs_and_skills_only(tmp_path: Path, capsy
     assert payload["skipped_count"] == 0
     assert len(payload["new_jobs"]) == 2
 
-    connection = sqlite3.connect(db)
-    assert connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0] == 2
-    assert (
-        connection.execute("SELECT COUNT(*) FROM job_skills WHERE skill = 'python'").fetchone()[0]
-        == 2
-    )
-    tables = {
-        row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
-    }
-    assert {"jobs", "job_skills", "collector_runs", "collector_run_results"} <= tables
-    assert "raw_payloads" not in tables
+    with closing(sqlite3.connect(db)) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0] == 2
+        assert (
+            connection.execute("SELECT COUNT(*) FROM job_skills WHERE skill = 'python'").fetchone()[
+                0
+            ]
+            == 2
+        )
+        tables = {
+            row[0]
+            for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+        }
+        assert {"jobs", "job_skills", "collector_runs", "collector_run_results"} <= tables
+        assert "raw_payloads" not in tables
 
 
 def test_repeated_ingest_skips_existing_jobs(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def]
@@ -69,8 +73,8 @@ def test_repeated_ingest_skips_existing_jobs(tmp_path: Path, capsys) -> None:  #
     assert payload["inserted_count"] == 0
     assert payload["skipped_count"] == 1
     assert payload["new_jobs"] == []
-    connection = sqlite3.connect(db)
-    assert connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0] == 1
+    with closing(sqlite3.connect(db)) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0] == 1
 
 
 def test_schema_uses_jobs_only_indexes(tmp_path: Path) -> None:
@@ -79,12 +83,17 @@ def test_schema_uses_jobs_only_indexes(tmp_path: Path) -> None:
     _write_jsonl(jsonl, [_record()])
     assert main(["--db", str(db), "--input", str(jsonl)]) == 0
 
-    connection = sqlite3.connect(db)
-    indexes = {
-        row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'index'")
-    }
-    assert {"idx_jobs_content_hash", "idx_jobs_first_seen_at", "idx_job_skills_skill"} <= indexes
-    columns = {row[1] for row in connection.execute("PRAGMA table_info(jobs)")}
-    assert "first_seen_at" in columns
-    assert "created_at" in columns
-    assert "last_seen_at" not in columns
+    with closing(sqlite3.connect(db)) as connection:
+        indexes = {
+            row[0]
+            for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'index'")
+        }
+        assert {
+            "idx_jobs_content_hash",
+            "idx_jobs_first_seen_at",
+            "idx_job_skills_skill",
+        } <= indexes
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(jobs)")}
+        assert "first_seen_at" in columns
+        assert "created_at" in columns
+        assert "last_seen_at" not in columns

@@ -8,6 +8,7 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from typing import Any
 
+from work_feed_mcp.core.time import utc_now
 from work_feed_mcp.db.connection import connect_worker
 from work_feed_mcp.domain.collector_record import CollectorRecord, validate_payload
 from work_feed_mcp.integrations.upwork.credentials import redact
@@ -16,7 +17,7 @@ from work_feed_mcp.integrations.upwork.models import Job
 from work_feed_mcp.repositories import run_history
 from work_feed_mcp.repositories.run_history import RunTotals
 from work_feed_mcp.services.collector import collect_jobs
-from work_feed_mcp.services.ingestion import ingest_records_into_connection, utc_now
+from work_feed_mcp.services.ingestion import ingest_records_into_connection
 from work_feed_mcp.services.retry import Jitter, RetryExhausted, Sleep, collect_with_retry
 
 QueryValue = str | None

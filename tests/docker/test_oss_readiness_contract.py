@@ -38,9 +38,31 @@ def test_readme_exposes_project_health_without_fake_coverage_badge() -> None:
     assert "actions/workflows/ci-cd.yml/badge.svg?branch=main" in readme
     assert "actions/workflows/release.yml/badge.svg" in readme
     assert "license-MIT" in readme
-    assert "uv run --extra dev --with pytest-cov pytest --cov=work_feed_mcp" in readme
+    assert "make architecture" in readme
+    assert "make coverage" in readme
+    assert "conservative coverage gate at 80%" in readme
     assert "Codecov" not in readme
     assert "coverage.svg" not in readme
+
+
+def test_python_quality_gates_are_declared() -> None:
+    pyproject = read("pyproject.toml")
+    makefile = read("Makefile")
+    workflow = read(".github/workflows/ci-cd.yml")
+
+    assert "pytest-cov>=7.1" in pyproject
+    assert "import-linter>=2.5" in pyproject
+    assert "[tool.importlinter]" in pyproject
+    assert 'type = "forbidden"' in pyproject
+    assert "work_feed_mcp.integrations.upwork" in pyproject
+    assert "work_feed_mcp.mcp_server" in pyproject
+    assert "coverage:" in makefile
+    assert "--cov-fail-under=80" in makefile
+    assert "architecture:" in makefile
+    assert "lint-imports" in makefile
+    assert ".coverage coverage.xml htmlcov" in makefile
+    assert "Run coverage gate" in workflow
+    assert "make coverage" in workflow
 
 
 def test_license_matches_project_metadata() -> None:
@@ -57,9 +79,17 @@ def test_contributing_and_security_keep_project_boundaries() -> None:
     security = read("SECURITY.md")
     combined = f"{contributing}\n{security}"
 
-    for expected in ["make quality", "make smoke", "make e2e-smoke"]:
+    for expected in [
+        "make quality",
+        "make architecture",
+        "make coverage",
+        "make smoke",
+        "make e2e-smoke",
+    ]:
         assert expected in contributing
 
+    assert "import architecture contracts" in contributing
+    assert "threshold starts conservatively at 80%" in contributing
     assert "Do not run live Upwork collection as part of normal verification" in contributing
     assert "GitHub private vulnerability reporting" in security
     assert "Collection diagnostics must stay redacted and secret-safe" in security

@@ -7,7 +7,7 @@ import sqlite3
 import uuid
 from typing import Any
 
-from work_feed_mcp.services.ingestion import utc_now
+from work_feed_mcp.core.time import utc_now
 
 CONFIG_KEYS = {"interval_seconds", "queries", "max_pages", "page_size", "paused"}
 COMMAND_TYPES = {"run_once", "pause", "resume", "update_config"}

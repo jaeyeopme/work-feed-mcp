@@ -32,9 +32,13 @@ Run the offline checks before opening a pull request:
 
 ```bash
 make quality
+make architecture
+make coverage
 make smoke
 make e2e-smoke
 ```
+
+`make quality` is the normal PR gate: it checks formatting, linting, strict typing, import architecture contracts, and tests. `make architecture` runs the import-boundary contracts by themselves when you are changing package dependencies. `make coverage` runs the pytest coverage gate; the threshold starts conservatively at 80% so contributors improve coverage without chasing an aggressive target.
 
 Do not run live Upwork collection as part of normal verification. If live evidence is explicitly requested, report it separately from fixture/local contract evidence.
 

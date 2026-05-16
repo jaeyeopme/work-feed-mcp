@@ -1,4 +1,4 @@
-.PHONY: up down restart status logs config quality smoke e2e-smoke mcp-smoke docker-compose-config live-smoke clean
+.PHONY: up down restart status logs config quality architecture coverage smoke e2e-smoke mcp-smoke docker-compose-config live-smoke clean
 
 QUERY ?=
 APP_DB ?= $(CURDIR)/data/work-feed.sqlite
@@ -31,7 +31,14 @@ quality:
 	uv run --extra dev ruff format --check .
 	uv run --extra dev ruff check .
 	uv run --extra dev mypy src
+	uv run --extra dev lint-imports
 	uv run --extra dev pytest -q
+
+architecture:
+	uv run --extra dev lint-imports
+
+coverage:
+	uv run --extra dev pytest --cov --cov-report=term-missing --cov-fail-under=80 -q
 
 smoke:
 	uv run --extra dev work-feed collect --fixture $(FIXTURE) > $(SMOKE_OUT)
@@ -56,5 +63,5 @@ live-smoke:
 
 
 clean:
-	rm -rf .pytest_cache .mypy_cache .ruff_cache src/*.egg-info
+	rm -rf .pytest_cache .mypy_cache .ruff_cache .coverage coverage.xml htmlcov src/*.egg-info
 	find src tests -type d -name __pycache__ -prune -exec rm -rf {} +

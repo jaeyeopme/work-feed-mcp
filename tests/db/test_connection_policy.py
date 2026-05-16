@@ -35,6 +35,15 @@ def test_worker_connection_initializes_schema_and_pragmas(tmp_path: Path) -> Non
     assert {"collector_config", "collector_commands", "jobs", "collector_runs"} <= tables
 
 
+def test_connection_context_manager_closes_handle(tmp_path: Path) -> None:
+    db = tmp_path / "work-feed.sqlite"
+    with connect_worker(str(db)) as connection:
+        assert connection.execute("SELECT 1").fetchone()[0] == 1
+
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        connection.execute("SELECT 1")
+
+
 def test_readonly_connection_does_not_create_missing_database(tmp_path: Path) -> None:
     db = tmp_path / "missing.sqlite"
     with pytest.raises(sqlite3.OperationalError):

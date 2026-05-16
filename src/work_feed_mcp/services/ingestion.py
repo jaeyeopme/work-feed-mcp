@@ -6,11 +6,11 @@ import json
 import sqlite3
 import sys
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TextIO
 
 from work_feed_mcp.core.errors import UsageError, ValidationError
+from work_feed_mcp.core.time import utc_now
 from work_feed_mcp.db.schema import initialize_schema
 from work_feed_mcp.domain.collector_record import CollectorRecord, validate_payload
 from work_feed_mcp.repositories import ingestion as ingestion_repository
@@ -25,10 +25,6 @@ class IngestResult:
     db_path: str
     input_path: str | None
     source_query: str | None
-
-
-def utc_now() -> str:
-    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def read_jsonl(stream: TextIO) -> list[CollectorRecord]:

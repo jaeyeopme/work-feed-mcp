@@ -20,8 +20,10 @@ work-feed = "work_feed_mcp.cli.__main__:main"
 
 [project.optional-dependencies]
 dev = [
+  "import-linter>=2.5",
   "mypy>=1.10",
   "pytest>=8",
+  "pytest-cov>=7.1",
   "ruff>=0.6",
 ]
 
@@ -31,6 +33,75 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src", "."]
+filterwarnings = [
+  "error::ResourceWarning",
+  "error::pytest.PytestUnraisableExceptionWarning",
+]
+
+[tool.coverage.run]
+source = ["work_feed_mcp"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.importlinter]
+root_package = "work_feed_mcp"
+
+[[tool.importlinter.contracts]]
+name = "Domain stays independent from infrastructure"
+type = "forbidden"
+source_modules = ["work_feed_mcp.domain"]
+forbidden_modules = [
+  "work_feed_mcp.cli",
+  "work_feed_mcp.db",
+  "work_feed_mcp.integrations",
+  "work_feed_mcp.mcp_server",
+  "work_feed_mcp.repositories",
+  "work_feed_mcp.runtime",
+  "work_feed_mcp.services",
+]
+
+[[tool.importlinter.contracts]]
+name = "Persistence layers stay below application interfaces"
+type = "forbidden"
+source_modules = ["work_feed_mcp.db", "work_feed_mcp.repositories"]
+forbidden_modules = [
+  "work_feed_mcp.cli",
+  "work_feed_mcp.integrations",
+  "work_feed_mcp.mcp_server",
+  "work_feed_mcp.runtime",
+  "work_feed_mcp.services",
+]
+
+[[tool.importlinter.contracts]]
+name = "Upwork integration stays below app interfaces"
+type = "forbidden"
+source_modules = ["work_feed_mcp.integrations.upwork"]
+forbidden_modules = [
+  "work_feed_mcp.cli",
+  "work_feed_mcp.db",
+  "work_feed_mcp.mcp_server",
+  "work_feed_mcp.repositories",
+  "work_feed_mcp.runtime",
+  "work_feed_mcp.services",
+]
+
+[[tool.importlinter.contracts]]
+name = "Services do not depend on interface adapters"
+type = "forbidden"
+source_modules = ["work_feed_mcp.services"]
+forbidden_modules = [
+  "work_feed_mcp.cli",
+  "work_feed_mcp.mcp_server",
+  "work_feed_mcp.runtime",
+]
+
+[[tool.importlinter.contracts]]
+name = "MCP adapter does not depend on CLI"
+type = "forbidden"
+source_modules = ["work_feed_mcp.mcp_server"]
+forbidden_modules = ["work_feed_mcp.cli"]
 
 [tool.ruff]
 line-length = 100

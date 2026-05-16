@@ -48,6 +48,7 @@ def test_oracle_deploy_script_runs_compose_health_and_mcp_smoke() -> None:
     assert "work-feed health --role worker" in script
     assert "work-feed health --role mcp" in script
     assert "work-feed mcp-smoke" in script
+    assert "sh -lc" not in script
     assert "work-feed scheduler-status" in script
 
 

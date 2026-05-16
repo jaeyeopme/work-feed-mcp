@@ -56,8 +56,8 @@ docker compose config >/tmp/work-feed-compose-config.yaml
 docker compose up -d --build --remove-orphans
 docker compose ps
 docker compose exec -T work-feed-worker work-feed health --role worker --db /data/work-feed.sqlite
-docker compose exec -T work-feed-mcp sh -lc 'work-feed health --role mcp --db /data/work-feed.sqlite --http-url "http://127.0.0.1:${WORK_FEED_MCP_PORT:-8000}${WORK_FEED_MCP_PATH:-/mcp}"'
-docker compose exec -T work-feed-mcp sh -lc 'work-feed mcp-smoke --url "http://127.0.0.1:${WORK_FEED_MCP_PORT:-8000}${WORK_FEED_MCP_PATH:-/mcp}"'
+docker compose exec -T work-feed-mcp sh -c 'work-feed health --role mcp --db /data/work-feed.sqlite --http-url "http://127.0.0.1:${WORK_FEED_MCP_PORT:-8000}${WORK_FEED_MCP_PATH:-/mcp}"'
+docker compose exec -T work-feed-mcp sh -c 'work-feed mcp-smoke --url "http://127.0.0.1:${WORK_FEED_MCP_PORT:-8000}${WORK_FEED_MCP_PATH:-/mcp}"'
 docker compose exec -T work-feed-worker work-feed scheduler-status --db /data/work-feed.sqlite
 
 rollback_armed=false

@@ -38,6 +38,8 @@ Ingestion is deduplicating: existing `job_id` values are skipped and newly inser
 
 Project-local agent skill: `skills/work-feed-jobs`. Use it for agent-facing lookup and short candidate summaries over already-collected jobs via MCP tools. It routes recent-job requests to `jobs_recent`, keyword/skill searches to `jobs_search`, specific ids to `jobs_get`, and collector status questions to `collector_status` / `runs_recent`. The skill is not a collector, scheduler, Docker operator, proposal writer, auto-apply flow, or backend ranking engine.
 
+MCP and skill packaging are intentionally separate for now: MCP provides data/tool access, while the skill provides agent instructions. A plugin bundle can be added later if an agent client needs one installable package, but it should remain read-only over collected data and must not include credentials, live collection setup, or scheduler operations.
+
 ## Maintainer docs
 
 Use `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md`, and `docs/RELEASING.md` as the source of truth for contribution, vulnerability reporting, release-note, and release-cutting expectations. These docs do not change the product scope: GHCR remains the primary distribution surface, PyPI is deferred, and live collection is not part of normal verification.

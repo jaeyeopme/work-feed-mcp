@@ -156,6 +156,12 @@ This repository ships a project-local agent skill at `skills/work-feed-jobs`. Us
 
 The skill also contains localized trigger examples for agent discovery. It is read-only over collected data. It prefers `jobs_recent`, `jobs_search`, `jobs_get`, `runs_recent`, and `collector_status`; it does not run live collection, configure schedules, operate Docker, write proposals/messages, auto-apply, or provide cookie/session/proxy/bypass guidance.
 
+MCP and the skill serve different layers:
+
+- MCP exposes the actual tools and data access.
+- `skills/work-feed-jobs` tells an agent when and how to use those tools safely.
+- A plugin bundle is optional. It is useful only if a client needs one installable package that includes skill metadata plus MCP setup hints. This repository currently keeps them separate: Docker/MCP runtime in the app, repo-local skill instructions in `skills/`, and no bundled credentials or live collection setup in either layer.
+
 ## Operate the runtime
 
 ```bash

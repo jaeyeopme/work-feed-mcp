@@ -175,8 +175,16 @@ def test_project_local_agent_skill_is_documented() -> None:
     assert skill.exists()
     assert metadata.exists()
     assert "work-feed-jobs" in skill.read_text()
-    assert "skills/work-feed-jobs" in _readme()
-    assert "## Agent skill for collected jobs" in _readme()
-    assert "## Codex skill for collected jobs" not in _readme()
-    assert "skills/work-feed-jobs" in Path("docs/LLM_CONTEXT.md").read_text()
-    assert "skills/work-feed-jobs" in Path("docs/EXTERNAL_LLM_GUIDE.md").read_text()
+    readme = _readme()
+    llm_context = Path("docs/LLM_CONTEXT.md").read_text()
+    external_guide = Path("docs/EXTERNAL_LLM_GUIDE.md").read_text()
+
+    assert "skills/work-feed-jobs" in readme
+    assert "## Agent skill for collected jobs" in readme
+    assert "## Codex skill for collected jobs" not in readme
+    assert "MCP and the skill serve different layers" in readme
+    assert "A plugin bundle is optional" in readme
+    assert "skills/work-feed-jobs" in llm_context
+    assert "MCP provides data/tool access" in llm_context
+    assert "skills/work-feed-jobs" in external_guide
+    assert "Plugin packaging is optional" in external_guide

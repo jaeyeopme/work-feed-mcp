@@ -42,6 +42,11 @@ Use these docs as source of truth:
 
 Project-local agent skill:
 - skills/work-feed-jobs for read-only collected job lookup, filtering, and candidate summaries through MCP tools.
+
+Integration model:
+- MCP provides data/tool access.
+- The skill provides agent instructions for safe lookup and summarization.
+- Plugin packaging is optional and should not include credentials, live collection setup, or scheduler operations.
 ```
 
 ## What the current project can do

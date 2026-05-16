@@ -1,5 +1,9 @@
 # work-feed-mcp
 
+[![checks](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/ci-cd.yml)
+[![release](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/release.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Docker/MCP-first local data engine for collecting Upwork job listings into SQLite and exposing them to agents through MCP.
 
 This project is not affiliated with, endorsed by, or sponsored by Upwork Inc. Upwork is referenced only as the source platform for collected public job listings.
@@ -287,6 +291,12 @@ make quality
 make smoke
 make e2e-smoke
 make docker-compose-config
+```
+
+The `ci-cd` workflow runs the same quality, smoke, and e2e smoke checks on pull requests and pushes. To inspect local test coverage without publishing a badge, run:
+
+```bash
+uv run --extra dev --with pytest-cov pytest --cov=work_feed_mcp --cov-report=term-missing -q
 ```
 
 Direct Python CLI entrypoints exist for local debugging, but they are not the normal user interface. Prefer Docker/MCP for normal use.

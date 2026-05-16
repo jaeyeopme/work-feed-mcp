@@ -32,6 +32,17 @@ def test_root_oss_files_exist_and_are_referenced() -> None:
         assert path in agent_docs
 
 
+def test_readme_exposes_project_health_without_fake_coverage_badge() -> None:
+    readme = read("README.md")
+
+    assert "actions/workflows/ci-cd.yml/badge.svg?branch=main" in readme
+    assert "actions/workflows/release.yml/badge.svg" in readme
+    assert "license-MIT" in readme
+    assert "uv run --extra dev --with pytest-cov pytest --cov=work_feed_mcp" in readme
+    assert "Codecov" not in readme
+    assert "coverage.svg" not in readme
+
+
 def test_license_matches_project_metadata() -> None:
     license_text = read("LICENSE")
     pyproject = read("pyproject.toml")

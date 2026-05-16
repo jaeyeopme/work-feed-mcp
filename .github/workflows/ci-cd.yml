@@ -1,20 +1,24 @@
-name: deploy-oracle
+name: ci-cd
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-concurrency:
-  group: oracle-deploy-main
-  cancel-in-progress: false
-
 jobs:
-  verify:
+  quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
@@ -30,11 +34,33 @@ jobs:
       - name: Run e2e smoke
         run: make e2e-smoke
 
-  deploy:
+  changes:
     runs-on: ubuntu-latest
-    needs: verify
+    timeout-minutes: 5
+    outputs:
+      deploy_relevant: ${{ steps.changed-files.outputs.deploy_relevant }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Decide whether Oracle deploy is needed
+        id: changed-files
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF_VALUE: ${{ github.ref }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: scripts/deploy/should-deploy-oracle.sh
+
+  deploy-oracle:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: oracle-deploy-main
+      cancel-in-progress: false
+    timeout-minutes: 15
+    needs: [quality, changes]
     environment: oracle-cloud
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    if: needs.changes.outputs.deploy_relevant == 'true'
     steps:
       - name: Validate deploy secrets
         env:
@@ -51,15 +77,16 @@ jobs:
       - name: Configure SSH
         env:
           ORACLE_SSH_HOST: ${{ secrets.ORACLE_SSH_HOST }}
-          ORACLE_SSH_PORT: ${{ secrets.ORACLE_SSH_PORT || '22' }}
+          ORACLE_SSH_PORT: ${{ secrets.ORACLE_SSH_PORT }}
           ORACLE_SSH_USER: ${{ secrets.ORACLE_SSH_USER }}
           ORACLE_SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
         run: |
+          ORACLE_SSH_PORT="${ORACLE_SSH_PORT:-22}"
           install -m 700 -d ~/.ssh
           printf '%s\n' "$ORACLE_SSH_KEY" > ~/.ssh/oracle_deploy_key
           chmod 600 ~/.ssh/oracle_deploy_key
           ssh-keyscan -p "$ORACLE_SSH_PORT" -H "$ORACLE_SSH_HOST" >> ~/.ssh/known_hosts
-          cat > ~/.ssh/config <<EOF
+          cat > ~/.ssh/config <<EOF_SSH
           Host oracle-work-feed
             HostName $ORACLE_SSH_HOST
             User $ORACLE_SSH_USER
@@ -68,7 +95,7 @@ jobs:
             IdentitiesOnly yes
             BatchMode yes
             StrictHostKeyChecking yes
-          EOF
+          EOF_SSH
 
       - name: Deploy compose runtime
         env:
@@ -79,14 +106,9 @@ jobs:
             "ORACLE_DEPLOY_PATH='$ORACLE_DEPLOY_PATH' DEPLOY_SHA='$DEPLOY_SHA' bash -se" <<'REMOTE'
           set -euo pipefail
           cd "$ORACLE_DEPLOY_PATH"
+          PREVIOUS_SHA="$(git rev-parse HEAD)"
           git fetch --prune origin main
           git checkout main
           git reset --hard "$DEPLOY_SHA"
-          docker compose config >/tmp/work-feed-compose-config.yaml
-          docker compose up -d --build --remove-orphans
-          docker compose ps
-          docker compose exec -T work-feed-worker work-feed health --role worker --db /data/work-feed.sqlite
-          docker compose exec -T work-feed-mcp sh -lc 'work-feed health --role mcp --db /data/work-feed.sqlite --http-url "http://127.0.0.1:${WORK_FEED_MCP_PORT:-8000}${WORK_FEED_MCP_PATH:-/mcp}"'
-          docker compose exec -T work-feed-mcp sh -lc 'work-feed mcp-smoke --url "http://127.0.0.1:${WORK_FEED_MCP_PORT:-8000}${WORK_FEED_MCP_PATH:-/mcp}"'
-          docker compose exec -T work-feed-worker work-feed scheduler-status --db /data/work-feed.sqlite
+          PREVIOUS_SHA="$PREVIOUS_SHA" DEPLOY_SHA="$DEPLOY_SHA" ORACLE_DEPLOY_PATH="$ORACLE_DEPLOY_PATH" bash scripts/deploy/oracle-compose-deploy.sh
           REMOTE

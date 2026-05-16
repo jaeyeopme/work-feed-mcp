@@ -4,7 +4,7 @@ Docker/MCP-first local data engine for collecting Upwork job listings into SQLit
 
 This project is not affiliated with, endorsed by, or sponsored by Upwork Inc. Upwork is referenced only as the source platform for collected public job listings.
 
-License: MIT. Community and maintainer policies live in `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, and `CHANGELOG.md`.
+License: MIT. See `CONTRIBUTING.md`, `SECURITY.md`, and `CHANGELOG.md` for maintainer notes.
 
 ```mermaid
 sequenceDiagram
@@ -144,9 +144,9 @@ After connecting, ask your agent to call `jobs_recent` with `limit: 5` to confir
 make mcp-smoke
 ```
 
-## Codex skill for collected jobs
+## Agent skill for collected jobs
 
-This repository ships a project-local Codex skill at `skills/work-feed-jobs`. Use it when an agent should read and summarize already-collected Upwork jobs through the work-feed MCP tools. Typical prompts include:
+This repository ships a project-local agent skill at `skills/work-feed-jobs`. Use it when an agent should read and summarize already-collected Upwork jobs through the work-feed MCP tools. Typical prompts include:
 
 - `show recent collected jobs`
 - `find python jobs`
@@ -273,7 +273,6 @@ Contributor and release references:
 
 - `CONTRIBUTING.md` for setup, verification, scope boundaries, and PR expectations.
 - `SECURITY.md` for vulnerability reporting and safe diagnostic rules.
-- `CODE_OF_CONDUCT.md` for participation expectations.
 - `CHANGELOG.md` for release notes.
 - `docs/RELEASING.md` for GitHub Release and GHCR publishing steps.
 

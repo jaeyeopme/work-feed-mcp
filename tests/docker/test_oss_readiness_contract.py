@@ -5,15 +5,13 @@ from pathlib import Path
 ROOT_OSS_FILES = [
     "LICENSE",
     "CONTRIBUTING.md",
-    "CODE_OF_CONDUCT.md",
     "SECURITY.md",
     "CHANGELOG.md",
 ]
 
 GITHUB_COMMUNITY_FILES = [
-    ".github/ISSUE_TEMPLATE/bug_report.yml",
-    ".github/ISSUE_TEMPLATE/feature_request.yml",
-    ".github/ISSUE_TEMPLATE/config.yml",
+    ".github/ISSUE_TEMPLATE/bug_report.md",
+    ".github/ISSUE_TEMPLATE/feature_request.md",
     ".github/pull_request_template.md",
     ".github/dependabot.yml",
 ]
@@ -70,18 +68,18 @@ def test_contributing_and_security_keep_project_boundaries() -> None:
         assert phrase.lower() in lowered
 
 
-def test_github_community_templates_and_dependabot_are_present() -> None:
+def test_github_templates_and_dependabot_are_present() -> None:
     for path in GITHUB_COMMUNITY_FILES:
         assert Path(path).exists(), path
 
-    bug = read(".github/ISSUE_TEMPLATE/bug_report.yml")
-    feature = read(".github/ISSUE_TEMPLATE/feature_request.yml")
+    bug = read(".github/ISSUE_TEMPLATE/bug_report.md")
+    feature = read(".github/ISSUE_TEMPLATE/feature_request.md")
     pr_template = read(".github/pull_request_template.md")
     dependabot = read(".github/dependabot.yml")
 
-    assert "Do not include credentials, cookies, sessions, proxy details" in bug
-    assert "This does not add proposal/message generation or auto-apply behavior" in feature
-    assert "No backend ranking or recommendation engine is added" in pr_template
+    assert "Do not include credentials, cookies, sessions" in bug
+    assert "It does not add auto-apply, proposal/message generation" in feature
+    assert "No auto-apply, proposal/message generation" in pr_template
     assert "package-ecosystem: github-actions" in dependabot
     assert "package-ecosystem: pip" in dependabot
     assert "interval: weekly" in dependabot

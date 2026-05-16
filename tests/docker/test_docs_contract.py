@@ -169,12 +169,14 @@ def test_removed_legacy_public_artifacts_stay_removed() -> None:
     assert ".omx/" in Path(".gitignore").read_text()
 
 
-def test_project_local_codex_skill_is_documented() -> None:
+def test_project_local_agent_skill_is_documented() -> None:
     skill = Path("skills/work-feed-jobs/SKILL.md")
     metadata = Path("skills/work-feed-jobs/agents/openai.yaml")
     assert skill.exists()
     assert metadata.exists()
     assert "work-feed-jobs" in skill.read_text()
     assert "skills/work-feed-jobs" in _readme()
+    assert "## Agent skill for collected jobs" in _readme()
+    assert "## Codex skill for collected jobs" not in _readme()
     assert "skills/work-feed-jobs" in Path("docs/LLM_CONTEXT.md").read_text()
     assert "skills/work-feed-jobs" in Path("docs/EXTERNAL_LLM_GUIDE.md").read_text()

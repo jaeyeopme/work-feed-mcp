@@ -8,9 +8,9 @@ The format follows Keep a Changelog style, and this project uses semantic versio
 
 ### Added
 
-- Open-source governance files: license, contributing guide, code of conduct, security policy, and GitHub collaboration templates.
+- Lightweight open-source maintenance files: license, contributing guide, security policy, changelog, issue templates, and PR template.
 - Dependabot configuration for conservative GitHub Actions and Python dependency update checks.
-- Documentation contract coverage for the public OSS surface.
+- Documentation contract coverage for the public maintenance surface.
 
 ### Changed
 

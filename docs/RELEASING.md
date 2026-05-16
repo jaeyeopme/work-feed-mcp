@@ -6,7 +6,7 @@ This repository publishes GitHub Releases and GHCR container images from version
 
 Before pushing the first public release tag:
 
-1. confirm `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, and `CHANGELOG.md` are present;
+1. confirm `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md`, and `CHANGELOG.md` are present;
 2. update `CHANGELOG.md` so the release section describes the shipped user-facing changes;
 3. run `make quality`, `make smoke`, and `make e2e-smoke`;
 4. keep live collection evidence out of the release gate unless a maintainer explicitly requests it, and report any live evidence separately;

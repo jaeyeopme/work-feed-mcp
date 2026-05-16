@@ -36,11 +36,11 @@ Ingestion is deduplicating: existing `job_id` values are skipped and newly inser
 
 ## Agent skill
 
-Project-local Codex skill: `skills/work-feed-jobs`. Use it for agent-facing lookup and short candidate summaries over already-collected jobs via MCP tools. It routes recent-job requests to `jobs_recent`, keyword/skill searches to `jobs_search`, specific ids to `jobs_get`, and collector status questions to `collector_status` / `runs_recent`. The skill is not a collector, scheduler, Docker operator, proposal writer, auto-apply flow, or backend ranking engine.
+Project-local agent skill: `skills/work-feed-jobs`. Use it for agent-facing lookup and short candidate summaries over already-collected jobs via MCP tools. It routes recent-job requests to `jobs_recent`, keyword/skill searches to `jobs_search`, specific ids to `jobs_get`, and collector status questions to `collector_status` / `runs_recent`. The skill is not a collector, scheduler, Docker operator, proposal writer, auto-apply flow, or backend ranking engine.
 
-## OSS and maintainer docs
+## Maintainer docs
 
-Use `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`, and `docs/RELEASING.md` as the source of truth for public contribution, vulnerability reporting, release-note, and release-cutting expectations. These docs do not change the product scope: GHCR remains the primary distribution surface, PyPI is deferred, and live collection is not part of normal verification.
+Use `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md`, and `docs/RELEASING.md` as the source of truth for contribution, vulnerability reporting, release-note, and release-cutting expectations. These docs do not change the product scope: GHCR remains the primary distribution surface, PyPI is deferred, and live collection is not part of normal verification.
 
 ## Boundaries
 

@@ -78,10 +78,11 @@ def test_deploy_path_gating_excludes_docs_tests_and_skills_only_changes() -> Non
     assert "github.sha" in workflow
 
 
-def test_oracle_deploy_keeps_secret_environment_and_minimal_bootstrap() -> None:
+def test_oracle_deploy_uses_repo_secrets_without_public_environment() -> None:
     workflow = _workflow()
 
-    assert "environment: oracle-cloud" in workflow
+    assert "environment: oracle-cloud" not in workflow
+    assert "environment:" not in workflow
     for secret in [
         "ORACLE_SSH_HOST",
         "ORACLE_SSH_USER",

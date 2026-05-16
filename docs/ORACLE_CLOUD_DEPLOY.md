@@ -4,7 +4,7 @@ This repository uses a single GitHub Actions workflow for CI/CD:
 
 - `.github/workflows/ci-cd.yml`
 
-The workflow keeps verification and deployment in one pipeline, but deployment is a separate job that runs only after the `quality` job succeeds.
+The workflow keeps verification and maintainer deployment in one pipeline, but deployment is a separate job that runs only after the `quality` job succeeds. It intentionally does not use a GitHub Actions `environment`, so public GitHub Deployments are not created for this private Oracle runtime.
 
 ## What ci-cd does
 
@@ -25,7 +25,7 @@ Docs-only, tests-only, skills-only, and `.omx`-only changes still run CI, but th
 
 The deploy job:
 
-1. Validates required GitHub environment secrets.
+1. Validates required GitHub repository secrets.
 2. Configures SSH for the Oracle instance.
 3. SSHes into the existing server checkout.
 4. Captures `PREVIOUS_SHA` before changing the checkout.
@@ -45,9 +45,9 @@ The deploy path intentionally does **not** run `git clean`, so server-local file
 
 Rollback is best-effort. Host-level failures such as Docker daemon failure, disk exhaustion, or broken server Git auth can still require manual operator recovery.
 
-## Required GitHub environment and secrets
+## Required GitHub repository secrets
 
-Create a GitHub Environment named `oracle-cloud` and add these secrets:
+Add these repository-level GitHub Actions secrets. Do not use a GitHub Environment for this maintainer runtime; keeping the job environment-free avoids a public Deployments entry that could be confused with an official hosted service.
 
 | Secret | Example | Notes |
 | --- | --- | --- |

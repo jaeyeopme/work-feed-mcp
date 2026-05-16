@@ -77,3 +77,25 @@ def test_workflow_dispatch_is_main_only(tmp_path: Path) -> None:
     assert "deploy_relevant=true" in main.stdout
     assert branch.returncode != 0
     assert "main-only" in branch.stderr
+
+
+def test_runtime_path_with_spaces_deploys(tmp_path: Path) -> None:
+    repo = init_git_repo(tmp_path)
+    before = run_git(repo, "rev-parse", "HEAD")
+    commit_file(repo, "src/work_feed_mcp/space name.py", "print('runtime')\n")
+
+    result = _run_decision(repo, event="push", ref="refs/heads/main", before=before)
+
+    assert result.returncode == 0
+    assert "deploy_relevant=true" in result.stdout
+
+
+def test_docs_path_with_spaces_does_not_deploy(tmp_path: Path) -> None:
+    repo = init_git_repo(tmp_path)
+    before = run_git(repo, "rev-parse", "HEAD")
+    commit_file(repo, "docs/space name.md", "docs only\n")
+
+    result = _run_decision(repo, event="push", ref="refs/heads/main", before=before)
+
+    assert result.returncode == 0
+    assert "deploy_relevant=false" in result.stdout

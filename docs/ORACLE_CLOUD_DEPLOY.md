@@ -54,10 +54,21 @@ Add these repository-level GitHub Actions secrets. Do not use a GitHub Environme
 | `ORACLE_SSH_HOST` | `168.107.37.234` | Oracle instance public IP or DNS name. |
 | `ORACLE_SSH_USER` | `ubuntu` | SSH user on the Oracle instance. |
 | `ORACLE_SSH_KEY` | private key text | Private key with access to the instance. |
+| `ORACLE_SSH_KNOWN_HOSTS` | `168.107.37.234 ssh-ed25519 ...` | Pinned known_hosts line(s) for the Oracle instance. Required; the workflow does not trust runtime `ssh-keyscan` output. |
 | `ORACLE_SSH_PORT` | `22` | Optional; defaults to `22`. |
 | `ORACLE_DEPLOY_PATH` | `/home/ubuntu/work-feed-mcp` | Existing checkout path on the instance. |
 
 For the current Oracle instance, the deploy path observed during local verification was `/home/ubuntu/work-feed-mcp`.
+
+To set `ORACLE_SSH_KNOWN_HOSTS`, collect the host key from a trusted network and verify the fingerprint out of band before storing it. Example shape:
+
+```bash
+ssh-keyscan -p 22 <oracle-host> > /tmp/oracle_known_hosts
+ssh-keygen -lf /tmp/oracle_known_hosts
+gh secret set ORACLE_SSH_KNOWN_HOSTS --repo jaeyeopme/work-feed-mcp < /tmp/oracle_known_hosts
+```
+
+If the Oracle host key rotates, update this repository secret before the next deploy.
 
 ## Server assumptions
 

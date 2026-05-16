@@ -24,6 +24,7 @@ def test_release_workflow_publishes_github_release_and_ghcr_image() -> None:
     assert "release-manifest.json" in workflow
     assert "checksums.txt" in workflow
     assert "gh release upload" in workflow
+    assert "preserving release notes" in workflow
 
 
 def test_release_workflow_uses_versioned_ghcr_tags_and_metadata() -> None:
@@ -51,6 +52,7 @@ def test_release_workflow_validates_tags_and_avoids_live_or_deploy_side_effects(
     assert "ssh oracle-work-feed" not in workflow
     assert "docker compose up" not in workflow
     assert "ORACLE_SSH" not in workflow
+    assert 'gh release edit "$TAG" --title "$TAG" --notes' not in workflow
 
 
 def test_releasing_docs_describe_tag_driven_release() -> None:
@@ -64,3 +66,4 @@ def test_releasing_docs_describe_tag_driven_release() -> None:
     assert "does not run live Upwork collection" in docs
     assert "release-manifest.json" in docs
     assert "checksums.txt" in docs
+    assert "preserves existing release notes" in docs

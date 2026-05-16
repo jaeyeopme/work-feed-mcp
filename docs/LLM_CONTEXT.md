@@ -44,6 +44,16 @@ MCP and skill packaging are intentionally separate for now: MCP provides data/to
 
 Use `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md`, and `docs/RELEASING.md` as the source of truth for contribution, vulnerability reporting, release-note, and release-cutting expectations. These docs do not change the product scope: GHCR remains the primary distribution surface, PyPI is deferred, and live collection is not part of normal verification.
 
+## DB readiness policy
+
+| Surface | May initialize/create schema? | Required DB state before use | Access mode / authority | Contract |
+| --- | --- | --- | --- | --- |
+| worker | Yes | DB may be missing or partially initialized | Worker-owned read/write via `connect_worker` | Normal runtime schema owner; creates and maintains base + control tables. |
+| MCP read | No | Existing worker-initialized runtime DB | Read-only existing DB via `connect_readonly` | Returns `not_ready` instead of initializing; requires base + control tables. |
+| MCP control | No | Existing worker-initialized runtime DB | Existing DB read/write control via `connect_control` | Queues commands only; requires base + control tables. |
+| analytics | No | Existing DB with analytics tables | Local/debug read-only analytics query path | Does not initialize schema and does not use MCP `not_ready` payloads. |
+| scheduler_status | Yes, currently | DB may be missing or uninitialized for maintainer diagnostics | Local/deploy diagnostic command | Explicit exception for operational status checks; not precedent for agent-facing MCP reads. |
+
 ## Boundaries
 
 - Keep Upwork collection dumb and secret-safe.

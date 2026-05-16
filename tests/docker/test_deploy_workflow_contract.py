@@ -76,6 +76,8 @@ def test_deploy_path_gating_excludes_docs_tests_and_skills_only_changes() -> Non
     assert "run: scripts/deploy/should-deploy-oracle.sh" in workflow
     assert "github.event.before" in workflow
     assert "github.sha" in workflow
+    assert "git diff --name-only -z" in decision_script
+    assert "git ls-tree -r -z --name-only" in decision_script
 
 
 def test_oracle_deploy_uses_repo_secrets_without_public_environment() -> None:
@@ -87,10 +89,14 @@ def test_oracle_deploy_uses_repo_secrets_without_public_environment() -> None:
         "ORACLE_SSH_HOST",
         "ORACLE_SSH_USER",
         "ORACLE_SSH_KEY",
+        "ORACLE_SSH_KNOWN_HOSTS",
         "ORACLE_SSH_PORT",
         "ORACLE_DEPLOY_PATH",
     ]:
         assert secret in workflow
+    assert "ssh-keyscan" not in workflow
+    assert "~/.ssh/known_hosts" in workflow
+    assert "missing ORACLE_SSH_KNOWN_HOSTS" in workflow
     assert 'PREVIOUS_SHA="$(git rev-parse HEAD)"' in workflow
     assert "git fetch --prune origin main" in workflow
     assert 'git reset --hard "$DEPLOY_SHA"' in workflow

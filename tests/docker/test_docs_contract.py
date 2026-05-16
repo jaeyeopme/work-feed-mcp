@@ -151,6 +151,17 @@ def test_agent_context_docs_track_docker_mcp_runtime() -> None:
     assert "make status" in external_guide
 
 
+def test_llm_context_documents_db_readiness_policy() -> None:
+    context = Path("docs/LLM_CONTEXT.md").read_text()
+
+    assert "## DB readiness policy" in context
+    assert "MCP read" in context
+    assert "MCP control" in context
+    assert "scheduler_status" in context
+    assert "Explicit exception" in context
+    assert "not precedent for agent-facing MCP reads" in context
+
+
 def test_removed_legacy_public_artifacts_stay_removed() -> None:
     removed_paths = [
         ".github/workflows/deploy-server.yml",

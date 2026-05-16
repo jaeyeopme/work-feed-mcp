@@ -23,6 +23,16 @@ matches_deploy_path() {
   esac
 }
 
+changed_paths_include_deploy_path() {
+  local path
+  while IFS= read -r -d '' path; do
+    if matches_deploy_path "$path"; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 if [[ "$EVENT_NAME" == "pull_request" ]]; then
   echo "pull_request never deploys"
   output_result false
@@ -48,19 +58,21 @@ fi
 before="${GITHUB_EVENT_BEFORE:-}"
 
 if [[ -z "$before" || "$before" =~ ^0+$ ]]; then
-  changed="$(git ls-tree -r --name-only HEAD)"
-elif git cat-file -e "$before^{commit}" 2>/dev/null; then
-  changed="$(git diff --name-only "$before" "$GITHUB_SHA")"
-else
-  echo "before commit ${before} is unavailable; checking the target tree"
-  changed="$(git ls-tree -r --name-only HEAD)"
-fi
-
-for path in $changed; do
-  if matches_deploy_path "$path"; then
+  if changed_paths_include_deploy_path < <(git ls-tree -r -z --name-only HEAD); then
     output_result true
     exit 0
   fi
-done
+elif git cat-file -e "$before^{commit}" 2>/dev/null; then
+  if changed_paths_include_deploy_path < <(git diff --name-only -z "$before" "$GITHUB_SHA"); then
+    output_result true
+    exit 0
+  fi
+else
+  echo "before commit ${before} is unavailable; checking the target tree"
+  if changed_paths_include_deploy_path < <(git ls-tree -r -z --name-only HEAD); then
+    output_result true
+    exit 0
+  fi
+fi
 
 output_result false

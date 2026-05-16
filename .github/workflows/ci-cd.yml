@@ -64,11 +64,13 @@ jobs:
           ORACLE_SSH_HOST: ${{ secrets.ORACLE_SSH_HOST }}
           ORACLE_SSH_USER: ${{ secrets.ORACLE_SSH_USER }}
           ORACLE_SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+          ORACLE_SSH_KNOWN_HOSTS: ${{ secrets.ORACLE_SSH_KNOWN_HOSTS }}
           ORACLE_DEPLOY_PATH: ${{ secrets.ORACLE_DEPLOY_PATH }}
         run: |
           test -n "$ORACLE_SSH_HOST" || { echo "missing ORACLE_SSH_HOST" >&2; exit 1; }
           test -n "$ORACLE_SSH_USER" || { echo "missing ORACLE_SSH_USER" >&2; exit 1; }
           test -n "$ORACLE_SSH_KEY" || { echo "missing ORACLE_SSH_KEY" >&2; exit 1; }
+          test -n "$ORACLE_SSH_KNOWN_HOSTS" || { echo "missing ORACLE_SSH_KNOWN_HOSTS" >&2; exit 1; }
           test -n "$ORACLE_DEPLOY_PATH" || { echo "missing ORACLE_DEPLOY_PATH" >&2; exit 1; }
 
       - name: Configure SSH
@@ -77,12 +79,13 @@ jobs:
           ORACLE_SSH_PORT: ${{ secrets.ORACLE_SSH_PORT }}
           ORACLE_SSH_USER: ${{ secrets.ORACLE_SSH_USER }}
           ORACLE_SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+          ORACLE_SSH_KNOWN_HOSTS: ${{ secrets.ORACLE_SSH_KNOWN_HOSTS }}
         run: |
           ORACLE_SSH_PORT="${ORACLE_SSH_PORT:-22}"
           install -m 700 -d ~/.ssh
           printf '%s\n' "$ORACLE_SSH_KEY" > ~/.ssh/oracle_deploy_key
-          chmod 600 ~/.ssh/oracle_deploy_key
-          ssh-keyscan -p "$ORACLE_SSH_PORT" -H "$ORACLE_SSH_HOST" >> ~/.ssh/known_hosts
+          printf '%s\n' "$ORACLE_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/oracle_deploy_key ~/.ssh/known_hosts
           cat > ~/.ssh/config <<EOF_SSH
           Host oracle-work-feed
             HostName $ORACLE_SSH_HOST

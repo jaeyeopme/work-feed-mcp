@@ -147,7 +147,7 @@ jobs:
           set -euo pipefail
           notes="Container image: \`${IMAGE}:${TAG}\`"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --title "$TAG" --notes "$notes"
+            echo "release ${TAG} already exists; preserving release notes"
           else
             gh release create "$TAG" \
               --verify-tag \

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -40,24 +41,20 @@ def not_ready_payload(reason: NotReadyReason) -> dict[str, Any]:
 
 
 def ensure_ready_read(db_path: str) -> sqlite3.Connection:
-    if not Path(db_path).exists():
-        raise NotReadyError("db_missing")
-    connection = connect_readonly(db_path)
-    try:
-        assert_supported_schema_version(connection)
-    except UnsupportedSchemaVersionError as exc:
-        connection.close()
-        raise NotReadyError("unsupported_schema") from exc
-    if not schema_has_tables(connection, BASE_TABLES | CONTROL_TABLES):
-        connection.close()
-        raise NotReadyError("schema_missing")
-    return connection
+    return _ensure_mcp_runtime_ready(db_path, connect_readonly)
 
 
 def ensure_ready_control(db_path: str) -> sqlite3.Connection:
+    return _ensure_mcp_runtime_ready(db_path, connect_control)
+
+
+def _ensure_mcp_runtime_ready(
+    db_path: str, connect: Callable[[str], sqlite3.Connection]
+) -> sqlite3.Connection:
+    """Open an existing worker-initialized runtime DB for MCP read/control paths."""
     if not Path(db_path).exists():
         raise NotReadyError("db_missing")
-    connection = connect_control(db_path)
+    connection = connect(db_path)
     try:
         assert_supported_schema_version(connection)
     except UnsupportedSchemaVersionError as exc:

@@ -36,7 +36,7 @@ The `.github/workflows/release.yml` workflow then:
    - `release-manifest.json` with image tags, digest, source revision, runtime, and MCP endpoint metadata;
    - `checksums.txt` for the manifest.
 
-Manual dispatch is also available for an existing tag if the release job needs to be rerun. Existing release assets are overwritten with `--clobber`.
+Manual dispatch is also available for an existing tag if the release job needs to be rerun. On reruns, the workflow preserves existing release notes and overwrites only `release-manifest.json` / `checksums.txt` assets with `--clobber`.
 
 ## Versioning
 

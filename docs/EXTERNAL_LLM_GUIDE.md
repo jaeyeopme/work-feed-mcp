@@ -118,7 +118,8 @@ Default live smoke asks Upwork for 50 jobs in one visitor GraphQL page. Success 
 2. `docs/LLM_CONTEXT.md`
 3. `docs/EXTERNAL_LLM_GUIDE.md`
 4. `docs/contracts/job-jsonl.md`
-5. `skills/work-feed-jobs/SKILL.md` for Codex job lookup behavior
-6. Relevant source/tests under `src/work_feed_mcp` and `tests`.
+5. `docs/ORACLE_CLOUD_DEPLOY.md` for deployment workflow and server assumptions
+6. `skills/work-feed-jobs/SKILL.md` for Codex job lookup behavior
+7. Relevant source/tests under `src/work_feed_mcp` and `tests`.
 
 Do not paste `.omx/logs`, `.omx/state`, or runtime traces unless the question is specifically about OMX execution.

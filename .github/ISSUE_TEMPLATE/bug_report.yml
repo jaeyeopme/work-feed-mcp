@@ -1,0 +1,73 @@
+name: Bug report
+description: Report a reproducible problem in the Docker/MCP data engine.
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Do not include credentials, cookies, sessions, proxy details, or live service data.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What went wrong?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Docker runtime
+        - MCP server/tools
+        - SQLite ingestion/query
+        - Upwork normalization
+        - Documentation
+        - CI/release automation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Provide minimal offline or fixture-based steps when possible.
+      placeholder: |
+        1. cp .env.example .env
+        2. make up
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification run
+      description: List relevant commands and results, such as make quality, make smoke, or make e2e-smoke.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted logs or output
+      description: Paste only redacted output. Remove secrets, cookies, sessions, tokens, proxy details, and private payloads.
+      render: shell
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Boundary checks
+      options:
+        - label: I did not include secrets, cookies, sessions, tokens, proxy details, or private payloads.
+          required: true
+        - label: This report is not asking for auto-apply, proposal/message generation, backend ranking, or bypass guidance.
+          required: true

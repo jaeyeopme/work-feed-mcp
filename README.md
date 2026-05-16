@@ -4,6 +4,8 @@ Docker/MCP-first local data engine for collecting Upwork job listings into SQLit
 
 This project is not affiliated with, endorsed by, or sponsored by Upwork Inc. Upwork is referenced only as the source platform for collected public job listings.
 
+License: MIT. Community and maintainer policies live in `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, and `CHANGELOG.md`.
+
 ```mermaid
 sequenceDiagram
     participant U as Upwork job search
@@ -266,6 +268,14 @@ integrations/upwork
 ## Developer reference
 
 Development checks are maintained for contributors and local maintenance; they are not required for normal Docker/MCP usage.
+
+Contributor and release references:
+
+- `CONTRIBUTING.md` for setup, verification, scope boundaries, and PR expectations.
+- `SECURITY.md` for vulnerability reporting and safe diagnostic rules.
+- `CODE_OF_CONDUCT.md` for participation expectations.
+- `CHANGELOG.md` for release notes.
+- `docs/RELEASING.md` for GitHub Release and GHCR publishing steps.
 
 ```bash
 make quality

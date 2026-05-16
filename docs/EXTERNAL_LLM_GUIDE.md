@@ -36,6 +36,9 @@ Use these docs as source of truth:
 - README.md
 - docs/LLM_CONTEXT.md
 - docs/contracts/job-jsonl.md
+- CONTRIBUTING.md for contribution and offline verification expectations
+- SECURITY.md for vulnerability reporting and secret-safe diagnostics
+- CHANGELOG.md and docs/RELEASING.md for release-note and GHCR release expectations
 
 Project-local Codex skill:
 - skills/work-feed-jobs for read-only collected job lookup, filtering, and candidate summaries through MCP tools.
@@ -121,6 +124,7 @@ Default live smoke asks Upwork for 50 jobs in one visitor GraphQL page. Success 
 5. `docs/ORACLE_CLOUD_DEPLOY.md` for deployment workflow and server assumptions
 6. `docs/RELEASING.md` for GitHub Release and GHCR package publishing behavior
 7. `skills/work-feed-jobs/SKILL.md` for Codex job lookup behavior
-8. Relevant source/tests under `src/work_feed_mcp` and `tests`.
+8. `CONTRIBUTING.md`, `SECURITY.md`, and `CHANGELOG.md` for OSS governance and release-note expectations
+9. Relevant source/tests under `src/work_feed_mcp` and `tests`.
 
 Do not paste `.omx/logs`, `.omx/state`, or runtime traces unless the question is specifically about OMX execution.

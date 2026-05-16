@@ -31,9 +31,12 @@ The `.github/workflows/release.yml` workflow then:
    - `ghcr.io/jaeyeopme/work-feed-mcp:v0.1.0`
    - `ghcr.io/jaeyeopme/work-feed-mcp:0.1.0`
    - `ghcr.io/jaeyeopme/work-feed-mcp:latest`
-4. creates a GitHub Release for the tag.
+4. creates or updates a GitHub Release for the tag;
+5. uploads lightweight release assets:
+   - `release-manifest.json` with image tags, digest, source revision, runtime, and MCP endpoint metadata;
+   - `checksums.txt` for the manifest.
 
-Manual dispatch is also available for an existing tag if the release job needs to be rerun.
+Manual dispatch is also available for an existing tag if the release job needs to be rerun. Existing release assets are overwritten with `--clobber`.
 
 ## Versioning
 

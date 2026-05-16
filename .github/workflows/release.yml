@@ -87,15 +87,73 @@ jobs:
           docker push "${IMAGE}:${VERSION}"
           docker push "${IMAGE}:latest"
 
+      - name: Generate release assets
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          SOURCE: ${{ steps.meta.outputs.source }}
+          REVISION: ${{ github.sha }}
+          MCP_PATH: /mcp
+          MCP_PORT: "8000"
+        run: |
+          set -euo pipefail
+          DIGEST="$(docker buildx imagetools inspect "${IMAGE}:${TAG}" --format '{{.Manifest.Digest}}')"
+          export DIGEST
+          python - <<'PY_ASSET'
+          import json
+          import os
+
+          image = os.environ["IMAGE"]
+          tag = os.environ["TAG"]
+          version = os.environ["VERSION"]
+          manifest = {
+              "schema_version": 1,
+              "name": "work-feed-mcp",
+              "version": version,
+              "tag": tag,
+              "revision": os.environ["REVISION"],
+              "source": os.environ["SOURCE"],
+              "distribution": {
+                  "type": "ghcr-container",
+                  "image": image,
+                  "tags": [f"{image}:{tag}", f"{image}:{version}", f"{image}:latest"],
+                  "digest": os.environ["DIGEST"],
+              },
+              "runtime": {
+                  "type": "docker-compose",
+                  "mcp_transport": "streamable-http",
+                  "default_mcp_endpoint": f"http://127.0.0.1:{os.environ['MCP_PORT']}{os.environ['MCP_PATH']}",
+              },
+              "boundaries": [
+                  "no proposal/message generation",
+                  "no auto-apply",
+                  "no backend ranking engine",
+                  "no proxy/bypass tooling",
+              ],
+          }
+          with open("release-manifest.json", "w", encoding="utf-8") as f:
+              json.dump(manifest, f, indent=2, sort_keys=True)
+              f.write("\n")
+          PY_ASSET
+          sha256sum release-manifest.json > checksums.txt
+
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.meta.outputs.tag }}
           IMAGE: ${{ steps.meta.outputs.image }}
         run: |
-          gh release create "$TAG" \
-            --verify-tag \
-            --title "$TAG" \
-            --generate-notes \
-            --notes-start-tag "" \
-            --notes "Container image: \`${IMAGE}:${TAG}\`"
+          set -euo pipefail
+          notes="Container image: \`${IMAGE}:${TAG}\`"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TAG" --notes "$notes"
+          else
+            gh release create "$TAG" \
+              --verify-tag \
+              --title "$TAG" \
+              --generate-notes \
+              --notes-start-tag "" \
+              --notes "$notes"
+          fi
+          gh release upload "$TAG" release-manifest.json checksums.txt --clobber

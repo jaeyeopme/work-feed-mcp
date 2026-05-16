@@ -21,6 +21,9 @@ def test_release_workflow_publishes_github_release_and_ghcr_image() -> None:
     assert "docker build" in workflow
     assert "docker push" in workflow
     assert "gh release create" in workflow
+    assert "release-manifest.json" in workflow
+    assert "checksums.txt" in workflow
+    assert "gh release upload" in workflow
 
 
 def test_release_workflow_uses_versioned_ghcr_tags_and_metadata() -> None:
@@ -34,6 +37,8 @@ def test_release_workflow_uses_versioned_ghcr_tags_and_metadata() -> None:
     assert "org.opencontainers.image.description" in workflow
     assert "org.opencontainers.image.licenses=MIT" in workflow
     assert "org.opencontainers.image.revision" in workflow
+    assert "docker buildx imagetools inspect" in workflow
+    assert "default_mcp_endpoint" in workflow
 
 
 def test_release_workflow_validates_tags_and_avoids_live_or_deploy_side_effects() -> None:
@@ -57,3 +62,5 @@ def test_releasing_docs_describe_tag_driven_release() -> None:
     assert "does not publish to PyPI" in docs
     assert "does not deploy to Oracle Cloud" in docs
     assert "does not run live Upwork collection" in docs
+    assert "release-manifest.json" in docs
+    assert "checksums.txt" in docs

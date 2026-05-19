@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1600,height=900,initial-scale=1" />
+  <link rel="stylesheet" href="shared.css" />
+  <title>MCP tool integration sample</title>
+</head>
+<body>
+  <main class="canvas">
+    <section class="header">
+      <div>
+        <div class="kicker"><span class="dot"></span>MCP / AI tool integration</div>
+        <h1>MCP tool integration sample</h1>
+        <p class="subtitle">Scoped tools for AI-assisted internal workflows.</p>
+      </div>
+      <div class="project-mark"><strong>work-feed-mcp</strong>Docker-first local data engine</div>
+    </section>
+
+    <section class="flow-row" aria-label="MCP integration flow">
+      <article class="card flow-step">
+        <div class="step-num">1</div>
+        <h2>AI client</h2>
+        <p>Assistant requests a narrow operation.</p>
+      </article>
+      <article class="card flow-step">
+        <div class="step-num">2</div>
+        <h2>MCP server</h2>
+        <p>Streamable HTTP endpoint exposes tools.</p>
+      </article>
+      <article class="card flow-step">
+        <div class="step-num">3</div>
+        <h2>Typed schema</h2>
+        <p>Inputs stay explicit and JSON-safe.</p>
+      </article>
+      <article class="card flow-step">
+        <div class="step-num">4</div>
+        <h2>Local store</h2>
+        <p>Reads scoped records from SQLite.</p>
+      </article>
+      <article class="card flow-step">
+        <div class="step-num">5</div>
+        <h2>Structured result</h2>
+        <p>Returns compact data for the agent.</p>
+      </article>
+    </section>
+
+    <section class="proof-band">
+      <article class="card terminal">
+        <div class="terminal-top"><span></span><span></span><span></span></div>
+        <div class="code-line"><span class="key">tool</span>: <span class="val">records_search</span></div>
+        <div class="code-line"><span class="key">input</span>: { <span class="val">"keyword"</span>, <span class="val">"limit"</span> }</div>
+        <div class="code-line"><span class="key">boundary</span>: <span class="val">read-only SQLite query</span></div>
+        <div class="code-line"><span class="key">result</span>: <span class="ok">{ "ok": true, "items": [...] }</span></div>
+      </article>
+      <article class="card summary-card">
+        <h2>What this proves</h2>
+        <div class="check">Can expose a local data workflow to AI agents through MCP.</div>
+        <div class="check">Can keep tool calls scoped, typed, and observable.</div>
+        <div class="check">Can separate runtime, persistence, and agent-facing boundaries.</div>
+      </article>
+    </section>
+
+    <div class="footer">
+      <span>Source: README.md + src/... MCP tool/server modules</span>
+      <span class="safe">Public-safe framing: internal records, schemas, scoped tools</span>
+    </div>
+  </main>
+</body>
+</html>

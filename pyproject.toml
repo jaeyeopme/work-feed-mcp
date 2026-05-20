@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "work-feed-mcp"
 version = "0.1.0"
-description = "Docker/MCP-first data engine for the Upwork job discovery pipeline."
+description = "Dockerized Python data-ingestion engine with SQLite storage and MCP tool access."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

@@ -4,27 +4,29 @@
 [![release](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/release.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Docker/MCP-first local data engine for collecting Upwork job listings into SQLite and exposing them to agents through MCP.
+Dockerized Python data-ingestion engine with SQLite storage and MCP tool access.
 
-This project is not affiliated with, endorsed by, or sponsored by Upwork Inc. Upwork is referenced only as the source platform for collected public job listings.
+The project separates source collection, durable local storage, and agent-facing tools. It is useful as a small reference implementation for turning external records into scoped MCP tools with predictable JSON-safe outputs and explicit control boundaries.
+
+The current reference source is public job-listing data. Operators are responsible for using only sources they are authorized to collect and process. This project is not affiliated with, endorsed by, or sponsored by Upwork Inc.
 
 License: MIT. See `CONTRIBUTING.md`, `SECURITY.md`, and `CHANGELOG.md` for maintainer notes.
 
 ```mermaid
 sequenceDiagram
-    participant U as Upwork job search
+    participant S as External source
     participant W as work-feed-worker
     participant DB as SQLite volume
     participant M as work-feed-mcp
     participant A as Agent / MCP client
 
-    W->>U: Collect public listings
-    U-->>W: Job search responses
+    W->>S: Collect authorized records
+    S-->>W: Source responses
     W->>W: Normalize and deduplicate
-    W->>DB: Store jobs and run summaries
+    W->>DB: Store records and run summaries
 
     A->>M: jobs_recent / jobs_search / jobs_get
-    M->>DB: Read collected jobs
+    M->>DB: Read scoped records
     DB-->>M: Rows
     M-->>A: MCP tool result
 
@@ -34,7 +36,7 @@ sequenceDiagram
     W->>W: Apply between collection runs
 ```
 
-This is not a REST web app, application bot, proposal generator, auto-apply tool, or built-in recommendation engine.
+This is not a REST web app, application bot, proposal generator, auto-apply tool, or built-in recommendation engine. It does not provide credentials, cookies, proxy bypasses, application automation, or ranking logic.
 
 ## Quick start
 

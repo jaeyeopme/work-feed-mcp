@@ -6,49 +6,19 @@
 
 Dockerized Python data-ingestion engine with SQLite storage and MCP tool access.
 
-The project separates source collection, durable local storage, and agent-facing tools. It is useful as a small reference implementation for turning external records into scoped MCP tools with predictable JSON-safe outputs and explicit control boundaries.
+Run it locally with Docker Compose, then connect any Streamable HTTP MCP client to
+query collected jobs and control the collector safely.
 
-The current reference source is public job-listing data. Operators are responsible for using only sources they are authorized to collect and process. This project is not affiliated with, endorsed by, or sponsored by Upwork Inc.
+The current reference source is public job-listing data. Operators are responsible for using only sources they are authorized to collect and process. This project is not affiliated with, endorsed by, or sponsored by Upwork Inc. It does not provide credentials, cookies, proxy bypasses, application automation, ranking logic, or raw upstream private payloads.
 
 License: MIT. See `CONTRIBUTING.md`, `SECURITY.md`, and `CHANGELOG.md` for maintainer notes.
-
-```mermaid
-sequenceDiagram
-    participant S as External source
-    participant W as work-feed-worker
-    participant DB as SQLite volume
-    participant M as work-feed-mcp
-    participant A as Agent / MCP client
-
-    W->>S: Collect authorized records
-    S-->>W: Source responses
-    W->>W: Normalize and deduplicate
-    W->>DB: Store records and run summaries
-
-    A->>M: jobs_recent / jobs_search / jobs_get
-    M->>DB: Read scoped records
-    DB-->>M: Rows
-    M-->>A: MCP tool result
-
-    A->>M: config_update / collector_pause / collector_run_once
-    M->>DB: Enqueue command
-    W->>DB: Poll command queue
-    W->>W: Apply between collection runs
-```
-
-This is not a REST web app, application bot, proposal generator, auto-apply tool, or built-in recommendation engine. It does not provide credentials, cookies, proxy bypasses, application automation, ranking logic, or raw upstream private payloads.
 
 ## Quick start
 
 Prerequisites: Docker Desktop or Docker Engine with Docker Compose v2. Normal usage does
 not require a local Python toolchain.
 
-The normal user path is Docker Compose. It starts two services:
-
-- `work-feed-worker`: runs the live collection loop and writes to SQLite.
-- `work-feed-mcp`: exposes MCP tools over the same SQLite database.
-
-### 1. Start it
+Start the worker, MCP server, and shared SQLite volume:
 
 ```bash
 git clone https://github.com/jaeyeopme/work-feed-mcp.git
@@ -57,33 +27,54 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-### 2. Check it
+Check the runtime:
 
 ```bash
 docker compose ps
 ```
 
-Expected result:
+Expected result after the first boot finishes:
 
 - `work-feed-worker` is running.
 - `work-feed-mcp` is running.
-- Health may stay `starting` briefly on first boot while SQLite is initialized.
+- Health may stay `starting` briefly while SQLite is initialized.
 - A fresh database can return empty job lists until collection stores rows.
 
-### 3. Connect it
+Connect your MCP client with these values:
 
-Use this Streamable HTTP MCP endpoint in your client:
+| Field | Value |
+| --- | --- |
+| Name | `work-feed` |
+| Transport | Streamable HTTP, sometimes shown as HTTP |
+| URL | `http://127.0.0.1:8000/mcp` |
 
-```text
-http://127.0.0.1:8000/mcp
+Use the client's HTTP/Streamable HTTP option, not a stdio command. Client-specific
+config formats vary, but a typical shape is:
+
+```json
+{
+  "mcpServers": {
+    "work-feed": {
+      "url": "http://127.0.0.1:8000/mcp"
+    }
+  }
+}
 ```
 
-After connecting, ask your agent to call `jobs_recent` with `limit: 5`. An empty result is
-okay on a fresh database.
+After connecting, ask your agent to call `jobs_recent` with `limit: 5` to confirm the MCP server responds. An empty result is okay on a fresh database.
 
-Configuration lives in `.env`. The defaults are conservative and work without credentials or cookies.
-Most users can start without editing it. To target specific searches, edit only
-`WORK_FEED_QUERIES`, for example:
+For a protocol-level smoke from Docker, run:
+
+```bash
+docker compose exec work-feed-mcp work-feed mcp-smoke
+```
+
+## Configuration
+
+Configuration lives in `.env`. The defaults work without credentials or cookies, and
+most users can start without editing it.
+
+To target specific searches, edit only `WORK_FEED_QUERIES`:
 
 ```dotenv
 WORK_FEED_QUERIES=python,scraping,automation
@@ -110,45 +101,10 @@ docker compose up -d --force-recreate
 
 By default each run collects up to 250 jobs: `5 pages * 50 jobs`.
 
-## Connect an MCP client
-
-The Docker Compose runtime exposes a **Streamable HTTP MCP** endpoint, not a REST API.
-
-Use these values in any MCP client that supports Streamable HTTP:
-
-| Field | Value |
-| --- | --- |
-| Name | `work-feed` |
-| Transport | Streamable HTTP, sometimes shown as HTTP |
-| URL | `http://127.0.0.1:8000/mcp` |
-
-If you override Compose env, derive it as:
+If you override the MCP port or path, the endpoint becomes:
 
 ```text
 http://127.0.0.1:${WORK_FEED_MCP_PORT:-8000}${WORK_FEED_MCP_PATH:-/mcp}
-```
-
-Use the client's HTTP/Streamable HTTP option, not a stdio command. Client-specific
-config formats vary, but a typical shape is:
-
-```json
-{
-  "mcpServers": {
-    "work-feed": {
-      "url": "http://127.0.0.1:8000/mcp"
-    }
-  }
-}
-```
-
-Docker health checks prove container readiness and HTTP transport reachability for `/mcp`. They do **not** run a full MCP protocol initialize / tools/list / tool-call smoke.
-
-After connecting, ask your agent to call `jobs_recent` with `limit: 5` to confirm the MCP server responds. An empty result is okay on a fresh database.
-
-For a Docker-only protocol-level smoke against the running MCP server, run:
-
-```bash
-docker compose exec work-feed-mcp work-feed mcp-smoke
 ```
 
 ## Operate the runtime
@@ -160,9 +116,13 @@ docker compose exec work-feed-mcp work-feed mcp-smoke
 | Restart after `.env` edits | `docker compose up -d --force-recreate` |
 | Restart containers | `docker compose restart` |
 | Stop containers | `docker compose down` |
+| Stop and delete saved data | `docker compose down -v` |
 | Validate Compose config | `docker compose config` |
 | Check scheduler state | `docker compose exec work-feed-worker work-feed scheduler-status --db /data/work-feed.sqlite` |
 | Run MCP protocol smoke | `docker compose exec work-feed-mcp work-feed mcp-smoke` |
+
+`docker compose down` keeps the SQLite volume. `docker compose down -v` deletes the
+saved jobs and run history.
 
 ## MCP tools
 
@@ -284,6 +244,32 @@ If upstream collection is blocked, rate limited, temporarily unavailable, or mal
 
 ## Project structure
 
+Runtime flow:
+
+```mermaid
+sequenceDiagram
+    participant S as External source
+    participant W as work-feed-worker
+    participant DB as SQLite volume
+    participant M as work-feed-mcp
+    participant A as MCP client
+
+    W->>S: Collect authorized records
+    S-->>W: Source responses
+    W->>W: Normalize and deduplicate
+    W->>DB: Store records and run summaries
+
+    A->>M: jobs_recent / jobs_search / jobs_get
+    M->>DB: Read scoped records
+    DB-->>M: Rows
+    M-->>A: MCP tool result
+
+    A->>M: config_update / collector_pause / collector_run_once
+    M->>DB: Enqueue command
+    W->>DB: Poll command queue
+    W->>W: Apply between collection runs
+```
+
 Runtime tree:
 
 ```text
@@ -344,19 +330,3 @@ Direct Python CLI entrypoints exist for local debugging, but they are not the no
 user interface. Prefer Docker/MCP for normal use.
 
 Live collection evidence should be reported separately from local contract checks.
-
-## Agent context
-
-Use these docs as source of truth when giving this repo to another agent:
-
-- `docs/PRD.md`
-- `docs/ARCHITECTURE.md`
-- `docs/TRD.md`
-- `docs/adr/`
-
-Boundary reminder for agents:
-
-- Collection stays dumb and secret-safe.
-- SQLite persistence belongs in repository/db/service code.
-- Analytics and MCP read SQLite only.
-- Recommendation/ranking belongs outside this data engine unless explicitly promoted later.

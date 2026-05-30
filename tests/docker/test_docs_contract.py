@@ -31,25 +31,27 @@ def _normal_user_docs() -> str:
 def test_readme_normal_user_contract() -> None:
     section = _normal_user_docs()
     quick_start = _section("Quick start")
+    configuration = _section("Configuration")
     operate = _section("Operate the runtime")
     assert "git clone" in quick_start
     assert "Docker Desktop or Docker Engine with Docker Compose v2" in quick_start
     assert "Normal usage does\nnot require a local Python toolchain." in quick_start
-    assert "### 1. Start it" in quick_start
-    assert "### 2. Check it" in quick_start
-    assert "### 3. Connect it" in quick_start
     assert "cd work-feed-mcp" in quick_start
     assert "cp .env.example .env" in quick_start
     assert "docker compose up -d --build" in quick_start
     assert "docker compose ps" in quick_start
     assert "`work-feed-worker` is running" in quick_start
     assert "`work-feed-mcp` is running" in quick_start
-    assert "Use this Streamable HTTP MCP endpoint" in quick_start
+    assert "Connect your MCP client" in quick_start
     assert "A fresh database can return empty job lists" in quick_start
+    assert "jobs_recent" in quick_start
+    assert "limit: 5" in quick_start
     assert "make up" not in quick_start
     assert "docker compose logs -f" in operate
     assert "docker compose restart" in operate
     assert "docker compose down" in operate
+    assert "docker compose down -v" in operate
+    assert "deletes the\nsaved jobs and run history" in operate
     assert (
         "docker compose exec work-feed-worker work-feed scheduler-status "
         "--db /data/work-feed.sqlite"
@@ -69,7 +71,6 @@ def test_readme_normal_user_contract() -> None:
     assert "http://127.0.0.1:8000/mcp" in section
     assert "docs/mcp-client-setup.md" not in section
     assert "docs/" not in section
-    assert "## Connect an MCP client" in _readme()
     assert "| Name | `work-feed` |" in section
     assert "| Transport | Streamable HTTP, sometimes shown as HTTP |" in section
     assert "Use the client's HTTP/Streamable HTTP option, not a stdio command" in section
@@ -79,11 +80,8 @@ def test_readme_normal_user_contract() -> None:
     assert "jobs_recent" in section
     assert "limit: 5" in section
     assert "empty" in section
-    assert "any MCP client that supports Streamable HTTP" in section
     assert "docker compose exec work-feed-mcp work-feed mcp-smoke" in section
     assert "recreate the runtime" in section or "recreate the services" in section
-    assert "Docker health checks" in section
-    assert "do **not** run a full MCP protocol" in section
     assert "seen" in section
     assert "inserted" in section
     assert "skipped" in section
@@ -108,7 +106,7 @@ def test_readme_normal_user_contract() -> None:
         "WORK_FEED_MCP_PATH",
         "WORK_FEED_DB",
     ]:
-        assert variable in section
+        assert variable in configuration
     assert "WORK_FEED_MCP_TRANSPORT" not in section
 
     for tool in [

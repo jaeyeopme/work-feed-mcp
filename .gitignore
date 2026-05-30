@@ -17,6 +17,10 @@ venv/
 .env.*
 !.env.example
 
+# Local agent/planning artifacts
+.agents/
+/
+
 # Local live/proxy material - never commit
 *.proxy
 *.secrets
@@ -34,6 +38,3 @@ snapshot-*.json
 .DS_Store
 .idea/
 .vscode/
-
-# OMX runtime/planning artifacts - never commit
-.omx/

@@ -1,6 +1,6 @@
 # work-feed-mcp
 
-[![checks](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/ci-cd.yml)
+[![ci](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/ci-cd.yml)
 [![release](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/release.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -36,7 +36,7 @@ sequenceDiagram
     W->>W: Apply between collection runs
 ```
 
-This is not a REST web app, application bot, proposal generator, auto-apply tool, or built-in recommendation engine. It does not provide credentials, cookies, proxy bypasses, application automation, or ranking logic.
+This is not a REST web app, application bot, proposal generator, auto-apply tool, or built-in recommendation engine. It does not provide credentials, cookies, proxy bypasses, application automation, ranking logic, or raw upstream private payloads.
 
 ## Quick start
 
@@ -46,9 +46,11 @@ The normal user path is Docker Compose. It starts two services:
 - `work-feed-mcp`: exposes MCP tools over the same SQLite database.
 
 ```bash
+git clone https://github.com/jaeyeopme/work-feed-mcp.git
+cd work-feed-mcp
 cp .env.example .env
-make up
-make status
+docker compose up -d --build
+docker compose ps
 ```
 
 Configuration lives in `.env`. The defaults are conservative and work without credentials or cookies.
@@ -66,10 +68,10 @@ Configuration lives in `.env`. The defaults are conservative and work without cr
 | `WORK_FEED_MCP_PORT`         | `8000`                   | Host port for the local MCP endpoint.                                                       |
 | `WORK_FEED_MCP_PATH`         | `/mcp`                   | HTTP path for Streamable HTTP MCP.                                                          |
 
-By default each run collects up to 250 jobs: `5 pages * 50 jobs`. After changing `.env`, recreate the runtime so Docker applies the new environment:
+By default each run collects up to 250 jobs: `5 pages * 50 jobs`. After changing `.env`, recreate the services so Docker applies the new environment:
 
 ```bash
-make restart
+docker compose up -d --force-recreate
 ```
 
 ## Connect an MCP client
@@ -150,32 +152,26 @@ After connecting, ask your agent to call `jobs_recent` with `limit: 5` to confir
 make mcp-smoke
 ```
 
-## Agent skill for collected jobs
-
-This repository ships a project-local agent skill at `skills/work-feed-jobs`. Use it when an agent should read and summarize already-collected Upwork jobs through the work-feed MCP tools. Typical prompts include:
-
-- `show recent collected jobs`
-- `find python jobs`
-- `pick recommendation candidates`
-- `work-feed jobs`
-- `Upwork collected jobs`
-
-The skill also contains localized trigger examples for agent discovery. It is read-only over collected data. It prefers `jobs_recent`, `jobs_search`, `jobs_get`, `runs_recent`, and `collector_status`; it does not run live collection, configure schedules, operate Docker, write proposals/messages, auto-apply, or provide cookie/session/proxy/bypass guidance.
-
-MCP and the skill serve different layers:
-
-- MCP exposes the actual tools and data access.
-- `skills/work-feed-jobs` tells an agent when and how to use those tools safely.
-- A plugin bundle is optional. It is useful only if a client needs one installable package that includes skill metadata plus MCP setup hints. This repository currently keeps them separate: Docker/MCP runtime in the app, repo-local skill instructions in `skills/`, and no bundled credentials or live collection setup in either layer.
-
 ## Operate the runtime
 
 ```bash
-make status   # container status
-make logs     # follow worker + MCP logs
-make restart  # restart both services
-make down     # stop the runtime
-make config   # render docker compose config
+docker compose ps
+docker compose logs -f
+docker compose restart
+docker compose down
+docker compose config
+docker compose exec work-feed-worker work-feed scheduler-status --db /data/work-feed.sqlite
+```
+
+Convenience wrappers are available when `make` is installed:
+
+```bash
+make status
+make logs
+make restart
+make down
+make config
+make mcp-smoke
 ```
 
 ## MCP tools
@@ -240,6 +236,16 @@ If MCP starts before the worker initializes SQLite, tools return stable `not_rea
 
 `reason` may be `db_missing`, `schema_missing`, or `unsupported_schema`. For `unsupported_schema`, upgrade work-feed or migrate the database before reading or controlling the runtime. An initialized DB with no rows is not an error; list tools return `{ "ok": true, "status": "empty", "rows": [] }`.
 
+## Run counts and dedupe
+
+Collector status and run history use three counters:
+
+- `seen`: rows observed or fetched during a run.
+- `inserted`: newly stored unique jobs.
+- `skipped`: observed rows not stored because a job with the same identity already exists.
+
+Stored jobs are deduplicated by `job_id`. A high `skipped` count usually means the collector saw jobs already saved in the database; it is not a failure by itself.
+
 ## What this does not do
 
 - Not a REST API.
@@ -249,6 +255,39 @@ If MCP starts before the worker initializes SQLite, tools return stable `not_rea
 - Not notifications or report delivery.
 - Not proxy/bypass tooling.
 - Not cookie/session based collection guidance.
+- Not raw upstream private payload storage.
+
+## Troubleshooting
+
+Empty results after a fresh start usually mean the database is initialized but no jobs have been collected yet. This is a valid empty state.
+
+If an MCP tool returns `not_ready`, check that `work-feed-worker` is running and healthy:
+
+```bash
+docker compose ps
+docker compose logs -f work-feed-worker
+```
+
+For MCP connection failures, confirm the endpoint and local port:
+
+```bash
+docker compose ps work-feed-mcp
+docker compose logs -f work-feed-mcp
+```
+
+Default endpoint:
+
+```text
+http://127.0.0.1:8000/mcp
+```
+
+If `.env` changes do not appear, recreate the services:
+
+```bash
+docker compose up -d --force-recreate
+```
+
+If upstream collection is blocked or unavailable, keep the runtime running and inspect collector status and logs. Worker resilience for blocked upstream states is tracked as a separate follow-up; this README documents the current operational condition.
 
 ## Project structure
 
@@ -288,10 +327,13 @@ Development checks are maintained for contributors and local maintenance; they a
 
 Contributor and release references:
 
+- `docs/PRD.md` for current product requirements and non-goals.
+- `docs/ARCHITECTURE.md` for runtime, layer, data-flow, and release architecture.
+- `docs/TRD.md` for technical requirements, contracts, and verification gates.
+- `docs/adr/` for accepted architecture decisions.
 - `CONTRIBUTING.md` for setup, verification, scope boundaries, and PR expectations.
 - `SECURITY.md` for vulnerability reporting and safe diagnostic rules.
 - `CHANGELOG.md` for release notes.
-- `docs/RELEASING.md` for GitHub Release and GHCR publishing steps.
 
 ```bash
 make quality
@@ -324,9 +366,10 @@ Live collection evidence should be reported separately from local contract check
 
 Use these docs as source of truth when giving this repo to another agent:
 
-- `docs/LLM_CONTEXT.md`
-- `docs/EXTERNAL_LLM_GUIDE.md`
-- `docs/contracts/job-jsonl.md`
+- `docs/PRD.md`
+- `docs/ARCHITECTURE.md`
+- `docs/TRD.md`
+- `docs/adr/`
 
 Boundary reminder for agents:
 

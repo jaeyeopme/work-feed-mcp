@@ -1,8 +1,10 @@
 .git
 .github
+Dockerfile*
+.dockerignore
 skills
+.agents
 .idea
-.omx
 .venv
 .mypy_cache
 .pytest_cache
@@ -13,10 +15,13 @@ __pycache__
 *.sqlite-*
 *.db
 *.db-*
+.env*
+*.log*
 data
 build
 dist
 *.egg-info
 .coverage
+coverage/
 htmlcov
 .DS_Store

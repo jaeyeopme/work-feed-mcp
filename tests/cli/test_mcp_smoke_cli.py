@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 from work_feed_mcp.cli import mcp_smoke
 
 
@@ -19,6 +21,13 @@ def test_mcp_smoke_rejects_limit_above_service_contract(capsys: Any) -> None:
 
     assert result == 2
     assert "limit must be <= 100" in capsys.readouterr().err
+
+
+def test_mcp_smoke_default_url_uses_runtime_port_and_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("WORK_FEED_MCP_PORT", "8123")
+    monkeypatch.setenv("WORK_FEED_MCP_PATH", "/custom-mcp")
+
+    assert mcp_smoke.default_smoke_url() == "http://127.0.0.1:8123/custom-mcp"
 
 
 def test_mcp_smoke_rejects_tool_error_result() -> None:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
 from collections.abc import Sequence
 from typing import Any, Never
@@ -12,6 +13,7 @@ from typing import Any, Never
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 
+from work_feed_mcp.runtime.config import load_runtime_settings
 from work_feed_mcp.services.limits import validate_limit
 
 
@@ -26,9 +28,18 @@ class McpSmokeArgumentParser(argparse.ArgumentParser):
 
 def build_parser() -> argparse.ArgumentParser:
     parser = McpSmokeArgumentParser(prog="work-feed mcp-smoke")
-    parser.add_argument("--url", default="http://127.0.0.1:8000/mcp")
+    parser.add_argument(
+        "--url",
+        default=None,
+        help="Streamable HTTP MCP URL; defaults to WORK_FEED_MCP_PORT/PATH on localhost",
+    )
     parser.add_argument("--limit", type=int, default=5)
     return parser
+
+
+def default_smoke_url() -> str:
+    settings = load_runtime_settings(os.environ)
+    return f"http://127.0.0.1:{settings.mcp_port}{settings.mcp_path}"
 
 
 async def smoke_mcp(url: str, *, limit: int = 5) -> dict[str, Any]:
@@ -84,7 +95,7 @@ def _root_error_message(error: BaseException) -> str:
 def main(argv: Sequence[str] | None = None) -> int:
     try:
         args = build_parser().parse_args(argv)
-        result = asyncio.run(smoke_mcp(args.url, limit=args.limit))
+        result = asyncio.run(smoke_mcp(args.url or default_smoke_url(), limit=args.limit))
         print(json.dumps(result, sort_keys=True))
         return 0
     except (McpSmokeUsageError, ValueError) as exc:

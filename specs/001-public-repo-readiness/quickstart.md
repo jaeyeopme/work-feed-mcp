@@ -23,14 +23,6 @@ docker compose down
 docker compose exec work-feed-worker work-feed scheduler-status --db /data/work-feed.sqlite
 ```
 
-Make wrappers may remain as secondary convenience commands:
-
-```bash
-make status
-make logs
-make mcp-smoke
-```
-
 ## Contract Checks
 
 Search active public surfaces for private deployment traces:
@@ -66,9 +58,11 @@ uv run --extra dev pytest -q tests/docker
 Then run repository gates when implementation is complete:
 
 ```bash
-make quality
-make smoke
-make e2e-smoke
+uv run --extra dev ruff format --check .
+uv run --extra dev ruff check .
+uv run --extra dev mypy src
+uv run --extra dev lint-imports
+uv run --extra dev pytest -q
 ```
 
 Live collection evidence is out of scope for this feature and must not be used as normal verification.

@@ -32,9 +32,12 @@ Use `docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/TRD.md`, and `docs/adr/` for de
 For normal changes, run from repo root:
 
 ```bash
-make quality
-make smoke
-make e2e-smoke
+uv run --extra dev ruff format --check .
+uv run --extra dev ruff check .
+uv run --extra dev mypy src
+uv run --extra dev lint-imports
+uv run --extra dev pytest -q
+uv run --extra dev pytest --cov --cov-report=term-missing --cov-fail-under=80 -q
 ```
 
 For duplicate checks, run:
@@ -47,7 +50,7 @@ npx jscpd --reporters ai --gitignore --min-lines 10 \
 For live evidence, run only with explicit opt-in:
 
 ```bash
-make live-smoke QUERY="python"
+WORK_FEED_LIVE=1 uv run --extra dev work-feed collect --live --query "python" --max-pages 1 --page-size 50
 ```
 
 Report live status separately from fixture/local contract evidence.

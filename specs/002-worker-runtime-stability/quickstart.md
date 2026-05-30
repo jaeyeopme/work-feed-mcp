@@ -37,15 +37,17 @@ Expected evidence:
 Run repository gates:
 
 ```bash
-make quality
-make smoke
-make e2e-smoke
+uv run --extra dev ruff format --check .
+uv run --extra dev ruff check .
+uv run --extra dev mypy src
+uv run --extra dev lint-imports
+uv run --extra dev pytest -q
 ```
 
 Optional coverage check:
 
 ```bash
-make coverage
+uv run --extra dev pytest --cov --cov-report=term-missing --cov-fail-under=80 -q
 ```
 
 ## Manual Runtime Check
@@ -74,7 +76,7 @@ If upstream collection is blocked or unavailable, expected behavior is:
 Live collection evidence is optional and must be reported separately:
 
 ```bash
-make live-smoke QUERY="python"
+WORK_FEED_LIVE=1 uv run --extra dev work-feed collect --live --query "python" --max-pages 1 --page-size 50
 ```
 
 Do not use live upstream success or failure as a required normal verification

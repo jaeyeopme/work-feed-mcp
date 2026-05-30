@@ -16,12 +16,11 @@ This feature changes public-facing repository surfaces, not runtime persistence.
 - Runtime operation commands.
 - Run counter and `job_id` deduplication definitions.
 - Troubleshooting for common startup, database, MCP, config, and upstream states.
-- Make commands listed only as convenience wrappers.
 
 **Validation rules**:
 
 - Must be sufficient for normal startup and operation without requiring `docs/`.
-- Must not present `make up` as the canonical quick start.
+- Must not present project-specific wrapper commands as the canonical quick start.
 - Must not contain private deployment instructions or private server rollback steps.
 
 ## Example Environment
@@ -35,7 +34,7 @@ This feature changes public-facing repository surfaces, not runtime persistence.
 
 **Validation rules**:
 
-- Must not make Make a prerequisite.
+- Must not require project-specific wrapper tooling.
 - Must not include credentials, cookies, sessions, proxies, private hosts, or cloud-specific values.
 
 ## Public Automation Surface
@@ -67,7 +66,7 @@ This feature changes public-facing repository surfaces, not runtime persistence.
 **Validation rules**:
 
 - README must define all three counters.
-- Definitions must make clear that skipped duplicates are not collector failures.
+- Definitions must clarify that skipped duplicates are not collector failures.
 
 ## Job Identity
 

@@ -24,10 +24,17 @@ def test_ci_workflow_is_verification_only() -> None:
     assert "timeout-minutes:" in workflow
 
     assert "quality:" in workflow
-    assert "make quality" in workflow
-    assert "make coverage" in workflow
-    assert "make smoke" in workflow
-    assert "make e2e-smoke" in workflow
+    assert "uv run --extra dev ruff format --check ." in workflow
+    assert "uv run --extra dev ruff check ." in workflow
+    assert "uv run --extra dev mypy src" in workflow
+    assert "uv run --extra dev lint-imports" in workflow
+    assert "uv run --extra dev pytest -q" in workflow
+    assert (
+        "uv run --extra dev pytest --cov --cov-report=term-missing --cov-fail-under=80 -q"
+        in workflow
+    )
+    assert "work-feed collect --fixture tests/fixtures/visitor_job_search_response.json" in workflow
+    assert "work-feed ingest --db /tmp/work-feed-e2e.sqlite" in workflow
 
     assert "changes:" not in workflow
     assert "deploy_relevant" not in workflow
@@ -38,4 +45,5 @@ def test_ci_workflow_is_verification_only() -> None:
     assert "ORACLE_" not in workflow
     assert "environment:" not in workflow
     assert "docker compose up" not in workflow
-    assert "make live-smoke" not in workflow
+    assert "make" not in workflow
+    assert "--live" not in workflow

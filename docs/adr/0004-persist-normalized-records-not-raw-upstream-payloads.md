@@ -8,7 +8,7 @@ Accepted
 
 Source collection receives upstream response shapes that may include fields not
 appropriate for durable storage or agent-facing output. Persisting raw envelopes
-would make debugging convenient, but it increases privacy, security, and
+would simplify debugging, but it increases privacy, security, and
 platform-boundary risk.
 
 The repository already defines a normalized job JSONL contract and rejects

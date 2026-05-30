@@ -13,9 +13,8 @@ collection path should still surface instead of being silently swallowed.
 **Alternatives considered**:
 
 - Let Docker restart the worker after each failure: rejected because repeated
-  restart loops hide command processing behavior and make status harder to
-  reason about.
-- Make `collect_scheduled` never raise: rejected because CLI one-shot commands
+  restart loops hide command processing behavior and obscure status.
+- Force `collect_scheduled` never to raise: rejected because CLI one-shot commands
   still need meaningful exit codes and tests already rely on fail-fast service
   behavior.
 - Catch every exception in the worker loop: rejected because it can hide coding

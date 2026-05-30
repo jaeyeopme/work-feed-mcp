@@ -33,10 +33,19 @@ def test_readme_normal_user_contract() -> None:
     quick_start = _section("Quick start")
     operate = _section("Operate the runtime")
     assert "git clone" in quick_start
+    assert "Docker Desktop or Docker Engine with Docker Compose v2" in quick_start
+    assert "Normal usage does\nnot require a local Python toolchain." in quick_start
+    assert "### 1. Start it" in quick_start
+    assert "### 2. Check it" in quick_start
+    assert "### 3. Connect it" in quick_start
     assert "cd work-feed-mcp" in quick_start
     assert "cp .env.example .env" in quick_start
     assert "docker compose up -d --build" in quick_start
     assert "docker compose ps" in quick_start
+    assert "`work-feed-worker` is running" in quick_start
+    assert "`work-feed-mcp` is running" in quick_start
+    assert "Use this Streamable HTTP MCP endpoint" in quick_start
+    assert "A fresh database can return empty job lists" in quick_start
     assert "make up" not in quick_start
     assert "docker compose logs -f" in operate
     assert "docker compose restart" in operate
@@ -45,9 +54,9 @@ def test_readme_normal_user_contract() -> None:
         "docker compose exec work-feed-worker work-feed scheduler-status "
         "--db /data/work-feed.sqlite"
     ) in operate
-    assert "make status" in section
-    assert "make logs" in section
-    assert "make mcp-smoke" in section
+    assert "make status" not in section
+    assert "make logs" not in section
+    assert "make mcp-smoke" not in section
     assert "# work-feed-mcp" in _readme()
     assert "```mermaid" in _readme()
     assert "sequenceDiagram" in _readme()
@@ -61,16 +70,17 @@ def test_readme_normal_user_contract() -> None:
     assert "docs/mcp-client-setup.md" not in section
     assert "docs/" not in section
     assert "## Connect an MCP client" in _readme()
-    assert "### Claude Code" in section
-    assert "claude mcp add --transport http work-feed http://127.0.0.1:8000/mcp" in section
-    assert '"type": "http"' in section
-    assert "### Codex" in section
-    assert "codex mcp add work-feed --url http://127.0.0.1:8000/mcp" in section
-    assert "[mcp_servers.work-feed]" in section
-    assert "Codex infers streamable HTTP from `url`" in section
+    assert "| Name | `work-feed` |" in section
+    assert "| Transport | Streamable HTTP, sometimes shown as HTTP |" in section
+    assert "Use the client's HTTP/Streamable HTTP option, not a stdio command" in section
+    assert '"mcpServers"' in section
+    assert "Claude Code" not in section
+    assert "Codex" not in section
     assert "jobs_recent" in section
     assert "limit: 5" in section
     assert "empty" in section
+    assert "any MCP client that supports Streamable HTTP" in section
+    assert "docker compose exec work-feed-mcp work-feed mcp-smoke" in section
     assert "recreate the runtime" in section or "recreate the services" in section
     assert "Docker health checks" in section
     assert "do **not** run a full MCP protocol" in section
@@ -82,6 +92,7 @@ def test_readme_normal_user_contract() -> None:
     assert "## Troubleshooting" in section
     assert "not_ready" in section
     assert "blocked" in section
+    assert "make" not in section
     assert "uv run" not in section
     assert not KOREAN_RE.search(section)
 
@@ -156,6 +167,7 @@ def test_readme_normal_user_contract() -> None:
 def test_readme_whole_document_boundaries() -> None:
     readme = _readme()
     assert not KOREAN_RE.search(readme)
+    assert "make" not in readme
     assert "## CI/CD" not in readme
     assert "proxy acquisition" not in readme.lower()
     assert "access-control bypass" not in readme.lower()

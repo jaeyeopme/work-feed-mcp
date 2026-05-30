@@ -8,7 +8,7 @@ This contract defines the observable public repository state after implementatio
   - copy `.env.example` to `.env`
   - start with build
   - inspect service status
-- `make up` and related Make commands may appear only as convenience wrappers.
+- Project-specific wrapper commands are not part of the normal-user README path.
 - README contains all normal-user startup, operation, MCP connection, counter definition, and troubleshooting guidance.
 - Developer docs may remain as optional references, but README must not require them for normal usage.
 - The normal-user portion of README includes:

@@ -8,7 +8,7 @@
 
 ## Summary
 
-Make the public repository understandable, runnable, and safe for a new local Docker/MCP user. The implementation will make README the complete normal-user source of truth, keep developer docs as optional references, switch the documented quick start to standard Docker Compose, keep Make as optional wrappers, delete Oracle/private deploy scripts/docs/workflow expectations from the public surface, keep CI verification-only, document run counters and `job_id` deduplication, and preserve GHCR/GitHub Release automation only as public artifact publishing.
+The public repository should be understandable, runnable, and safe for a new local Docker/MCP user. The implementation will keep README as the complete normal-user source of truth, keep developer docs as optional references, switch the documented quick start to standard Docker Compose, remove project-specific wrapper tooling from the public path, delete Oracle/private deploy scripts/docs/workflow expectations from the public surface, keep CI verification-only, document run counters and `job_id` deduplication, and preserve GHCR/GitHub Release automation only as public artifact publishing.
 
 ## Technical Context
 
@@ -18,7 +18,7 @@ Make the public repository understandable, runnable, and safe for a new local Do
 
 **Storage**: Existing SQLite runtime documented only; no schema or data retention change
 
-**Testing**: Documentation/workflow contract tests under `tests/docker`, plus `make quality`, `make smoke`, `make e2e-smoke` when practical
+**Testing**: Documentation/workflow contract tests under `tests/docker`, plus direct `uv`/CLI quality, fixture smoke, and e2e smoke checks when practical
 
 **Target Platform**: Public clone running local Docker Compose and connecting local MCP clients
 
@@ -64,7 +64,6 @@ specs/001-public-repo-readiness/
 README.md                 # Primary normal-user documentation
 .env.example              # Copyable runtime configuration comments
 compose.yaml              # Existing Docker Compose runtime, unchanged unless docs reveal mismatch
-Makefile                  # Convenience wrappers, not primary user path
 .github/workflows/ci-cd.yml
 .github/workflows/release.yml  # Public artifact publishing only
 scripts/deploy/           # Oracle/private deployment scripts removed

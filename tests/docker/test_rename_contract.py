@@ -11,7 +11,6 @@ SCAN_PATHS = [
     Path("Dockerfile"),
     Path(".env.example"),
     Path("compose.yaml"),
-    Path("Makefile"),
     Path("src"),
     Path("tests"),
     Path("AGENTS.md"),

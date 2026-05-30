@@ -124,8 +124,8 @@ and keep normal CI limited to verification.
 
 Acceptance:
 
-- `make quality`, `make smoke`, and `make e2e-smoke` are normal verification.
-- `make live-smoke` is explicit opt-in only.
+- Normal verification includes quality, coverage, fixture smoke, and e2e smoke checks.
+- Live collection evidence is explicit opt-in only.
 - Release publishes GitHub Release and GHCR image tags.
 - Normal CI does not deploy to a private host or require private server secrets.
 

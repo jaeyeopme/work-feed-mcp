@@ -236,21 +236,23 @@ Release must:
 Normal changes:
 
 ```bash
-make quality
-make smoke
-make e2e-smoke
-```
-
-Architecture-sensitive changes:
-
-```bash
-make architecture
+uv run --extra dev ruff format --check .
+uv run --extra dev ruff check .
+uv run --extra dev mypy src
+uv run --extra dev lint-imports
+uv run --extra dev pytest -q
 ```
 
 Coverage-sensitive changes:
 
 ```bash
-make coverage
+uv run --extra dev pytest --cov --cov-report=term-missing --cov-fail-under=80 -q
+```
+
+Fixture smoke:
+
+```bash
+uv run --extra dev work-feed collect --fixture tests/fixtures/visitor_job_search_response.json
 ```
 
 Duplicate check:
@@ -263,7 +265,7 @@ npx jscpd --reporters ai --gitignore --min-lines 10 \
 Live evidence only with explicit opt-in:
 
 ```bash
-make live-smoke QUERY="python"
+WORK_FEED_LIVE=1 uv run --extra dev work-feed collect --live --query "python" --max-pages 1 --page-size 50
 ```
 
 ## Security Requirements

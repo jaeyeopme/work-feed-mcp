@@ -55,7 +55,7 @@ A public reader can inspect repository automation and see verification workflows
 
 A user can understand what collection run counts mean, how duplicate jobs are handled, and what the project intentionally does not provide.
 
-**Why this priority**: Run summaries and Upwork-related boundaries are frequent sources of confusion. Clear definitions prevent misinterpreting duplicates as data loss and make safe use expectations explicit.
+**Why this priority**: Run summaries and Upwork-related boundaries are frequent sources of confusion. Clear definitions prevent misinterpreting duplicates as data loss and keep safe-use expectations explicit.
 
 **Independent Test**: Read the README and verify it defines run counters, job deduplication, and safety limits without requiring a data model document.
 
@@ -67,8 +67,8 @@ A user can understand what collection run counts mean, how duplicate jobs are ha
 
 ### Edge Cases
 
-- A user without `make` installed can still follow the canonical quick start and operation commands.
-- Users who prefer Make can still discover Make commands as optional wrappers, not as the main path.
+- A user with Docker Compose can follow the canonical quick start and operation commands without project-specific wrapper commands.
+- The repository does not need a wrapper-command path for normal users.
 - A fresh database with no collected jobs is documented as a valid empty state, not a failure.
 - A not-ready database, unavailable worker, or MCP connection failure has a visible troubleshooting path in the README.
 - A blocked or unavailable upstream source is documented as an operational condition, while worker resilience changes remain outside this feature's scope.
@@ -82,8 +82,8 @@ A user can understand what collection run counts mean, how duplicate jobs are ha
 
 - **FR-001**: The README MUST be sufficient for a normal local Docker/MCP user to understand the project, start it, operate it, connect an MCP client, and understand common failure states without reading any other project document.
 - **FR-002**: The README quick start MUST present standard Docker Compose commands as the canonical startup path, including clone, entering the repository, copying `.env.example`, starting with build, and checking service status.
-- **FR-003**: Make commands MAY remain documented, but they MUST be presented as convenience wrappers rather than the primary user path.
-- **FR-004**: The example environment file MUST align with the README quick start and MUST not make Make a prerequisite for normal use.
+- **FR-003**: Project-specific wrapper commands MUST NOT be presented as part of the normal-user README path.
+- **FR-004**: The example environment file MUST align with the README quick start and MUST not require project-specific wrapper tooling for normal use.
 - **FR-005**: The README MUST include common operation commands for viewing logs, restarting, stopping, inspecting status, and checking the collector/MCP runtime.
 - **FR-006**: The README MUST explain how to connect at least one MCP client and how to confirm the MCP server responds, including the empty-database success case.
 - **FR-007**: The README MUST define `seen`, `inserted`, `skipped`, and `job_id` deduplication in user-facing language.

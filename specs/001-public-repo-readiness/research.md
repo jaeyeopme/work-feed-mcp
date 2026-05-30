@@ -11,16 +11,16 @@
 
 ## Decision: Standard Docker Compose is the canonical quick start
 
-**Rationale**: Docker Compose is the portable runtime interface visible in the repository. Make can remain useful for maintainers and frequent users, but public quick start should work in environments where Make is unavailable.
+**Rationale**: Docker Compose is the portable runtime interface visible in the repository. The public quick start should not depend on project-specific wrapper tooling.
 
 **Alternatives considered**:
 
-- Keep `make up` as the main quick start: rejected because it adds an avoidable tool prerequisite for first-time users.
-- Replace Make entirely: rejected because existing wrappers remain useful as convenience commands and verification entrypoints.
+- Keep wrapper commands as the main quick start: rejected because it adds an avoidable tool prerequisite for first-time users.
+- Keep wrapper commands as a documented secondary path: rejected because it still makes the user-facing surface less direct than standard Docker Compose.
 
 ## Decision: Private Oracle deployment artifacts are deleted or rewritten out of the public surface
 
-**Rationale**: Personal server deployment workflows, scripts, docs, tests that require them, `ORACLE_*` secrets, SSH setup, host paths, and rollback runbooks make the repository look tailored to one maintainer's infrastructure and create avoidable safety and trust concerns for public users.
+**Rationale**: Personal server deployment workflows, scripts, docs, tests that require them, `ORACLE_*` secrets, SSH setup, host paths, and rollback runbooks cause the repository to look tailored to one maintainer's infrastructure and create avoidable safety and trust concerns for public users.
 
 **Alternatives considered**:
 

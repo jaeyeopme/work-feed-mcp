@@ -26,11 +26,11 @@
 
 ## Phase 2: Foundational (Contract Test Direction)
 
-**Purpose**: Make tests describe the clarified public repository contract before implementation.
+**Purpose**: Ensure tests describe the clarified public repository contract before implementation.
 
 **Critical**: Complete this phase before user-story implementation so failing tests describe the target state.
 
-- [X] T004 Update normal-user README assertions in `tests/docker/test_docs_contract.py` to remove old `make up` primary-path expectations and any requirement to read `docs/`
+- [X] T004 Update normal-user README assertions in `tests/docker/test_docs_contract.py` to require the Docker Compose primary path and no requirement to read `docs/`
 - [X] T005 [P] Update public OSS readiness policy assertions in `tests/docker/test_oss_readiness_contract.py` to allow developer docs as optional references
 - [X] T006 [P] Update release workflow policy assertions in `tests/docker/test_release_workflow_contract.py` to forbid private SSH/server deployment steps
 - [X] T007 Delete or rewrite private deployment contract tests in `tests/docker/test_deploy_workflow_contract.py`, `tests/docker/test_oracle_deploy_decision.py`, `tests/docker/test_oracle_deploy_script_contract.py`, and `tests/docker/test_oracle_deploy_script_behavior.py`
@@ -43,24 +43,24 @@
 
 **Goal**: A first-time local operator can start, inspect, operate, and connect the runtime by reading only `README.md`.
 
-**Independent Test**: `tests/docker/test_docs_contract.py` passes for the normal-user README contract, and a reader can follow the README quick start without `make`.
+**Independent Test**: `tests/docker/test_docs_contract.py` passes for the normal-user README contract, and a reader can follow the README quick start with standard Docker Compose.
 
 ### Tests for User Story 1
 
 - [X] T008 [P] [US1] Add README quick-start assertions in `tests/docker/test_docs_contract.py` for `cp .env.example .env`, `docker compose up -d --build`, and `docker compose ps`
-- [X] T009 [P] [US1] Add environment-comment assertions in `tests/docker/test_docs_contract.py` for `.env.example` not requiring `make`
+- [X] T009 [P] [US1] Add environment-comment assertions in `tests/docker/test_docs_contract.py` for `.env.example` matching the Docker Compose quick start
 - [X] T010 [P] [US1] Add operation-command assertions in `tests/docker/test_docs_contract.py` for `docker compose logs -f`, `docker compose restart`, `docker compose down`, and `docker compose exec work-feed-worker work-feed scheduler-status --db /data/work-feed.sqlite`
 
 ### Implementation for User Story 1
 
 - [X] T011 [US1] Rewrite the `README.md` quick start to use clone, `cd work-feed-mcp`, `cp .env.example .env`, `docker compose up -d --build`, and `docker compose ps`
 - [X] T012 [US1] Update the `README.md` operation section to show Docker Compose status, logs, restart, shutdown, config inspection, scheduler status, and MCP smoke commands
-- [X] T013 [US1] Move Make commands in `README.md` into a convenience-wrapper section that does not present `make up` as the primary path
-- [X] T014 [US1] Update `.env.example` comments to match the Docker Compose quick start and remove `make up` / `make status` as required setup commands
+- [X] T013 [US1] Remove project-specific wrapper commands from the normal-user `README.md` path
+- [X] T014 [US1] Update `.env.example` comments to match the Docker Compose quick start
 - [X] T015 [US1] Ensure `README.md` MCP client setup still documents the local Streamable HTTP endpoint and empty-database success behavior
 - [X] T016 [US1] Add README troubleshooting entries in `README.md` for empty database, database not ready, MCP connection failure, config changes requiring recreate/restart, and blocked upstream collection
 
-**Checkpoint**: User Story 1 is independently complete when the README normal-user path works without `make` and its Docker docs contract passes.
+**Checkpoint**: User Story 1 is independently complete when the README normal-user path works with Docker Compose and its Docker docs contract passes.
 
 ---
 
@@ -116,9 +116,9 @@
 - [X] T030 [P] Update `AGENTS.md` and developer reference links in `README.md` so developer docs are optional and not part of the normal-user path
 - [X] T031 [P] Run `uv run --extra dev pytest -q tests/docker` for `tests/docker`
 - [X] T032 [P] Run the private-deployment inventory command from `specs/001-public-repo-readiness/quickstart.md` against `README.md`, `.github/`, `scripts/`, and `docs/`
-- [X] T033 Run `make quality` from `Makefile`
-- [X] T034 Run `make smoke` from `Makefile`
-- [X] T035 Run `make e2e-smoke` from `Makefile`
+- [X] T033 Run formatting/lint/type/import/test checks with direct `uv` commands
+- [X] T034 Run fixture smoke with direct CLI commands
+- [X] T035 Run e2e smoke with direct CLI commands
 - [X] T036 Update `specs/001-public-repo-readiness/quickstart.md` if verification commands or public-surface checks changed during implementation
 
 ---
@@ -195,8 +195,8 @@ Task: "T026 Add safety-boundary assertions in tests/docker/test_docs_contract.py
 ### Verification Scope
 
 - Required narrow check: `uv run --extra dev pytest -q tests/docker`
-- Required broad checks when implementation completes: `make quality`, `make smoke`, `make e2e-smoke`
-- Out of scope: `make live-smoke`
+- Required broad checks when implementation completes: formatting/lint/type/import/test checks, fixture smoke, and e2e smoke with direct `uv`/CLI commands
+- Out of scope: live upstream collection as a required gate
 
 ## Notes
 

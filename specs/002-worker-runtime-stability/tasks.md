@@ -133,9 +133,9 @@
 - [X] T031 [P] Update `specs/002-worker-runtime-stability/contracts/runtime-stability.md`, `specs/002-worker-runtime-stability/data-model.md`, and `specs/002-worker-runtime-stability/quickstart.md` if implementation details refine accepted payload fields
 - [X] T032 Run `uv run --extra dev pytest -q tests/runtime tests/services tests/mcp_server tests/cli`
 - [X] T033 Run `uv run --extra dev pytest -q tests/docker`
-- [X] T034 Run `make quality`
-- [X] T035 Run `make smoke`
-- [X] T036 Run `make e2e-smoke`
+- [X] T034 Run formatting/lint/type/import/test checks with direct `uv` commands
+- [X] T035 Run fixture smoke with direct CLI commands
+- [X] T036 Run e2e smoke with direct CLI commands
 - [X] T037 Review `git status --short` to keep unrelated working-tree deletions outside the stability implementation commit
 
 ---
@@ -213,8 +213,8 @@ Task: "T025 Add CLI tests in tests/cli/test_scheduler_status_cli.py"
 ### Verification Scope
 
 - Required narrow checks are listed inside each story checkpoint.
-- Required broad checks when implementation completes: `make quality`, `make smoke`, `make e2e-smoke`.
-- Optional coverage check: `make coverage`.
+- Required broad checks when implementation completes: formatting/lint/type/import/test checks, fixture smoke, and e2e smoke with direct `uv`/CLI commands.
+- Optional coverage check: direct pytest coverage gate.
 - Out of scope: live upstream collection as a required gate.
 
 ## Notes

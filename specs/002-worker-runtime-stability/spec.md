@@ -128,7 +128,7 @@ A local operator runs status/read commands against a missing or uninitialized da
 - **SC-004**: Read/status tests prove missing or schema-less databases are not mutated by read paths.
 - **SC-005**: Redaction tests prove credential-like values and raw exception details are absent from run history, command failures, and MCP error payloads.
 - **SC-006**: Scheduler/status tests prove not-ready cases return parseable JSON with specific `reason`/`details` fields and exit code 2.
-- **SC-007**: Relevant fixture/local verification commands pass: `uv run --extra dev pytest -q tests/runtime tests/services tests/mcp_server tests/cli`, `uv run --extra dev pytest -q tests/docker`, `make quality`, `make smoke`, and `make e2e-smoke`.
+- **SC-007**: Relevant fixture/local verification commands pass: targeted pytest suites, formatting/lint/type/import checks, coverage, fixture smoke, and e2e smoke using direct `uv`/CLI commands.
 
 ## Assumptions
 

@@ -258,7 +258,7 @@ def test_collect_scheduled_records_ingest_failure_without_retry(
         fake_ingest_records_into_connection,
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as exc_info:
         collect_scheduled(
             db_path=str(db),
             queries=("python", "scraping"),
@@ -269,6 +269,16 @@ def test_collect_scheduled_records_ingest_failure_without_retry(
 
     assert collect_calls == ["python", "scraping"]
     assert ingest_calls == 2
+    assert scheduled_collection.is_expected_operational_collection_failure(
+        exc_info.value,
+        db_path=str(db),
+        trigger="scheduled",
+    )
+    assert not scheduled_collection.is_expected_operational_collection_failure(
+        ValidationError("invalid token=secret"),
+        db_path=str(tmp_path / "missing.sqlite"),
+        trigger="scheduled",
+    )
 
     import sqlite3
 

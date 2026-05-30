@@ -6,10 +6,12 @@ import sqlite3
 import uuid
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any
 
+from work_feed_mcp.core.errors import IngestError
 from work_feed_mcp.core.time import utc_now
-from work_feed_mcp.db.connection import connect_worker
+from work_feed_mcp.db.connection import connect_readonly, connect_worker
 from work_feed_mcp.domain.collector_record import CollectorRecord, validate_payload
 from work_feed_mcp.integrations.upwork.credentials import redact
 from work_feed_mcp.integrations.upwork.errors import CollectorError
@@ -76,6 +78,45 @@ def _connect_for_write(db_path: str) -> sqlite3.Connection:
 
 def _error_type(error: BaseException) -> str:
     return type(error).__name__
+
+
+def is_expected_operational_collection_failure(
+    error: BaseException, *, db_path: str, trigger: str
+) -> bool:
+    """Classify failures the long-running worker may record-and-continue after."""
+
+    if isinstance(error, CollectorError):
+        return True
+    if isinstance(error, IngestError):
+        return _has_recorded_failed_run(db_path=db_path, trigger=trigger, error=error)
+    return False
+
+
+def _has_recorded_failed_run(*, db_path: str, trigger: str, error: BaseException) -> bool:
+    if not Path(db_path).exists():
+        return False
+    try:
+        connection = connect_readonly(db_path)
+    except sqlite3.Error:
+        return False
+    try:
+        row = connection.execute(
+            """
+            SELECT run_id
+              FROM collector_runs
+             WHERE trigger = ?
+               AND status = 'failed'
+               AND error_type = ?
+             ORDER BY started_at DESC, run_id DESC
+             LIMIT 1
+            """,
+            (trigger, _error_type(error)),
+        ).fetchone()
+        return row is not None
+    except sqlite3.Error:
+        return False
+    finally:
+        connection.close()
 
 
 def _record_failed_query(

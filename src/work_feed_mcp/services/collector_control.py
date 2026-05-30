@@ -17,10 +17,17 @@ BASE_TABLES = {"jobs", "job_skills", "collector_runs", "collector_run_results"}
 
 NotReadyReason = Literal["db_missing", "schema_missing", "unsupported_schema"]
 
+_NOT_READY_DETAILS: dict[NotReadyReason, str] = {
+    "db_missing": "database file does not exist",
+    "schema_missing": "runtime schema is missing required tables",
+    "unsupported_schema": "database schema version is newer than this work-feed build supports",
+}
+
 
 @dataclass(frozen=True, slots=True)
 class NotReadyError(Exception):
     reason: NotReadyReason
+    details: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         next_action = (
@@ -32,6 +39,7 @@ class NotReadyError(Exception):
             "ok": False,
             "error": "not_ready",
             "reason": self.reason,
+            "details": self.details or _NOT_READY_DETAILS[self.reason],
             "next_action": next_action,
         }
 

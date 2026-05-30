@@ -230,11 +230,12 @@ If MCP starts before the worker initializes SQLite, tools return stable `not_rea
   "ok": false,
   "error": "not_ready",
   "reason": "db_missing",
+  "details": "database file does not exist",
   "next_action": "start work-feed-worker"
 }
 ```
 
-`reason` may be `db_missing`, `schema_missing`, or `unsupported_schema`. For `unsupported_schema`, upgrade work-feed or migrate the database before reading or controlling the runtime. An initialized DB with no rows is not an error; list tools return `{ "ok": true, "status": "empty", "rows": [] }`.
+`reason` may be `db_missing`, `schema_missing`, or `unsupported_schema`; `details` gives a safe short explanation for the reason. For `unsupported_schema`, upgrade work-feed or migrate the database before reading or controlling the runtime. An initialized DB with no rows is not an error; list tools return `{ "ok": true, "status": "empty", "rows": [] }`.
 
 ## Run counts and dedupe
 
@@ -268,6 +269,8 @@ docker compose ps
 docker compose logs -f work-feed-worker
 ```
 
+The `work-feed scheduler-status` command also prints parseable `not_ready` JSON and exits with code 2 when the database is missing, schema-less, or newer than this build supports. It does not create or migrate the SQLite schema from the read path.
+
 For MCP connection failures, confirm the endpoint and local port:
 
 ```bash
@@ -287,7 +290,7 @@ If `.env` changes do not appear, recreate the services:
 docker compose up -d --force-recreate
 ```
 
-If upstream collection is blocked or unavailable, keep the runtime running and inspect collector status and logs. Worker resilience for blocked upstream states is tracked as a separate follow-up; this README documents the current operational condition.
+If upstream collection is blocked, rate limited, temporarily unavailable, or malformed, the worker keeps running after recording the failed run with redacted diagnostics. Inspect collector status and logs, then retry later or adjust collection settings if needed.
 
 ## Project structure
 

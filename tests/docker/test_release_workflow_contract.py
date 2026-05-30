@@ -50,20 +50,16 @@ def test_release_workflow_validates_tags_and_avoids_live_or_deploy_side_effects(
     assert "make live-smoke" not in workflow
     assert "WORK_FEED_LIVE=1" not in workflow
     assert "ssh oracle-work-feed" not in workflow
+    assert "ssh " not in workflow
     assert "docker compose up" not in workflow
     assert "ORACLE_SSH" not in workflow
+    assert "ORACLE_DEPLOY_PATH" not in workflow
     assert 'gh release edit "$TAG" --title "$TAG" --notes' not in workflow
 
 
-def test_releasing_docs_describe_tag_driven_release() -> None:
-    docs = Path("docs/RELEASING.md").read_text()
+def test_changelog_keeps_release_notes_surface() -> None:
+    docs = Path("CHANGELOG.md").read_text()
 
-    assert "git tag v0.1.0" in docs
-    assert "ghcr.io/jaeyeopme/work-feed-mcp:v0.1.0" in docs
-    assert "GitHub Release" in docs
-    assert "does not publish to PyPI" in docs
-    assert "does not deploy to Oracle Cloud" in docs
-    assert "does not run live Upwork collection" in docs
-    assert "release-manifest.json" in docs
-    assert "checksums.txt" in docs
-    assert "preserves existing release notes" in docs
+    assert "## [Unreleased]" in docs
+    assert "## [0.1.0] - TBD" in docs
+    assert "GHCR" in docs

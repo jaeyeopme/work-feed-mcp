@@ -64,7 +64,7 @@ def test_dockerfile_uses_locked_uv_runtime() -> None:
 
 def test_dockerignore_excludes_local_runtime_artifacts() -> None:
     dockerignore = pathlib.Path(".dockerignore").read_text().splitlines()
-    for pattern in [".venv", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".omx", "skills"]:
+    for pattern in [".venv", ".mypy_cache", ".pytest_cache", ".ruff_cache", "skills"]:
         assert pattern in dockerignore
     for pattern in ["*.sqlite", "*.db", "__pycache__", "*.py[cod]", "data"]:
         assert pattern in dockerignore

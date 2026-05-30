@@ -30,17 +30,36 @@ def _normal_user_docs() -> str:
 
 def test_readme_normal_user_contract() -> None:
     section = _normal_user_docs()
-    assert "make up" in section
+    quick_start = _section("Quick start")
+    operate = _section("Operate the runtime")
+    assert "git clone" in quick_start
+    assert "cd work-feed-mcp" in quick_start
+    assert "cp .env.example .env" in quick_start
+    assert "docker compose up -d --build" in quick_start
+    assert "docker compose ps" in quick_start
+    assert "make up" not in quick_start
+    assert "docker compose logs -f" in operate
+    assert "docker compose restart" in operate
+    assert "docker compose down" in operate
+    assert (
+        "docker compose exec work-feed-worker work-feed scheduler-status "
+        "--db /data/work-feed.sqlite"
+    ) in operate
     assert "make status" in section
     assert "make logs" in section
-    assert "make restart" in section
-    assert "make down" in section
+    assert "make mcp-smoke" in section
     assert "# work-feed-mcp" in _readme()
     assert "```mermaid" in _readme()
     assert "sequenceDiagram" in _readme()
     assert "not affiliated with, endorsed by, or sponsored by Upwork Inc." in _readme()
+    assert "Operators are responsible for using only sources they are authorized" in section
+    assert "credentials, cookies, proxy bypasses" in section
+    assert "raw upstream private payloads" in section
+    assert "proposal/message generation" in section
+    assert "auto-apply" in section
     assert "http://127.0.0.1:8000/mcp" in section
     assert "docs/mcp-client-setup.md" not in section
+    assert "docs/" not in section
     assert "## Connect an MCP client" in _readme()
     assert "### Claude Code" in section
     assert "claude mcp add --transport http work-feed http://127.0.0.1:8000/mcp" in section
@@ -51,10 +70,18 @@ def test_readme_normal_user_contract() -> None:
     assert "Codex infers streamable HTTP from `url`" in section
     assert "jobs_recent" in section
     assert "limit: 5" in section
-    assert "recreate the runtime" in section
+    assert "empty" in section
+    assert "recreate the runtime" in section or "recreate the services" in section
     assert "Docker health checks" in section
     assert "do **not** run a full MCP protocol" in section
-    assert "docker compose up -d" not in section
+    assert "seen" in section
+    assert "inserted" in section
+    assert "skipped" in section
+    assert "job_id" in section
+    assert "deduplicated by `job_id`" in section
+    assert "## Troubleshooting" in section
+    assert "not_ready" in section
+    assert "blocked" in section
     assert "uv run" not in section
     assert not KOREAN_RE.search(section)
 
@@ -132,34 +159,34 @@ def test_readme_whole_document_boundaries() -> None:
     assert "proposal instructions" not in readme.lower()
 
 
-def test_agent_context_docs_track_docker_mcp_runtime() -> None:
+def test_core_docs_track_docker_mcp_runtime() -> None:
     docs = {
         "AGENTS.md": Path("AGENTS.md").read_text(),
-        "docs/LLM_CONTEXT.md": Path("docs/LLM_CONTEXT.md").read_text(),
-        "docs/EXTERNAL_LLM_GUIDE.md": Path("docs/EXTERNAL_LLM_GUIDE.md").read_text(),
+        "docs/PRD.md": Path("docs/PRD.md").read_text(),
+        "docs/ARCHITECTURE.md": Path("docs/ARCHITECTURE.md").read_text(),
+        "docs/TRD.md": Path("docs/TRD.md").read_text(),
     }
 
     for path, text in docs.items():
-        assert "Docker/MCP-first" in text, path
         assert "MCP" in text, path
         assert "CLI-first" not in text, path
         assert "app-native scheduler daemon" not in text, path
 
-    external_guide = docs["docs/EXTERNAL_LLM_GUIDE.md"]
-    assert "http://127.0.0.1:8000/mcp" in external_guide
-    assert "make up" in external_guide
-    assert "make status" in external_guide
+    assert "Docker/MCP-first" in docs["AGENTS.md"]
+    assert "Docker/MCP-first" in docs["docs/PRD.md"]
+    assert "http://127.0.0.1:8000/mcp" in docs["docs/PRD.md"]
+    assert "docker compose up -d --build" in docs["docs/PRD.md"]
+    assert "docker compose ps" in docs["docs/PRD.md"]
 
 
-def test_llm_context_documents_db_readiness_policy() -> None:
-    context = Path("docs/LLM_CONTEXT.md").read_text()
+def test_architecture_documents_db_readiness_policy() -> None:
+    architecture = Path("docs/ARCHITECTURE.md").read_text()
 
-    assert "## DB readiness policy" in context
-    assert "MCP read" in context
-    assert "MCP control" in context
-    assert "scheduler_status" in context
-    assert "Explicit exception" in context
-    assert "not precedent for agent-facing MCP reads" in context
+    assert "## Runtime Components" in architecture
+    assert "MCP read" in architecture
+    assert "MCP control" in architecture
+    assert "scheduler-status" in architecture
+    assert "current exception" in architecture
 
 
 def test_removed_legacy_public_artifacts_stay_removed() -> None:
@@ -177,25 +204,18 @@ def test_removed_legacy_public_artifacts_stay_removed() -> None:
     for path in removed_paths:
         assert not Path(path).exists(), path
 
-    assert ".omx/" in Path(".gitignore").read_text()
 
-
-def test_project_local_agent_skill_is_documented() -> None:
-    skill = Path("skills/work-feed-jobs/SKILL.md")
-    metadata = Path("skills/work-feed-jobs/agents/openai.yaml")
-    assert skill.exists()
-    assert metadata.exists()
-    assert "work-feed-jobs" in skill.read_text()
+def test_project_local_agent_skill_is_not_part_of_public_surface() -> None:
     readme = _readme()
-    llm_context = Path("docs/LLM_CONTEXT.md").read_text()
-    external_guide = Path("docs/EXTERNAL_LLM_GUIDE.md").read_text()
+    prd = Path("docs/PRD.md").read_text()
+    adr = Path("docs/adr/0005-keep-ranking-outside-core-data-engine.md").read_text()
+    architecture = Path("docs/ARCHITECTURE.md").read_text()
 
-    assert "skills/work-feed-jobs" in readme
-    assert "## Agent skill for collected jobs" in readme
+    assert not Path("skills").exists()
+    assert "skills/work-feed-jobs" not in readme
+    assert "## Agent skill for collected jobs" not in readme
     assert "## Codex skill for collected jobs" not in readme
-    assert "MCP and the skill serve different layers" in readme
-    assert "A plugin bundle is optional" in readme
-    assert "skills/work-feed-jobs" in llm_context
-    assert "MCP provides data/tool access" in llm_context
-    assert "skills/work-feed-jobs" in external_guide
-    assert "Plugin packaging is optional" in external_guide
+    assert "skills/work-feed-jobs" not in prd
+    assert "repository-local" not in adr
+    assert "skills/work-feed-jobs" not in adr
+    assert "MCP" in architecture

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 ROOT_OSS_FILES = [
@@ -26,10 +27,11 @@ def test_root_oss_files_exist_and_are_referenced() -> None:
         assert Path(path).exists(), path
 
     readme = read("README.md")
-    agent_docs = read("docs/LLM_CONTEXT.md") + read("docs/EXTERNAL_LLM_GUIDE.md")
+    core_docs = read("docs/PRD.md") + read("docs/TRD.md") + read("docs/ARCHITECTURE.md")
     for path in ["CONTRIBUTING.md", "SECURITY.md", "CHANGELOG.md"]:
         assert path in readme
-        assert path in agent_docs
+    assert "security" in core_docs.lower()
+    assert "verification" in core_docs.lower()
 
 
 def test_readme_exposes_project_health_without_fake_coverage_badge() -> None:
@@ -126,14 +128,54 @@ def test_github_templates_and_dependabot_are_present() -> None:
     assert "interval: weekly" in dependabot
 
 
-def test_changelog_and_release_docs_define_staged_release_path() -> None:
+def test_changelog_and_release_workflow_define_staged_release_path() -> None:
     changelog = read("CHANGELOG.md")
-    releasing = read("docs/RELEASING.md")
+    workflow = read(".github/workflows/release.yml")
 
     assert "## [Unreleased]" in changelog
     assert "## [0.1.0] - TBD" in changelog
-    assert "First release checklist" in releasing
-    assert "CHANGELOG.md" in releasing
-    assert "GHCR is the primary package distribution surface" in releasing
-    assert "PyPI publishing is deferred" in releasing
-    assert "It does not publish to PyPI" in releasing
+    assert "ghcr.io/${REPOSITORY,,}" in workflow
+    assert "release-manifest.json" in workflow
+    assert "checksums.txt" in workflow
+    assert "make live-smoke" not in workflow
+
+
+def test_public_surfaces_do_not_include_private_deployment_artifacts() -> None:
+    public_paths = [
+        Path("README.md"),
+        *Path(".github/workflows").glob("*.yml"),
+        *Path("docs").rglob("*.md"),
+    ]
+    if Path("scripts").exists():
+        public_paths.extend(path for path in Path("scripts").rglob("*") if path.is_file())
+
+    forbidden = re.compile(
+        r"Oracle|ORACLE_|oracle|/home/ubuntu|deploy-oracle|oracle-work-feed|"
+        r"ORACLE_SSH|ORACLE_DEPLOY_PATH"
+    )
+    allowed_mentions = {
+        "docs/code-quality-responsibility.md": ["rollback"],
+    }
+    offenders: list[str] = []
+    for path in public_paths:
+        text = path.read_text()
+        if forbidden.search(text):
+            offenders.append(str(path))
+        if "rollback" in text and "rollback" not in allowed_mentions.get(str(path), []):
+            offenders.append(str(path))
+
+    assert offenders == []
+
+
+def test_private_deployment_artifacts_are_not_required_by_tests() -> None:
+    removed_paths = [
+        "scripts/deploy/oracle-compose-deploy.sh",
+        "scripts/deploy/should-deploy-oracle.sh",
+        "docs/ORACLE_CLOUD_DEPLOY.md",
+        "tests/docker/test_oracle_deploy_decision.py",
+        "tests/docker/test_oracle_deploy_script_contract.py",
+        "tests/docker/test_oracle_deploy_script_behavior.py",
+        "tests/docker/deploy_contract_helpers.py",
+    ]
+    for path in removed_paths:
+        assert not Path(path).exists(), path

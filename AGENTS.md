@@ -25,9 +25,7 @@ Keep Upwork collection dumb and secret-safe:
 
 SQLite persistence belongs in ingestion/db/repository code. Analytics and MCP reads SQLite only. Docker Compose is the primary runtime: the worker owns recurring collection and the MCP server exposes agent-facing tools.
 
-For Codex job lookup tasks, use the project-local skill at `skills/work-feed-jobs`: it is read-only over already-collected jobs and routes to `jobs_recent`, `jobs_search`, `jobs_get`, `runs_recent`, and `collector_status`. It must not run collection, scheduler/Docker operations, proposal/message generation, auto-apply, backend ranking, or cookie/session/proxy/bypass guidance.
-
-Use `docs/LLM_CONTEXT.md` and `docs/contracts/job-jsonl.md` for detailed context.
+Use `docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/TRD.md`, and `docs/adr/` for detailed context.
 
 ## Verification
 
@@ -43,7 +41,7 @@ For duplicate checks, run:
 
 ```bash
 npx jscpd --reporters ai --gitignore --min-lines 10 \
-  --ignore "**/.venv/**,**/.mypy_cache/**,**/.pytest_cache/**,**/.ruff_cache/**,**/__pycache__/**,**/*.egg-info/**,**/uv.lock,.omx/**" .
+  --ignore "**/.venv/**,**/.mypy_cache/**,**/.pytest_cache/**,**/.ruff_cache/**,**/__pycache__/**,**/*.egg-info/**,**/uv.lock" .
 ```
 
 For live evidence, run only with explicit opt-in:

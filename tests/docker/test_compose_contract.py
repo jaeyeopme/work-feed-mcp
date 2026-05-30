@@ -22,12 +22,6 @@ def test_compose_contract() -> None:
     assert "condition: service_healthy" in compose
 
 
-def test_make_restart_recreates_services() -> None:
-    makefile = pathlib.Path("Makefile").read_text()
-    assert "restart:\n\tdocker compose up -d --force-recreate" in makefile
-    assert "restart:\n\tdocker compose restart" not in makefile
-
-
 def test_compose_uses_env_overrides() -> None:
     env = os.environ.copy()
     env.update(
@@ -70,12 +64,9 @@ def test_dockerignore_excludes_local_runtime_artifacts() -> None:
         assert pattern in dockerignore
 
 
-def test_makefile_exposes_mcp_protocol_smoke() -> None:
-    makefile = pathlib.Path("Makefile").read_text()
+def test_cli_exposes_mcp_protocol_smoke() -> None:
     cli = pathlib.Path("src/work_feed_mcp/cli/__main__.py").read_text()
     smoke = pathlib.Path("src/work_feed_mcp/cli/mcp_smoke.py").read_text()
-    assert "mcp-smoke:" in makefile
-    assert "work-feed mcp-smoke --url $(MCP_URL)" in makefile
     assert 'subcommands.add_parser("mcp-smoke", add_help=False)' in cli
     assert "streamable_http_client" in smoke
     assert "jobs_recent" in smoke

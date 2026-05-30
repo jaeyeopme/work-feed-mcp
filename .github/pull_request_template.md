@@ -4,9 +4,8 @@
 
 ## Verification
 
-- [ ] `make quality`
-- [ ] `make smoke`
-- [ ] `make e2e-smoke`
+- [ ] Formatting, linting, typing, import architecture, and tests pass.
+- [ ] Coverage, fixture smoke, and e2e smoke checks pass or are covered by CI.
 - [ ] Not applicable:
 
 ## Checklist

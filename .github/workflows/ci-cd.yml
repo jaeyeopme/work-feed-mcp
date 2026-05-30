@@ -25,11 +25,27 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - name: Run quality checks
-        run: make quality
+      - name: Run formatting check
+        run: uv run --extra dev ruff format --check .
+      - name: Run lint
+        run: uv run --extra dev ruff check .
+      - name: Run type checks
+        run: uv run --extra dev mypy src
+      - name: Run import architecture checks
+        run: uv run --extra dev lint-imports
+      - name: Run tests
+        run: uv run --extra dev pytest -q
       - name: Run coverage gate
-        run: make coverage
+        run: uv run --extra dev pytest --cov --cov-report=term-missing --cov-fail-under=80 -q
       - name: Run smoke
-        run: make smoke
+        run: |
+          uv run --extra dev work-feed collect --fixture tests/fixtures/visitor_job_search_response.json > /tmp/work-feed-fixture.jsonl
+          python -c 'import json,sys; [json.loads(line) for line in sys.stdin if line.strip()]' < /tmp/work-feed-fixture.jsonl
       - name: Run e2e smoke
-        run: make e2e-smoke
+        run: |
+          rm -f /tmp/work-feed-e2e.sqlite /tmp/work-feed-e2e.jsonl
+          uv run --extra dev work-feed collect --fixture tests/fixtures/visitor_job_search_response.json > /tmp/work-feed-e2e.jsonl
+          uv run --extra dev work-feed ingest --db /tmp/work-feed-e2e.sqlite --input /tmp/work-feed-e2e.jsonl
+          uv run --extra dev work-feed analytics summary --db /tmp/work-feed-e2e.sqlite
+          uv run --extra dev work-feed analytics skills --db /tmp/work-feed-e2e.sqlite
+          uv run --extra dev work-feed analytics clients --db /tmp/work-feed-e2e.sqlite

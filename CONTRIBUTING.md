@@ -20,8 +20,8 @@ Out of scope unless the project direction changes first:
 
 ```bash
 cp .env.example .env
-make up
-make status
+docker compose up -d --build
+docker compose ps
 ```
 
 Use Docker/MCP for normal operation. Direct `uv run work-feed ...` commands are for local debugging and maintenance.
@@ -31,14 +31,17 @@ Use Docker/MCP for normal operation. Direct `uv run work-feed ...` commands are 
 Run the offline checks before opening a pull request:
 
 ```bash
-make quality
-make architecture
-make coverage
-make smoke
-make e2e-smoke
+uv run --extra dev ruff format --check .
+uv run --extra dev ruff check .
+uv run --extra dev mypy src
+uv run --extra dev lint-imports
+uv run --extra dev pytest -q
+uv run --extra dev pytest --cov --cov-report=term-missing --cov-fail-under=80 -q
 ```
 
-`make quality` is the normal PR gate: it checks formatting, linting, strict typing, import architecture contracts, and tests. `make architecture` runs the import-boundary contracts by themselves when you are changing package dependencies. `make coverage` runs the pytest coverage gate; the threshold starts conservatively at 80% so contributors improve coverage without chasing an aggressive target.
+These checks cover formatting, linting, strict typing, import architecture contracts, tests,
+and the conservative 80% coverage gate. CI also runs fixture smoke and e2e smoke flows on
+pull requests and pushes.
 
 Do not run live Upwork collection as part of normal verification. If live evidence is explicitly requested, report it separately from fixture/local contract evidence.
 

@@ -40,16 +40,15 @@ def test_readme_exposes_project_health_without_fake_coverage_badge() -> None:
     assert "actions/workflows/ci-cd.yml/badge.svg?branch=main" in readme
     assert "actions/workflows/release.yml/badge.svg" in readme
     assert "license-MIT" in readme
-    assert "make architecture" in readme
-    assert "make coverage" in readme
-    assert "conservative coverage gate at 80%" in readme
+    assert "CONTRIBUTING.md" in readme
+    assert "conservative 80% gate" in readme
+    assert "make" not in readme
     assert "Codecov" not in readme
     assert "coverage.svg" not in readme
 
 
 def test_python_quality_gates_are_declared() -> None:
     pyproject = read("pyproject.toml")
-    makefile = read("Makefile")
     workflow = read(".github/workflows/ci-cd.yml")
 
     assert "pytest-cov>=7.1" in pyproject
@@ -58,13 +57,18 @@ def test_python_quality_gates_are_declared() -> None:
     assert 'type = "forbidden"' in pyproject
     assert "work_feed_mcp.integrations.upwork" in pyproject
     assert "work_feed_mcp.mcp_server" in pyproject
-    assert "coverage:" in makefile
-    assert "--cov-fail-under=80" in makefile
-    assert "architecture:" in makefile
-    assert "lint-imports" in makefile
-    assert ".coverage coverage.xml htmlcov" in makefile
+    assert "uv run --extra dev ruff format --check ." in workflow
+    assert "uv run --extra dev ruff check ." in workflow
+    assert "uv run --extra dev mypy src" in workflow
+    assert "uv run --extra dev lint-imports" in workflow
+    assert "uv run --extra dev pytest -q" in workflow
     assert "Run coverage gate" in workflow
-    assert "make coverage" in workflow
+    assert (
+        "uv run --extra dev pytest --cov --cov-report=term-missing --cov-fail-under=80 -q"
+        in workflow
+    )
+    assert "work-feed collect --fixture tests/fixtures/visitor_job_search_response.json" in workflow
+    assert "work-feed ingest --db /tmp/work-feed-e2e.sqlite" in workflow
 
 
 def test_license_matches_project_metadata() -> None:
@@ -82,16 +86,19 @@ def test_contributing_and_security_keep_project_boundaries() -> None:
     combined = f"{contributing}\n{security}"
 
     for expected in [
-        "make quality",
-        "make architecture",
-        "make coverage",
-        "make smoke",
-        "make e2e-smoke",
+        "uv run --extra dev ruff format --check .",
+        "uv run --extra dev ruff check .",
+        "uv run --extra dev mypy src",
+        "uv run --extra dev lint-imports",
+        "uv run --extra dev pytest -q",
+        "--cov-fail-under=80",
     ]:
         assert expected in contributing
 
+    assert "Makefile" not in contributing
+    assert "make" not in contributing
     assert "import architecture contracts" in contributing
-    assert "threshold starts conservatively at 80%" in contributing
+    assert "conservative 80% coverage gate" in contributing
     assert "Do not run live Upwork collection as part of normal verification" in contributing
     assert "GitHub private vulnerability reporting" in security
     assert "Collection diagnostics must stay redacted and secret-safe" in security
@@ -137,7 +144,7 @@ def test_changelog_and_release_workflow_define_staged_release_path() -> None:
     assert "ghcr.io/${REPOSITORY,,}" in workflow
     assert "release-manifest.json" in workflow
     assert "checksums.txt" in workflow
-    assert "make live-smoke" not in workflow
+    assert "work-feed collect --live" not in workflow
 
 
 def test_public_surfaces_do_not_include_private_deployment_artifacts() -> None:

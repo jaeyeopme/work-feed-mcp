@@ -40,20 +40,60 @@ This is not a REST web app, application bot, proposal generator, auto-apply tool
 
 ## Quick start
 
+Prerequisites: Docker Desktop or Docker Engine with Docker Compose v2. Normal usage does
+not require a local Python toolchain.
+
 The normal user path is Docker Compose. It starts two services:
 
 - `work-feed-worker`: runs the live collection loop and writes to SQLite.
 - `work-feed-mcp`: exposes MCP tools over the same SQLite database.
+
+### 1. Start it
 
 ```bash
 git clone https://github.com/jaeyeopme/work-feed-mcp.git
 cd work-feed-mcp
 cp .env.example .env
 docker compose up -d --build
+```
+
+### 2. Check it
+
+```bash
 docker compose ps
 ```
 
+Expected result:
+
+- `work-feed-worker` is running.
+- `work-feed-mcp` is running.
+- Health may stay `starting` briefly on first boot while SQLite is initialized.
+- A fresh database can return empty job lists until collection stores rows.
+
+### 3. Connect it
+
+Use this Streamable HTTP MCP endpoint in your client:
+
+```text
+http://127.0.0.1:8000/mcp
+```
+
+After connecting, ask your agent to call `jobs_recent` with `limit: 5`. An empty result is
+okay on a fresh database.
+
 Configuration lives in `.env`. The defaults are conservative and work without credentials or cookies.
+Most users can start without editing it. To target specific searches, edit only
+`WORK_FEED_QUERIES`, for example:
+
+```dotenv
+WORK_FEED_QUERIES=python,scraping,automation
+```
+
+Then recreate the services:
+
+```bash
+docker compose up -d --force-recreate
+```
 
 | Variable                     | Default                  | Meaning                                                                                     |
 | ---------------------------- | ------------------------ | ------------------------------------------------------------------------------------------- |
@@ -62,27 +102,25 @@ Configuration lives in `.env`. The defaults are conservative and work without cr
 | `WORK_FEED_INTERVAL_SECONDS` | `3600`                   | Wait time between worker collection runs.                                                   |
 | `WORK_FEED_MAX_PAGES`        | `5`                      | Maximum pages per run.                                                                      |
 | `WORK_FEED_PAGE_SIZE`        | `50`                     | Jobs requested per page.                                                                    |
-| `WORK_FEED_QUERIES`          | empty                    | Optional comma-separated searches such as `python,scraping`; empty means unfiltered/latest. |
+| `WORK_FEED_QUERIES`          | empty                    | Optional comma-separated searches; empty means unfiltered/latest.                           |
 | `WORK_FEED_LOG_LEVEL`        | `INFO`                   | Worker log level.                                                                           |
 | `WORK_FEED_MCP_HOST`         | `0.0.0.0`                | Container bind host for the MCP server.                                                     |
 | `WORK_FEED_MCP_PORT`         | `8000`                   | Host port for the local MCP endpoint.                                                       |
 | `WORK_FEED_MCP_PATH`         | `/mcp`                   | HTTP path for Streamable HTTP MCP.                                                          |
 
-By default each run collects up to 250 jobs: `5 pages * 50 jobs`. After changing `.env`, recreate the services so Docker applies the new environment:
-
-```bash
-docker compose up -d --force-recreate
-```
+By default each run collects up to 250 jobs: `5 pages * 50 jobs`.
 
 ## Connect an MCP client
 
 The Docker Compose runtime exposes a **Streamable HTTP MCP** endpoint, not a REST API.
 
-Default endpoint:
+Use these values in any MCP client that supports Streamable HTTP:
 
-```text
-http://127.0.0.1:8000/mcp
-```
+| Field | Value |
+| --- | --- |
+| Name | `work-feed` |
+| Transport | Streamable HTTP, sometimes shown as HTTP |
+| URL | `http://127.0.0.1:8000/mcp` |
 
 If you override Compose env, derive it as:
 
@@ -90,89 +128,41 @@ If you override Compose env, derive it as:
 http://127.0.0.1:${WORK_FEED_MCP_PORT:-8000}${WORK_FEED_MCP_PATH:-/mcp}
 ```
 
-Docker health checks prove container readiness and HTTP transport reachability for `/mcp`. They do **not** run a full MCP protocol initialize / tools/list / tool-call smoke. Run a protocol-level smoke from your MCP client if you need that evidence.
-
-### Claude Code
-
-Use Claude Code's HTTP MCP transport. Local scope is usually best for a personal Docker runtime because it stays private to your machine and current project.
-
-```bash
-claude mcp add --transport http work-feed http://127.0.0.1:8000/mcp
-claude mcp list
-```
-
-Inside Claude Code, run:
-
-```text
-/mcp
-```
-
-If you want a project-scoped config instead, Claude Code can write a `.mcp.json` file:
-
-```bash
-claude mcp add --transport http --scope project work-feed http://127.0.0.1:8000/mcp
-```
-
-The equivalent JSON shape is:
+Use the client's HTTP/Streamable HTTP option, not a stdio command. Client-specific
+config formats vary, but a typical shape is:
 
 ```json
 {
   "mcpServers": {
     "work-feed": {
-      "type": "http",
       "url": "http://127.0.0.1:8000/mcp"
     }
   }
 }
 ```
 
-Claude Code also accepts `streamable-http` as a JSON alias for `http`, but the CLI examples above use `http` because that is the documented Claude Code command syntax.
+Docker health checks prove container readiness and HTTP transport reachability for `/mcp`. They do **not** run a full MCP protocol initialize / tools/list / tool-call smoke.
 
-### Codex
+After connecting, ask your agent to call `jobs_recent` with `limit: 5` to confirm the MCP server responds. An empty result is okay on a fresh database.
 
-Use Codex's streamable HTTP MCP support. The CLI writes the shared Codex config used by the CLI and IDE extension.
-
-```bash
-codex mcp add work-feed --url http://127.0.0.1:8000/mcp
-codex mcp list
-```
-
-The equivalent `~/.codex/config.toml` entry is:
-
-```toml
-[mcp_servers.work-feed]
-url = "http://127.0.0.1:8000/mcp"
-```
-
-Codex infers streamable HTTP from `url`; do not add Claude-style `type` or `transport` fields to the TOML entry.
-
-After connecting, ask your agent to call `jobs_recent` with `limit: 5` to confirm the MCP server responds. An empty result is okay on a fresh database. For a protocol-level check against a running MCP server, run:
+For a Docker-only protocol-level smoke against the running MCP server, run:
 
 ```bash
-make mcp-smoke
+docker compose exec work-feed-mcp work-feed mcp-smoke
 ```
 
 ## Operate the runtime
 
-```bash
-docker compose ps
-docker compose logs -f
-docker compose restart
-docker compose down
-docker compose config
-docker compose exec work-feed-worker work-feed scheduler-status --db /data/work-feed.sqlite
-```
-
-Convenience wrappers are available when `make` is installed:
-
-```bash
-make status
-make logs
-make restart
-make down
-make config
-make mcp-smoke
-```
+| Need | Command |
+| --- | --- |
+| See containers | `docker compose ps` |
+| Follow logs | `docker compose logs -f` |
+| Restart after `.env` edits | `docker compose up -d --force-recreate` |
+| Restart containers | `docker compose restart` |
+| Stop containers | `docker compose down` |
+| Validate Compose config | `docker compose config` |
+| Check scheduler state | `docker compose exec work-feed-worker work-feed scheduler-status --db /data/work-feed.sqlite` |
+| Run MCP protocol smoke | `docker compose exec work-feed-mcp work-feed mcp-smoke` |
 
 ## MCP tools
 
@@ -294,34 +284,41 @@ If upstream collection is blocked, rate limited, temporarily unavailable, or mal
 
 ## Project structure
 
-Runtime flow:
+Runtime tree:
 
 ```text
-Docker Compose
-  work-feed-worker  -> recurring visitor collection -> SQLite volume
-  work-feed-mcp     -> Streamable HTTP MCP tools -> agent client
+work-feed-mcp
+|-- compose.yaml
+|   |-- work-feed-worker  collects authorized records and writes SQLite
+|   `-- work-feed-mcp     exposes Streamable HTTP MCP at /mcp
+|-- .env                  user runtime settings
+`-- work-feed-data        Docker volume with /data/work-feed.sqlite
 ```
 
-Internal Python layout:
+Data flow:
 
 ```text
-src/work_feed_mcp/integrations/upwork  Upwork visitor collection and normalization
-src/work_feed_mcp/services             collection, ingestion, analytics, health use cases
-src/work_feed_mcp/repositories         SQLite query/persistence helpers
-src/work_feed_mcp/db                   SQLite schema/connection helpers
-src/work_feed_mcp/domain               normalized collector contracts
-src/work_feed_mcp/runtime              collector worker runtime
-src/work_feed_mcp/mcp_server           agent-facing MCP tools
-src/work_feed_mcp/cli                  local/debug CLI entrypoints
+authorized source
+`-- integrations/upwork
+    `-- services/scheduled_collection
+        |-- repositories + db
+        |   `-- SQLite jobs, run history, command queue
+        `-- mcp_server/tools
+            `-- MCP client
 ```
 
-Core flow:
+Python package tree:
 
 ```text
-integrations/upwork
-  -> services/scheduled_collection
-  -> SQLite repositories/db
-  -> services/analytics and MCP tools
+src/work_feed_mcp/
+|-- integrations/upwork/  source collection, credential redaction, normalization
+|-- services/             collection, ingestion, analytics, health use cases
+|-- repositories/         SQLite query and persistence helpers
+|-- db/                   SQLite schema and connection policy
+|-- domain/               normalized collector contracts
+|-- runtime/              Docker worker runtime
+|-- mcp_server/           agent-facing MCP tools
+`-- cli/                  local/debug entrypoints
 ```
 
 ## Developer reference
@@ -338,30 +335,13 @@ Contributor and release references:
 - `SECURITY.md` for vulnerability reporting and safe diagnostic rules.
 - `CHANGELOG.md` for release notes.
 
-```bash
-make quality
-make architecture
-make coverage
-make smoke
-make e2e-smoke
-make docker-compose-config
-```
+Contributor setup and verification commands live in `CONTRIBUTING.md`. The `ci-cd`
+workflow runs quality, coverage, smoke, and e2e smoke checks on pull requests and
+pushes. Coverage is intentionally kept as a conservative 80% gate without
+publishing a badge or using an external service.
 
-`make quality` runs formatting, linting, strict type checks, import architecture contracts, and tests. `make architecture` runs only the import-boundary contracts. `make coverage` enforces the current conservative coverage gate at 80% without publishing a badge or using an external service.
-
-The `ci-cd` workflow runs the same quality, coverage, smoke, and e2e smoke checks on pull requests and pushes. To inspect local test coverage directly, run:
-
-```bash
-make coverage
-```
-
-Direct Python CLI entrypoints exist for local debugging, but they are not the normal user interface. Prefer Docker/MCP for normal use.
-
-```bash
-uv run work-feed --help
-uv run work-feed worker --help
-uv run work-feed mcp-server --help
-```
+Direct Python CLI entrypoints exist for local debugging, but they are not the normal
+user interface. Prefer Docker/MCP for normal use.
 
 Live collection evidence should be reported separately from local contract checks.
 

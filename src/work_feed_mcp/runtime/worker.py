@@ -12,7 +12,10 @@ from work_feed_mcp.db.connection import connect_worker
 from work_feed_mcp.integrations.upwork.credentials import redact
 from work_feed_mcp.repositories import collector_control
 from work_feed_mcp.runtime.config import RuntimeSettings, load_runtime_settings
-from work_feed_mcp.services.scheduled_collection import collect_scheduled
+from work_feed_mcp.services.scheduled_collection import (
+    collect_scheduled,
+    is_expected_operational_collection_failure,
+)
 
 Sleep = Callable[[float], None]
 CollectOnce = Callable[..., Any]
@@ -38,7 +41,7 @@ class WorkerRuntime:
             self.process_commands()
             config = self.effective_config()
             if not bool(config.get("paused", False)):
-                self._run_collection(trigger="worker_interval", config=config)
+                self._run_scheduled_collection(config=config)
             iterations += 1
             if max_iterations is not None and iterations >= max_iterations:
                 break
@@ -128,6 +131,17 @@ class WorkerRuntime:
         if hasattr(result, "to_dict"):
             return dict(result.to_dict())
         return {"result": result}
+
+    def _run_scheduled_collection(self, *, config: dict[str, Any]) -> None:
+        try:
+            self._run_collection(trigger="worker_interval", config=config)
+        except Exception as exc:
+            if not is_expected_operational_collection_failure(
+                exc,
+                db_path=self.settings.db_path,
+                trigger="worker_interval",
+            ):
+                raise
 
     def _sleep_with_command_poll(self, seconds: float) -> None:
         elapsed = 0.0

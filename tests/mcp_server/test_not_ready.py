@@ -10,7 +10,9 @@ from work_feed_mcp.runtime.config import RuntimeSettings
 
 def test_missing_db_returns_not_ready(tmp_path: Path) -> None:
     settings = RuntimeSettings(db_path=str(tmp_path / "missing.sqlite"))
-    assert tools.jobs_recent(settings=settings)["reason"] == "db_missing"
+    result = tools.jobs_recent(settings=settings)
+    assert result["reason"] == "db_missing"
+    assert result["details"] == "database file does not exist"
     assert not Path(settings.db_path).exists()
 
 
@@ -20,6 +22,7 @@ def test_schema_missing_returns_not_ready_without_initializing(tmp_path: Path) -
     settings = RuntimeSettings(db_path=str(db))
     result = tools.collector_status(settings=settings)
     assert result["reason"] == "schema_missing"
+    assert result["details"] == "runtime schema is missing required tables"
     connection = sqlite3.connect(db)
     try:
         assert list(connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")) == []
@@ -50,6 +53,9 @@ def test_newer_schema_returns_not_ready_without_downgrade(tmp_path: Path) -> Non
     settings = RuntimeSettings(db_path=str(db))
     result = tools.jobs_recent(settings=settings)
     assert result["reason"] == "unsupported_schema"
+    assert (
+        result["details"] == "database schema version is newer than this work-feed build supports"
+    )
     assert result["next_action"] == "upgrade work-feed or migrate the database"
 
     connection = sqlite3.connect(db)
@@ -72,6 +78,9 @@ def test_newer_schema_control_tool_returns_not_ready_without_downgrade(tmp_path:
     settings = RuntimeSettings(db_path=str(db))
     result = tools.collector_run_once(settings=settings)
     assert result["reason"] == "unsupported_schema"
+    assert (
+        result["details"] == "database schema version is newer than this work-feed build supports"
+    )
     assert result["next_action"] == "upgrade work-feed or migrate the database"
 
     connection = sqlite3.connect(db)

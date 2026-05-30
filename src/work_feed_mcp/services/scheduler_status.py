@@ -6,8 +6,8 @@ import sqlite3
 from dataclasses import dataclass
 from typing import Any
 
-from work_feed_mcp.db.schema import initialize_schema
 from work_feed_mcp.repositories import run_history
+from work_feed_mcp.services.collector_control import NotReadyError, ensure_ready_read
 
 
 @dataclass(slots=True)
@@ -20,14 +20,15 @@ class SchedulerStatusError(Exception):
 
 def scheduler_status(db_path: str, *, limit: int = 5) -> dict[str, Any]:
     try:
-        connection = sqlite3.connect(db_path)
-        connection.row_factory = sqlite3.Row
+        connection = ensure_ready_read(db_path)
+    except NotReadyError as exc:
+        return exc.to_dict()
+    try:
         try:
-            initialize_schema(connection)
-            connection.commit()
             last_run = run_history.latest_run(connection)
             run_id = str(last_run["run_id"]) if last_run else None
             return {
+                "ok": True,
                 "query": "scheduler-status",
                 "db_path": db_path,
                 "last_run": last_run,

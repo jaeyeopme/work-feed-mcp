@@ -63,3 +63,25 @@ def test_command_lifecycle(tmp_path: Path) -> None:
     assert status is not None
     assert status["status"] == "applied"
     assert status["result"] == {"done": True}
+
+
+def test_failed_command_status_returns_json_safe_error_details(tmp_path: Path) -> None:
+    connection = connect_worker(str(tmp_path / "work-feed.sqlite"))
+    try:
+        collector_control.enqueue_command(connection, "run_once", command_id="cmd-fail")
+        collector_control.mark_running(connection, "cmd-fail")
+        collector_control.mark_failed(
+            connection,
+            "cmd-fail",
+            error_type="UpstreamBlockedError",
+            redacted_error="blocked token=<redacted>",
+        )
+        status = collector_control.command_status(connection, "cmd-fail")
+    finally:
+        connection.close()
+
+    assert status is not None
+    assert status["status"] == "failed"
+    assert status["error_type"] == "UpstreamBlockedError"
+    assert status["redacted_error"] == "blocked token=<redacted>"
+    assert "secret" not in str(status["redacted_error"])

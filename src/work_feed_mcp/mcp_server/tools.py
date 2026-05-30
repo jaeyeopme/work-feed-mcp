@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import sqlite3
 from typing import Any
 
+from work_feed_mcp.integrations.upwork.credentials import redact
 from work_feed_mcp.runtime.config import RuntimeSettings, load_runtime_settings
 from work_feed_mcp.services.collector_control import (
     NotReadyError,
@@ -32,6 +34,22 @@ def _safe(call: Any) -> dict[str, Any]:
         return exc.to_dict()
     except ValueError as exc:
         return {"ok": False, "error": "invalid_request", "message": str(exc)}
+    except sqlite3.Error:
+        return {"ok": False, "error": "storage_error", "message": "runtime storage unavailable"}
+    except Exception as exc:
+        return {
+            "ok": False,
+            "error": "internal_error",
+            "error_type": type(exc).__name__,
+            "message": _short_redacted_message(exc),
+        }
+
+
+def _short_redacted_message(exc: BaseException, *, limit: int = 200) -> str:
+    message = redact(exc).strip() or "unexpected runtime failure"
+    if len(message) <= limit:
+        return message
+    return f"{message[:limit].rstrip()}..."
 
 
 def jobs_recent(*, limit: int = 20, settings: RuntimeSettings | None = None) -> dict[str, Any]:

@@ -6,7 +6,6 @@ import argparse
 import json
 import sys
 from collections.abc import Sequence
-from pathlib import Path
 from typing import Never
 
 from work_feed_mcp.cli.args import bounded_positive_int
@@ -30,11 +29,9 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     try:
         args = build_parser().parse_args(argv)
-        if not Path(args.db).exists():
-            raise SchedulerStatusError("SQLite database path does not exist")
         result = scheduler_status(args.db, limit=args.limit)
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
-        return 0
+        return 2 if result.get("error") == "not_ready" else 0
     except SchedulerStatusError as exc:
         print(str(exc), file=sys.stderr)
         return 2

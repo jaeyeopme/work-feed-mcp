@@ -17,10 +17,6 @@ venv/
 .env.*
 !.env.example
 
-# Local agent/planning artifacts
-.agents/
-/
-
 # Local live/proxy material - never commit
 *.proxy
 *.secrets

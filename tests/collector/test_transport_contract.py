@@ -8,6 +8,7 @@ from work_feed_mcp.integrations.upwork.errors import (
     UpstreamSchemaOrTemporaryError,
 )
 from work_feed_mcp.integrations.upwork.transport import (
+    _decode_graphql_response,
     _read_response_text,
     classify_http_status,
 )
@@ -36,3 +37,18 @@ def test_decode_fallback_text_is_bounded_to_response_body() -> None:
         content = b"non-json body"
 
     assert _read_response_text(Response()) == "non-json body"
+
+
+def test_decode_graphql_response_rejects_non_object_json() -> None:
+    class Response:
+        status_code = 200
+
+        @property
+        def text(self) -> str:
+            return "[]"
+
+        def json(self) -> list[object]:
+            return []
+
+    with pytest.raises(UpstreamSchemaOrTemporaryError, match="not an object"):
+        _decode_graphql_response(Response())

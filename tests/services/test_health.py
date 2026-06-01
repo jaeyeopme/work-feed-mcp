@@ -5,6 +5,7 @@ from pathlib import Path
 from tests.collector_db_helpers import create_ready_runtime_db
 from tests.http_helpers import reachable_http_url
 
+from work_feed_mcp.db.connection import connect_worker
 from work_feed_mcp.services.health import health_check
 
 
@@ -24,6 +25,20 @@ def test_health_reports_ready_after_worker_bootstrap(tmp_path: Path) -> None:
     assert result["status"] == "ready"
     assert result["checks"]["schema"] == "ready"
     assert result["checks"]["config"] == "ready"
+
+
+def test_worker_health_reports_config_empty_after_schema_initialization(tmp_path: Path) -> None:
+    db = tmp_path / "work-feed.sqlite"
+    with connect_worker(str(db)):
+        pass
+
+    result = health_check(str(db), role="worker")
+
+    assert result["ok"] is False
+    assert result["status"] == "not_ready"
+    assert result["reason"] == "config_empty"
+    assert result["checks"]["schema"] == "ready"
+    assert result["checks"]["config"] == "empty"
 
 
 def test_mcp_health_reports_unreachable_http(tmp_path: Path) -> None:

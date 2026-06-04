@@ -41,9 +41,9 @@ uv run --extra dev pytest -q
 uv run --extra dev pytest --cov --cov-report=term-missing --cov-fail-under=80 -q
 ```
 
-These checks cover formatting, linting, strict typing, import architecture
-contracts, tests, and the conservative 80% coverage gate. CI also runs fixture
-smoke and e2e smoke flows on pull requests and pushes.
+These checks cover formatting, linting, strict typing, import architecture contracts,
+tests, and the conservative 80% coverage gate. CI also runs fixture smoke and e2e
+smoke flows on pull requests and pushes.
 
 Do not run live Upwork collection as part of normal verification. If live
 evidence is explicitly requested, report it separately from fixture/local

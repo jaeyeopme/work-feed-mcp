@@ -1,6 +1,7 @@
 # Contributing
 
-Thanks for improving `work-feed-mcp`. Keep changes small, testable, and aligned with the Docker/MCP-first data engine scope.
+Keep changes small, testable, and aligned with the Docker/MCP-first data engine
+scope.
 
 ## Project scope
 
@@ -24,7 +25,8 @@ docker compose up -d --build
 docker compose ps
 ```
 
-Use Docker/MCP for normal operation. Direct `uv run work-feed ...` commands are for local debugging and maintenance.
+Use Docker/MCP for normal operation. Direct `uv run work-feed ...` commands are
+for local debugging and maintenance.
 
 ## Verification
 
@@ -39,19 +41,22 @@ uv run --extra dev pytest -q
 uv run --extra dev pytest --cov --cov-report=term-missing --cov-fail-under=80 -q
 ```
 
-These checks cover formatting, linting, strict typing, import architecture contracts, tests,
-and the conservative 80% coverage gate. CI also runs fixture smoke and e2e smoke flows on
-pull requests and pushes.
+These checks cover formatting, linting, strict typing, import architecture
+contracts, tests, and the conservative 80% coverage gate. CI also runs fixture
+smoke and e2e smoke flows on pull requests and pushes.
 
-Do not run live Upwork collection as part of normal verification. If live evidence is explicitly requested, report it separately from fixture/local contract evidence.
+Do not run live Upwork collection as part of normal verification. If live
+evidence is explicitly requested, report it separately from fixture/local
+contract evidence.
 
 ## Pull requests
 
-Please include:
+Include:
 
 - what changed and why;
 - relevant tests or why tests are not useful;
 - docs updates when setup, behavior, release, or agent usage changes;
-- confirmation that no secrets, session data, proxy details, bypass instructions, or runtime artifacts are committed.
+- confirmation that no secrets, session data, proxy details, bypass
+  instructions, or runtime artifacts are committed.
 
-Be respectful and constructive in issues and reviews. For vulnerabilities or sensitive reports, follow `SECURITY.md`.
+For vulnerabilities or sensitive reports, follow `SECURITY.md`.

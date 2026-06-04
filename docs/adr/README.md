@@ -1,8 +1,8 @@
 # Architecture Decision Records
 
-This directory records the core architecture decisions currently implemented in
-`work-feed-mcp`. The first ADR set is reconstructed from existing documentation,
-tests, and source behavior.
+This directory records architecture decisions that the current implementation
+follows. The first ADR set was reconstructed from existing documentation, tests,
+and source behavior.
 
 ADR status values:
 

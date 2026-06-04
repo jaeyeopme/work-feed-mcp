@@ -6,10 +6,10 @@ Accepted
 
 ## Context
 
-The project needs a local runtime that can collect job records, persist them,
-and expose them to coding agents. Early usage could have favored direct CLI
-commands, a REST API, or an application-native scheduler, but the current
-product direction is a local data engine consumed through MCP.
+The project needs a local runtime that collects job records, persists them, and
+exposes them to coding agents. Direct CLI commands, a REST API, or an
+application-native scheduler would all work technically, but the product is a
+local data engine consumed through MCP.
 
 The implemented runtime uses Docker Compose with two services:
 
@@ -27,7 +27,7 @@ work-feed-worker -> SQLite volume -> work-feed-mcp -> MCP client
 ```
 
 Direct Python CLI commands remain available for local debugging, smoke checks,
-and maintainer operations, but they are not the normal user interface.
+and maintainer operations. They are not the normal user interface.
 
 ## Consequences
 

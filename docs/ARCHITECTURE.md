@@ -2,13 +2,15 @@
 
 ## Status
 
-This document describes the current implemented architecture. It is derived from
-the existing public docs, source layout, tests, and release workflow.
+This document describes the implemented architecture. Use it when changing
+runtime boundaries, data flow, persistence, MCP tools, or release behavior.
+
+It is derived from the public docs, source layout, tests, and release workflow.
 
 ## System Overview
 
-`work-feed-mcp` is a two-process Docker Compose runtime backed by a shared
-SQLite database:
+`work-feed-mcp` runs as two Docker Compose services backed by one SQLite
+database in a shared Docker volume:
 
 ```text
 External source
@@ -19,8 +21,9 @@ External source
 ```
 
 The worker owns collection, ingestion, schema initialization, and recurring
-runtime behavior. The MCP server exposes Streamable HTTP MCP tools that read the
-same SQLite database and enqueue control commands for the worker to apply later.
+runtime behavior. The MCP server exposes Streamable HTTP MCP tools. Those tools
+read the same SQLite database and enqueue control commands for the worker to
+apply later.
 
 ## Runtime Components
 
@@ -63,8 +66,8 @@ Responsibilities:
 - Store collector run summaries and per-query run results.
 - Store collector config and queued commands.
 
-The database is not a shared mutable object for all layers. Access authority is
-split by surface:
+The database is shared storage, not shared authority. Each surface gets only the
+access it needs:
 
 | Surface | Authority | Schema initialization |
 | --- | --- | --- |
@@ -201,8 +204,9 @@ Worker loop
   -> repositories.run_history
 ```
 
-Completed per-query results are committed as the run progresses. A later query
-failure does not roll back already committed query results.
+Completed per-query results are committed as the run progresses. If a later
+query fails, the worker records that failure but does not roll back earlier
+successful query results from the same run.
 
 ### MCP Job Reads
 

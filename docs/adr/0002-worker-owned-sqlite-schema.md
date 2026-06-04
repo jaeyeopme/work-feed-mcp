@@ -11,16 +11,17 @@ SQLite access. If every surface initialized or migrated schema on demand,
 read-only agent paths could mutate runtime state and hide startup ordering
 problems.
 
-The docs define a readiness policy that separates worker-owned initialization
-from MCP reads and control writes.
+The readiness policy separates worker-owned initialization from MCP reads and
+control writes.
 
 ## Decision
 
 The worker owns SQLite schema initialization and runtime writes.
 
 MCP read and control paths require an existing worker-initialized database. When
-the database is missing, missing required tables, or uses a newer unsupported
-schema, MCP tools return `not_ready` payloads instead of creating schema.
+the database file is missing, required tables are absent, or the schema is newer
+than this build supports, MCP tools return `not_ready` payloads instead of
+creating schema.
 
 `scheduler-status` is a current maintainer diagnostic exception and may
 initialize schema.

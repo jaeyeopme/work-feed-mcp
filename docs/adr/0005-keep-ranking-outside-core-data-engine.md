@@ -6,10 +6,10 @@ Accepted
 
 ## Context
 
-Collected jobs are meant to be consumed by agents. It would be tempting to add
-backend scoring, Connects guidance, proposal writing, or auto-apply workflows to
-the same project. Those features have different safety, UX, and business logic
-requirements from collection and persistence.
+Collected jobs are meant to be consumed by agents. Backend scoring, Connects
+guidance, proposal writing, and auto-apply workflows may look adjacent, but they
+have different safety, UX, and business logic requirements from collection and
+persistence.
 
 Consuming agents may summarize already-collected jobs and apply user preferences
 outside the data engine.
@@ -18,8 +18,8 @@ outside the data engine.
 
 The core project does not implement backend ranking, recommendation persistence,
 proposal/message generation, or auto-apply behavior. Job selection and ranking
-belong in the consuming agent layer unless a future project decision explicitly
-promotes that scope into the core data engine.
+belong in the consuming agent layer unless a future project decision moves that
+scope into the core data engine.
 
 ## Consequences
 

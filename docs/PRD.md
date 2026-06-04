@@ -2,19 +2,21 @@
 
 ## Status
 
-This PRD describes the current implemented product surface of `work-feed-mcp`.
-It is derived from `README.md`, `docs/TRD.md`, `CONTRIBUTING.md`,
-`SECURITY.md`, tests, and the current source layout.
+This PRD describes the implemented product surface of `work-feed-mcp`. It is a
+reference for maintainers deciding whether a change belongs in the product.
+
+It is derived from `README.md`, `docs/TRD.md`, `CONTRIBUTING.md`, `SECURITY.md`,
+tests, and the current source layout.
 
 ## Product Summary
 
-`work-feed-mcp` is a Docker/MCP-first local data engine for collecting
-authorized public job-listing records, storing normalized records in SQLite, and
-exposing scoped MCP tools for agent consumption.
+`work-feed-mcp` is a Docker/MCP-first local data engine. It collects authorized
+public job-listing records, stores normalized rows in SQLite, and exposes scoped
+MCP tools for agents.
 
-The product separates source collection, durable local storage, and agent-facing
-access. It is not a hosted SaaS app, browser automation product, proposal
-generator, recommendation backend, or auto-apply system.
+The product keeps source collection, local storage, and agent access separate.
+It is not a hosted SaaS app, browser automation product, proposal generator,
+recommendation backend, or auto-apply system.
 
 ## Users
 
@@ -26,16 +28,15 @@ Primary users:
 
 Secondary users:
 
-- A maintainer publishing public release artifacts.
+- A maintainer who publishes public release artifacts.
 
 ## Goals
 
-- Run a local Docker Compose runtime with a worker and MCP server.
+- Run a local Docker Compose runtime with a worker and an MCP server.
 - Collect authorized public job-listing records in a secret-safe way.
-- Normalize source responses into a stable JSONL-compatible job contract.
+- Normalize source responses into a stable, JSONL-compatible job contract.
 - Deduplicate persisted jobs by `job_id`.
-- Store normalized jobs, skills, run summaries, config, and queued commands in
-  SQLite.
+- Store normalized jobs, skills, run summaries, config, and queued commands in SQLite.
 - Expose MCP tools for job lookup, run/status reads, and safe queued collector
   control.
 - Keep fixture/local verification separate from live upstream evidence.
@@ -59,8 +60,7 @@ The product does not provide:
 ### UJ-001: Start the Runtime
 
 As a local operator, I can copy `.env.example`, start Docker Compose with
-`docker compose up -d --build`, and inspect runtime status with
-`docker compose ps`.
+`docker compose up -d --build`, and inspect runtime status with `docker compose ps`.
 
 Acceptance:
 
@@ -71,8 +71,8 @@ Acceptance:
 
 ### UJ-002: Connect an MCP Client
 
-As an agent operator, I can connect an MCP client to
-`http://127.0.0.1:8000/mcp` and call job/status tools.
+As an agent operator, I can connect an MCP client to `http://127.0.0.1:8000/mcp`
+and call job/status tools.
 
 Acceptance:
 
@@ -107,7 +107,7 @@ Acceptance:
 ### UJ-005: Queue Safe Collector Control
 
 As an agent, I can enqueue pause/resume/run-once/config-update commands without
-directly mutating the worker's current run.
+mutating an active worker run directly.
 
 Acceptance:
 
@@ -119,8 +119,8 @@ Acceptance:
 
 ### UJ-006: Maintain and Release
 
-As a maintainer, I can run fixture/local gates, release GHCR images from tags,
-and keep normal CI limited to verification.
+As a maintainer, I can run fixture/local gates and release GHCR images from tags.
+Normal CI stays limited to verification.
 
 Acceptance:
 
@@ -152,13 +152,13 @@ Acceptance:
 
 ## Product Boundaries
 
-The project intentionally keeps recommendations and job-fit ranking outside the
-core data engine. Consuming agents may rank or summarize retrieved rows, but the
-backend does not persist scores or own proposal/application workflows.
+The project keeps recommendations and job-fit ranking outside the core data
+engine. Consuming agents may rank or summarize retrieved rows, but the backend
+does not persist scores or own proposal/application workflows.
 
-The project also intentionally avoids raw upstream payload archives. If future
-features need richer data, they must first update the normalized collector
-contract, schema, and safety rules.
+The project also avoids raw upstream payload archives. If future features need
+richer data, they must first update the normalized collector contract, schema,
+and safety rules.
 
 ## Success Criteria
 
@@ -177,5 +177,3 @@ contract, schema, and safety rules.
   concrete data-contract change exists?
 - Should query performance be upgraded with SQLite FTS or batched skill loading
   when local datasets grow?
-- Should  baseline specs mirror every current subsystem, or only future
-  behavior-changing work?

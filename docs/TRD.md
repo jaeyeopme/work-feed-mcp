@@ -2,9 +2,9 @@
 
 ## Status
 
-This TRD describes current technical requirements and contracts for the
-implemented system. It is intended for maintainers and coding agents working on
-source changes.
+This TRD defines the technical contracts for the implemented system. It is for
+maintainers and coding agents changing source, tests, runtime config, or release
+workflow.
 
 ## Technology Stack
 
@@ -18,8 +18,8 @@ source changes.
 
 ## Runtime Configuration
 
-Runtime configuration is supplied through environment variables and persisted
-collector config.
+Runtime configuration comes from environment variables and persisted collector
+config.
 
 Docker/.env startup settings:
 
@@ -34,6 +34,10 @@ Docker/.env startup settings:
 - `WORK_FEED_MCP_PORT`
 - `WORK_FEED_MCP_PATH`
 - `WORK_FEED_MCP_TRANSPORT`
+
+`WORK_FEED_MCP_TRANSPORT` is an internal Compose/runtime setting. User-facing
+docs should describe Streamable HTTP MCP without asking users to edit that
+variable.
 
 Config precedence:
 
@@ -78,8 +82,8 @@ Config precedence:
 
 ## Collector Record Contract
 
-The collector output contract is defined here so technical requirements and
-data-contract guidance stay in one place.
+The collector output contract is defined here so technical requirements and data
+contract guidance stay in one place.
 
 Required public fields:
 
@@ -101,15 +105,14 @@ Optional public fields:
 - `raw_id`
 
 The domain validator MUST reject unsupported fields and known private/access
-material field names such as cookie, session, token, proxy, and raw GraphQL
-payload fields.
+material fields such as cookie, session, token, proxy, and raw GraphQL payloads.
 
 ## Collection Requirements
 
 - Fixture collection must work without live upstream access.
 - Live collection requires explicit live mode.
 - Live collection must classify blocked, rate-limited, temporary, and schema
-  failures into useful collector errors.
+  failures into specific collector errors.
 - Diagnostics must redact credential-like values.
 - Retry applies to temporary live collection failures, not arbitrary ingestion
   failures.
@@ -189,8 +192,8 @@ failures. User-facing diagnostics must not leak credential material.
 
 ## Analytics Requirements
 
-Analytics reads SQLite only. It must not perform live collection or infer missing
-client fields from title or description text.
+Analytics reads SQLite only. It must not perform live collection or infer
+missing client fields from title or description text.
 
 Current query groups:
 
@@ -200,8 +203,8 @@ Current query groups:
 - `budgets`
 - `clients`
 
-Client dimensions absent from the current schema return unavailable
-`unknown`/`null` buckets.
+Client dimensions absent from the current schema return unavailable,
+`unknown`, or `null` buckets.
 
 ## Docker and Deployment Requirements
 
@@ -274,8 +277,8 @@ WORK_FEED_LIVE=1 uv run --extra dev work-feed collect --live --query "python" --
   or runtime SQLite data.
 - Do not document access-control bypasses or proxy acquisition.
 - Redact collection diagnostics.
-- Keep fixtures free of private upstream payloads unless explicitly sanitized
-  and contract-appropriate.
+- Keep fixtures free of private upstream payloads unless they are explicitly
+  sanitized and contract-appropriate.
 
 ## Known Technical Gaps
 

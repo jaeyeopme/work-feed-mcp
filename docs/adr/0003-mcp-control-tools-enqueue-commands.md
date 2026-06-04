@@ -6,19 +6,19 @@ Accepted
 
 ## Context
 
-Agents need limited control over the collector runtime, such as pausing,
-resuming, running once, or updating mutable schedule/query configuration. Direct
-mutation from MCP tools would couple agent calls to worker internals and could
-interrupt active collection runs.
+Agents need limited control over the collector runtime: pause, resume, run once,
+and update mutable schedule/query configuration. Direct mutation from MCP tools
+would couple agent calls to worker internals and could interrupt active
+collection runs.
 
 ## Decision
 
 MCP control tools enqueue commands in SQLite. The worker polls the command queue
 and applies commands between collection runs.
 
-Control tools return immediately with a `command_id` and `queued` status. Callers
-use `collector_command_status` to observe queued, running, applied, or failed
-states.
+Control tools return immediately with a `command_id` and `queued` status.
+Callers use `collector_command_status` to observe queued, running, applied, or
+failed states.
 
 ## Consequences
 

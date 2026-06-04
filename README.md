@@ -4,14 +4,25 @@
 [![release](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/jaeyeopme/work-feed-mcp/actions/workflows/release.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Dockerized Python data-ingestion engine with SQLite storage and MCP tool access.
+Local Python data-ingestion engine with Docker Compose runtime, SQLite storage,
+and MCP tool access.
 
 Run it locally with Docker Compose, then connect any Streamable HTTP MCP client to
-query collected jobs and control the collector safely.
+query collected jobs and control the collector through queued commands.
 
-The current reference source is public job-listing data. Operators are responsible for using only sources they are authorized to collect and process. This project is not affiliated with, endorsed by, or sponsored by Upwork Inc. It does not provide credentials, cookies, proxy bypasses, application automation, ranking logic, or raw upstream private payloads.
+The current reference source is public job-listing data.
+Operators are responsible for using only sources they are authorized to collect
+and process.
+This project is not affiliated with, endorsed by, or sponsored by Upwork Inc.
+It does not provide credentials, cookies, proxy bypasses, application automation,
+ranking logic, or raw upstream private payloads.
 
-License: MIT. See `CONTRIBUTING.md`, `SECURITY.md`, and `CHANGELOG.md` for maintainer notes.
+Use this repo when you want a local MCP-readable job feed backed by SQLite. It is
+not meant to be a hosted service, a browser automation tool, or a recommendation
+system.
+
+License: MIT. Maintainer notes live in `CONTRIBUTING.md`, `SECURITY.md`, and
+`CHANGELOG.md`.
 
 ## Quick start
 
@@ -61,7 +72,8 @@ config formats vary, but a typical shape is:
 }
 ```
 
-After connecting, ask your agent to call `jobs_recent` with `limit: 5` to confirm the MCP server responds. An empty result is okay on a fresh database.
+After connecting, ask your agent to call `jobs_recent` with `limit: 5` to
+confirm the MCP server responds. An empty result is okay on a fresh database.
 
 For a protocol-level smoke from Docker, run:
 
@@ -71,8 +83,8 @@ docker compose exec work-feed-mcp work-feed mcp-smoke
 
 ## Configuration
 
-Configuration lives in `.env`. The defaults work without credentials or cookies, and
-most users can start without editing it.
+Configuration lives in `.env`. The defaults work without credentials or cookies.
+Most users only need to set search terms.
 
 To target specific searches, edit only `WORK_FEED_QUERIES`:
 
@@ -99,7 +111,7 @@ docker compose up -d --force-recreate
 | `WORK_FEED_MCP_PORT`         | `8000`                   | Host port for the local MCP endpoint.                                                       |
 | `WORK_FEED_MCP_PATH`         | `/mcp`                   | HTTP path for Streamable HTTP MCP.                                                          |
 
-By default each run collects up to 250 jobs: `5 pages * 50 jobs`.
+By default, each run collects up to 250 jobs: `5 pages * 50 jobs`.
 
 If you override the MCP port or path, the endpoint becomes:
 
@@ -146,13 +158,15 @@ Config/control queue:
 - `collector_resume`
 - `collector_command_status`
 
-Control tools are **enqueue-only**. They return immediately with a command id; the worker applies commands between collection runs.
+Control tools are **enqueue-only**. They return immediately with a command id.
+The worker applies commands between collection runs.
 
 ```json
 { "ok": true, "command_id": "...", "status": "queued" }
 ```
 
-Poll completion with `collector_command_status(command_id)`. Terminal states are `applied` and `failed`; in-flight states are `queued` and `running`.
+Poll completion with `collector_command_status(command_id)`. Terminal states are
+`applied` and `failed`; in-flight states are `queued` and `running`.
 
 `config_update` follows the same queue path and only accepts:
 
@@ -162,7 +176,9 @@ Poll completion with `collector_command_status(command_id)`. Terminal states are
 - `page_size`
 - `paused`
 
-Live collection mode is set by Docker/.env at startup. MCP tools can pause/resume the worker and update schedule, query, and page settings, but they cannot switch the runtime between live and non-live modes.
+Live collection mode is set by Docker/.env at startup. MCP tools can
+pause/resume the worker and update schedule, query, and page settings, but they
+cannot switch the runtime between live and non-live modes.
 
 Config precedence:
 
@@ -173,7 +189,8 @@ Config precedence:
 4. Docker live mode remains an env/bootstrap setting
 ```
 
-If MCP starts before the worker initializes SQLite, tools return stable `not_ready` payloads instead of creating schema from the read path:
+If MCP starts before the worker initializes SQLite, tools return stable
+`not_ready` payloads instead of creating schema from the read path:
 
 ```json
 {
@@ -185,7 +202,12 @@ If MCP starts before the worker initializes SQLite, tools return stable `not_rea
 }
 ```
 
-`reason` may be `db_missing`, `schema_missing`, or `unsupported_schema`; `details` gives a safe short explanation for the reason. For `unsupported_schema`, upgrade work-feed or migrate the database before reading or controlling the runtime. An initialized DB with no rows is not an error; list tools return `{ "ok": true, "status": "empty", "rows": [] }`.
+`reason` may be `db_missing`, `schema_missing`, or `unsupported_schema`.
+`details` gives a safe short explanation. For `unsupported_schema`,
+upgrade work-feed or migrate the database before reading or controlling the
+runtime. An
+initialized DB with no rows is not an error; list tools return
+`{ "ok": true, "status": "empty", "rows": [] }`.
 
 ## Run counts and dedupe
 
@@ -195,7 +217,9 @@ Collector status and run history use three counters:
 - `inserted`: newly stored unique jobs.
 - `skipped`: observed rows not stored because a job with the same identity already exists.
 
-Stored jobs are deduplicated by `job_id`. A high `skipped` count usually means the collector saw jobs already saved in the database; it is not a failure by itself.
+Stored jobs are deduplicated by `job_id`. A high `skipped` count usually means
+the collector saw jobs already saved in the database; it is not a failure by
+itself.
 
 ## What this does not do
 
@@ -210,7 +234,8 @@ Stored jobs are deduplicated by `job_id`. A high `skipped` count usually means t
 
 ## Troubleshooting
 
-Empty results after a fresh start usually mean the database is initialized but no jobs have been collected yet. This is a valid empty state.
+Empty results after a fresh start usually mean the database is initialized but no
+jobs have been collected yet. This is a valid empty state.
 
 If an MCP tool returns `not_ready`, check that `work-feed-worker` is running and healthy:
 
@@ -219,7 +244,10 @@ docker compose ps
 docker compose logs -f work-feed-worker
 ```
 
-The `work-feed scheduler-status` command also prints parseable `not_ready` JSON and exits with code 2 when the database is missing, schema-less, or newer than this build supports. It does not create or migrate the SQLite schema from the read path.
+The `work-feed scheduler-status` command also prints parseable `not_ready` JSON
+and exits with code 2 when the database is missing, schema-less, or newer than
+this build supports. It does not create or migrate the SQLite schema from the
+read path.
 
 For MCP connection failures, confirm the endpoint and local port:
 
@@ -240,7 +268,10 @@ If `.env` changes do not appear, recreate the services:
 docker compose up -d --force-recreate
 ```
 
-If upstream collection is blocked, rate limited, temporarily unavailable, or malformed, the worker keeps running after recording the failed run with redacted diagnostics. Inspect collector status and logs, then retry later or adjust collection settings if needed.
+If upstream collection is blocked, rate limited, temporarily unavailable, or
+malformed, the worker keeps running after recording the failed run with redacted
+diagnostics. Inspect collector status and logs, then retry later or adjust
+collection settings if needed.
 
 ## Project structure
 
@@ -309,7 +340,8 @@ src/work_feed_mcp/
 
 ## Developer reference
 
-Development checks are maintained for contributors and local maintenance; they are not required for normal Docker/MCP usage.
+Development checks are for contributors and local maintenance. They are not
+required for normal Docker/MCP usage.
 
 Contributor and release references:
 
@@ -326,7 +358,7 @@ workflow runs quality, coverage, smoke, and e2e smoke checks on pull requests an
 pushes. Coverage is intentionally kept as a conservative 80% gate without
 publishing a badge or using an external service.
 
-Direct Python CLI entrypoints exist for local debugging, but they are not the normal
-user interface. Prefer Docker/MCP for normal use.
+Direct Python CLI entrypoints exist for local debugging, but they are not the
+normal user interface. Prefer Docker/MCP for normal use.
 
 Live collection evidence should be reported separately from local contract checks.

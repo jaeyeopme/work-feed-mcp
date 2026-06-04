@@ -8,7 +8,7 @@ Accepted
 
 Source collection receives upstream response shapes that may include fields not
 appropriate for durable storage or agent-facing output. Persisting raw envelopes
-would simplify debugging, but it increases privacy, security, and
+would make debugging easier, but it increases privacy, security, and
 platform-boundary risk.
 
 The repository already defines a normalized job JSONL contract and rejects
@@ -16,10 +16,9 @@ private/access-material fields in collector records.
 
 ## Decision
 
-The system persists normalized public job records, job skills, and redacted
-operational run summaries. It does not persist upstream private GraphQL
-envelopes, raw snapshots, cookies, sessions, tokens, proxies, or per-job
-observation logs.
+The system persists normalized public job records, job skills, and redacted run
+summaries. It does not persist upstream private GraphQL envelopes, raw snapshots,
+cookies, sessions, tokens, proxies, or per-job observation logs.
 
 Downstream code consumes the normalized collector contract, not source transport
 internals.

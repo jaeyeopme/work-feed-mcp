@@ -54,5 +54,3 @@ WORK_FEED_LIVE=1 uv run --extra dev work-feed collect --live --query "python" --
 ```
 
 Report live status separately from fixture/local contract evidence.
-
-

@@ -19,7 +19,7 @@ from work_feed_mcp.integrations.upwork.models import Job
 from work_feed_mcp.repositories import run_history
 from work_feed_mcp.repositories.run_history import RunTotals
 from work_feed_mcp.services.collector import collect_jobs
-from work_feed_mcp.services.ingestion import ingest_records_into_connection
+from work_feed_mcp.services.ingestion import IngestResult, ingest_records_into_connection
 from work_feed_mcp.services.retry import Jitter, RetryExhausted, Sleep, collect_with_retry
 
 QueryValue = str | None
@@ -156,6 +156,115 @@ def _record_failed_query(
     )
 
 
+def _retry_kwargs(*, sleep: Sleep | None, jitter: Jitter | None) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {}
+    if sleep is not None:
+        kwargs["sleep"] = sleep
+    if jitter is not None:
+        kwargs["jitter"] = jitter
+    return kwargs
+
+
+def _collect_jobs_with_attempts(
+    *,
+    query: QueryValue,
+    max_pages: int,
+    page_size: int,
+    sleep: Sleep | None,
+    jitter: Jitter | None,
+    live: bool,
+    fixture: str | None,
+) -> tuple[list[Job], int]:
+    def collect_operation() -> list[Job]:
+        return collect_jobs(
+            fixture=fixture,
+            live=live,
+            query=query,
+            max_pages=max_pages,
+            page_size=page_size,
+        )
+
+    return collect_with_retry(collect_operation, **_retry_kwargs(sleep=sleep, jitter=jitter))
+
+
+def _record_successful_query(
+    connection: sqlite3.Connection,
+    *,
+    run_id: str,
+    query: QueryValue,
+    attempts: int,
+    ingest_result: IngestResult,
+    started_at: str,
+    finished_at: str,
+) -> ScheduledQueryResult:
+    run_history.insert_run_result(
+        connection,
+        run_id=run_id,
+        query=query,
+        status="success",
+        attempts=attempts,
+        seen_count=ingest_result.seen_count,
+        inserted_count=ingest_result.inserted_count,
+        skipped_count=ingest_result.skipped_count,
+        error_type=None,
+        redacted_error=None,
+        started_at=started_at,
+        finished_at=finished_at,
+    )
+    return ScheduledQueryResult(
+        query=query,
+        seen_count=ingest_result.seen_count,
+        inserted_count=ingest_result.inserted_count,
+        skipped_count=ingest_result.skipped_count,
+        attempts=attempts,
+    )
+
+
+def _collect_and_ingest_query(
+    connection: sqlite3.Connection,
+    *,
+    db_path: str,
+    query: QueryValue,
+    max_pages: int,
+    page_size: int,
+    sleep: Sleep | None,
+    jitter: Jitter | None,
+    live: bool,
+    fixture: str | None,
+) -> tuple[int, IngestResult]:
+    jobs, attempts = _collect_jobs_with_attempts(
+        query=query,
+        max_pages=max_pages,
+        page_size=page_size,
+        sleep=sleep,
+        jitter=jitter,
+        live=live,
+        fixture=fixture,
+    )
+    ingest_result = ingest_records_into_connection(
+        connection,
+        _records_from_jobs(jobs),
+        db_path=db_path,
+        input_path=None,
+        source_query=query,
+    )
+    return attempts, ingest_result
+
+
+def _attempts_for_failure(error: BaseException, attempts: int) -> int:
+    if isinstance(error, RetryExhausted):
+        return error.attempts
+    if isinstance(error, CollectorError):
+        return 1
+    return attempts
+
+
+def _raise_collection_failure(error: BaseException) -> None:
+    if isinstance(error, RetryExhausted):
+        raise error.error from error
+    raise error
+
+
 def collect_scheduled(
     *,
     db_path: str,
@@ -196,41 +305,24 @@ def collect_scheduled(
             query_started_at = utc_now()
             attempts = 1
             try:
-
-                def collect_operation(query: QueryValue = query) -> list[Job]:
-                    return collect_jobs(
-                        fixture=fixture,
-                        live=live,
-                        query=query,
-                        max_pages=max_pages,
-                        page_size=page_size,
-                    )
-
-                retry_kwargs: dict[str, Any] = {}
-                if sleep is not None:
-                    retry_kwargs["sleep"] = sleep
-                if jitter is not None:
-                    retry_kwargs["jitter"] = jitter
-                jobs, attempts = collect_with_retry(collect_operation, **retry_kwargs)
-                ingest_result = ingest_records_into_connection(
+                attempts, ingest_result = _collect_and_ingest_query(
                     connection,
-                    _records_from_jobs(jobs),
                     db_path=db_path,
-                    input_path=None,
-                    source_query=query,
+                    query=query,
+                    max_pages=max_pages,
+                    page_size=page_size,
+                    sleep=sleep,
+                    jitter=jitter,
+                    live=live,
+                    fixture=fixture,
                 )
                 query_finished_at = utc_now()
-                run_history.insert_run_result(
+                result = _record_successful_query(
                     connection,
                     run_id=run_id,
                     query=query,
-                    status="success",
                     attempts=attempts,
-                    seen_count=ingest_result.seen_count,
-                    inserted_count=ingest_result.inserted_count,
-                    skipped_count=ingest_result.skipped_count,
-                    error_type=None,
-                    redacted_error=None,
+                    ingest_result=ingest_result,
                     started_at=query_started_at,
                     finished_at=query_finished_at,
                 )
@@ -239,58 +331,23 @@ def collect_scheduled(
                     inserted=ingest_result.inserted_count,
                     skipped=ingest_result.skipped_count,
                 )
-                results.append(
-                    ScheduledQueryResult(
-                        query=query,
-                        seen_count=ingest_result.seen_count,
-                        inserted_count=ingest_result.inserted_count,
-                        skipped_count=ingest_result.skipped_count,
-                        attempts=attempts,
-                    )
-                )
+                results.append(result)
                 connection.commit()
-            except RetryExhausted as exc:
-                query_finished_at = utc_now()
-                _record_failed_query(
-                    connection,
-                    run_id=run_id,
-                    query=query,
-                    attempts=exc.attempts,
-                    totals=totals,
-                    error=exc.error,
-                    started_at=query_started_at,
-                    finished_at=query_finished_at,
-                )
-                connection.commit()
-                raise exc.error from exc
-            except CollectorError as exc:
-                query_finished_at = utc_now()
-                _record_failed_query(
-                    connection,
-                    run_id=run_id,
-                    query=query,
-                    attempts=1,
-                    totals=totals,
-                    error=exc,
-                    started_at=query_started_at,
-                    finished_at=query_finished_at,
-                )
-                connection.commit()
-                raise
             except Exception as exc:
                 query_finished_at = utc_now()
+                recorded_error = exc.error if isinstance(exc, RetryExhausted) else exc
                 _record_failed_query(
                     connection,
                     run_id=run_id,
                     query=query,
-                    attempts=attempts,
+                    attempts=_attempts_for_failure(exc, attempts),
                     totals=totals,
-                    error=exc,
+                    error=recorded_error,
                     started_at=query_started_at,
                     finished_at=query_finished_at,
                 )
                 connection.commit()
-                raise
+                _raise_collection_failure(exc)
 
         finished_at = utc_now()
         run_history.finish_run_success(

@@ -11,7 +11,7 @@ def recent_jobs(connection: sqlite3.Connection, *, limit: int = 20) -> list[dict
         _base_sql() + " ORDER BY jobs.first_seen_at DESC, jobs.job_id ASC LIMIT ?",
         (limit,),
     ).fetchall()
-    return [_job_row(connection, row) for row in rows]
+    return _job_rows(connection, rows)
 
 
 def search_jobs(
@@ -42,12 +42,14 @@ def search_jobs(
     sql += " ORDER BY jobs.first_seen_at DESC, jobs.job_id ASC LIMIT ?"
     params.append(limit)
     rows = connection.execute(sql, params).fetchall()
-    return [_job_row(connection, row) for row in rows]
+    return _job_rows(connection, rows)
 
 
 def get_job(connection: sqlite3.Connection, job_id: str) -> dict[str, Any] | None:
     row = connection.execute(_base_sql() + " WHERE jobs.job_id = ?", (job_id,)).fetchone()
-    return _job_row(connection, row) if row is not None else None
+    if row is None:
+        return None
+    return _job_row(row, skills=_skills(connection, job_id))
 
 
 def _base_sql() -> str:
@@ -66,7 +68,34 @@ def _skills(connection: sqlite3.Connection, job_id: str) -> list[str]:
     return [str(row["skill"]) for row in rows]
 
 
-def _job_row(connection: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
+def _skills_by_job_id(
+    connection: sqlite3.Connection, job_ids: tuple[str, ...]
+) -> dict[str, list[str]]:
+    if not job_ids:
+        return {}
+    placeholders = ", ".join("?" for _ in job_ids)
+    rows = connection.execute(
+        f"""
+        SELECT job_id, skill
+          FROM job_skills
+         WHERE job_id IN ({placeholders})
+         ORDER BY job_id ASC, skill ASC
+        """,
+        job_ids,
+    ).fetchall()
+    skills: dict[str, list[str]] = {job_id: [] for job_id in job_ids}
+    for row in rows:
+        skills[str(row["job_id"])].append(str(row["skill"]))
+    return skills
+
+
+def _job_rows(connection: sqlite3.Connection, rows: list[sqlite3.Row]) -> list[dict[str, Any]]:
+    job_ids = tuple(str(row["job_id"]) for row in rows)
+    skills_by_job_id = _skills_by_job_id(connection, job_ids)
+    return [_job_row(row, skills=skills_by_job_id[str(row["job_id"])]) for row in rows]
+
+
+def _job_row(row: sqlite3.Row, *, skills: list[str]) -> dict[str, Any]:
     job_id = str(row["job_id"])
     return {
         "job_id": job_id,
@@ -74,7 +103,7 @@ def _job_row(connection: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]
         "title": str(row["title"]),
         "description": row["description"],
         "url": row["url"],
-        "skills": _skills(connection, job_id),
+        "skills": skills,
         "posted_at": row["posted_at"],
         "job_type": row["job_type"],
         "contractor_tier": row["contractor_tier"],

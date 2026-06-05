@@ -8,11 +8,12 @@ version = "0.1.0"
 description = "Dockerized Python data-ingestion engine with SQLite storage and MCP tool access."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT"
 authors = [{ name = "work-feed-mcp maintainers" }]
 dependencies = [
     "curl-cffi>=0.15.0",
     "mcp>=1.23.0",
+    "pydantic>=2",
 ]
 
 [project.scripts]

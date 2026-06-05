@@ -84,6 +84,7 @@ def test_query_helpers_return_basic_analytics(tmp_path: Path) -> None:
         assert summary(connection).rows == ({"jobs": 2, "skills": 3},)
         assert skills(connection).rows[0] == {"skill": "python", "count": 1}
         assert jobs(connection, skill="Python").rows[0]["job_id"] == "job-1"
+        assert len(jobs(connection, limit=1).rows) == 1
         assert {row["budget_type"] for row in budgets(connection).rows} == {"fixed", "hourly"}
 
 
@@ -96,3 +97,14 @@ def test_cli_outputs_json_and_reads_sqlite_only(tmp_path: Path, capsys) -> None:
 
     assert output["query"] == "skills"
     assert {row["skill"] for row in output["rows"]} == {"python", "sqlite", "react"}
+
+
+def test_cli_limits_jobs_query_rows(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def]
+    db = tmp_path / "work-feed.sqlite"
+    _seed_db(db)
+
+    assert main(["jobs", "--db", str(db), "--limit", "1"]) == 0
+    output = json.loads(capsys.readouterr().out)
+
+    assert output["query"] == "jobs"
+    assert len(output["rows"]) == 1

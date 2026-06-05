@@ -25,11 +25,12 @@ def query_database(
     *,
     skill: str | None = None,
     title: str | None = None,
+    limit: int | None = None,
 ) -> QueryResult:
     try:
         connection = connect_readonly(db_path)
         try:
-            return run_query(connection, name, skill=skill, title=title)
+            return run_query(connection, name, skill=skill, title=title, limit=limit)
         finally:
             connection.close()
     except sqlite3.OperationalError as exc:
@@ -44,6 +45,7 @@ def run_query(
     *,
     skill: str | None = None,
     title: str | None = None,
+    limit: int | None = None,
 ) -> QueryResult:
     match name:
         case "summary":
@@ -51,7 +53,9 @@ def run_query(
         case "skills":
             return analytics.skills(connection)
         case "jobs":
-            return analytics.jobs(connection, skill=skill, title=title)
+            if limit is None:
+                return analytics.jobs(connection, skill=skill, title=title)
+            return analytics.jobs(connection, skill=skill, title=title, limit=limit)
         case "budgets":
             return analytics.budgets(connection)
         case "clients":

@@ -23,3 +23,32 @@ def test_query_database_rejects_unknown_query_name(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="unknown analytics query: unknown"):
         query_database(str(db), "unknown")
+
+
+def test_query_database_rejects_invalid_jobs_limit(tmp_path: Path) -> None:
+    db = tmp_path / "work-feed.sqlite"
+    with closing(sqlite3.connect(db)) as connection:
+        connection.execute(
+            """
+            CREATE TABLE jobs (
+              job_id TEXT PRIMARY KEY,
+              source TEXT NOT NULL,
+              title TEXT NOT NULL,
+              description TEXT NULL,
+              url TEXT NULL,
+              posted_at TEXT NULL,
+              job_type TEXT NULL,
+              contractor_tier TEXT NULL,
+              hourly_min REAL NULL,
+              hourly_max REAL NULL,
+              fixed_amount REAL NULL,
+              raw_id TEXT NULL,
+              content_hash TEXT NOT NULL,
+              first_seen_at TEXT NOT NULL,
+              created_at TEXT NOT NULL
+            )
+            """
+        )
+
+    with pytest.raises(ValueError, match="limit must be a positive integer"):
+        query_database(str(db), "jobs", limit=0)

@@ -76,3 +76,24 @@ def test_job_queries_return_detailed_json_safe_rows(tmp_path: Path) -> None:
     assert detail is not None
     assert detail["skills"] == ["python", "scraping"]
     assert "private" not in detail
+
+
+def test_job_list_queries_batch_load_skills(tmp_path: Path) -> None:
+    connection = connect_worker(str(tmp_path / "work-feed.sqlite"))
+    statements: list[str] = []
+    try:
+        _seed(connection)
+        connection.commit()
+        connection.set_trace_callback(statements.append)
+
+        recent = jobs.recent_jobs(connection)
+    finally:
+        connection.close()
+
+    skill_queries = [
+        statement
+        for statement in statements
+        if "FROM job_skills" in statement and "SELECT job_id, skill" in statement
+    ]
+    assert [row["job_id"] for row in recent] == ["job-1", "job-2"]
+    assert len(skill_queries) == 1

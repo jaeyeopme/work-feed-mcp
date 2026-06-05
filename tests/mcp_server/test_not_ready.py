@@ -8,6 +8,26 @@ from work_feed_mcp.mcp_server import tools
 from work_feed_mcp.runtime.config import RuntimeSettings
 
 
+def _create_db_with_user_version(tmp_path: Path, filename: str, version: int) -> Path:
+    db = tmp_path / filename
+    connection = sqlite3.connect(db)
+    try:
+        connection.execute(f"PRAGMA user_version = {version}")
+        connection.commit()
+    finally:
+        connection.close()
+    return db
+
+
+def _assert_db_has_user_version_only(db: Path, version: int) -> None:
+    connection = sqlite3.connect(db)
+    try:
+        assert int(connection.execute("PRAGMA user_version").fetchone()[0]) == version
+        assert list(connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")) == []
+    finally:
+        connection.close()
+
+
 def test_missing_db_returns_not_ready(tmp_path: Path) -> None:
     settings = RuntimeSettings(db_path=str(tmp_path / "missing.sqlite"))
     result = tools.jobs_recent(settings=settings)
@@ -42,13 +62,7 @@ def test_empty_schema_returns_ok_empty(tmp_path: Path) -> None:
 
 
 def test_newer_schema_returns_not_ready_without_downgrade(tmp_path: Path) -> None:
-    db = tmp_path / "newer.sqlite"
-    connection = sqlite3.connect(db)
-    try:
-        connection.execute("PRAGMA user_version = 999")
-        connection.commit()
-    finally:
-        connection.close()
+    db = _create_db_with_user_version(tmp_path, "newer.sqlite", 999)
 
     settings = RuntimeSettings(db_path=str(db))
     result = tools.jobs_recent(settings=settings)
@@ -58,22 +72,11 @@ def test_newer_schema_returns_not_ready_without_downgrade(tmp_path: Path) -> Non
     )
     assert result["next_action"] == "upgrade work-feed or migrate the database"
 
-    connection = sqlite3.connect(db)
-    try:
-        assert int(connection.execute("PRAGMA user_version").fetchone()[0]) == 999
-        assert list(connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")) == []
-    finally:
-        connection.close()
+    _assert_db_has_user_version_only(db, 999)
 
 
 def test_newer_schema_control_tool_returns_not_ready_without_downgrade(tmp_path: Path) -> None:
-    db = tmp_path / "newer-control.sqlite"
-    connection = sqlite3.connect(db)
-    try:
-        connection.execute("PRAGMA user_version = 999")
-        connection.commit()
-    finally:
-        connection.close()
+    db = _create_db_with_user_version(tmp_path, "newer-control.sqlite", 999)
 
     settings = RuntimeSettings(db_path=str(db))
     result = tools.collector_run_once(settings=settings)
@@ -83,9 +86,4 @@ def test_newer_schema_control_tool_returns_not_ready_without_downgrade(tmp_path:
     )
     assert result["next_action"] == "upgrade work-feed or migrate the database"
 
-    connection = sqlite3.connect(db)
-    try:
-        assert int(connection.execute("PRAGMA user_version").fetchone()[0]) == 999
-        assert list(connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")) == []
-    finally:
-        connection.close()
+    _assert_db_has_user_version_only(db, 999)

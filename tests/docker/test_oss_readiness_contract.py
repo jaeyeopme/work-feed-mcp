@@ -77,7 +77,7 @@ def test_license_matches_project_metadata() -> None:
 
     assert "MIT License" in license_text
     assert "work-feed-mcp maintainers" in license_text
-    assert 'license = { text = "MIT" }' in pyproject
+    assert 'license = "MIT"' in pyproject
 
 
 def test_contributing_and_security_keep_project_boundaries() -> None:

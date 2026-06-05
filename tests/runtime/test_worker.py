@@ -18,6 +18,17 @@ class FakeResult:
         return {"trigger": self.trigger}
 
 
+def _enqueue_run_once_command(
+    settings: RuntimeSettings,
+    *,
+    command_id: str = "cmd-1",
+) -> None:
+    with connect_worker(settings.db_path) as connection:
+        collector_control.seed_config(connection, settings.persisted_defaults())
+        collector_control.enqueue_command(connection, "run_once", command_id=command_id)
+        connection.commit()
+
+
 def test_worker_invokes_collection_with_defaults(tmp_path: Path) -> None:
     calls: list[dict[str, Any]] = []
 
@@ -50,10 +61,7 @@ def test_run_once_executes_while_paused(tmp_path: Path) -> None:
         return FakeResult(str(kwargs["trigger"]))
 
     settings = RuntimeSettings(db_path=str(tmp_path / "work-feed.sqlite"), paused=True)
-    with connect_worker(settings.db_path) as connection:
-        collector_control.seed_config(connection, settings.persisted_defaults())
-        collector_control.enqueue_command(connection, "run_once", command_id="cmd-1")
-        connection.commit()
+    _enqueue_run_once_command(settings)
 
     runtime = WorkerRuntime(settings=settings, collect_once=fake_collect_once)
     runtime.run(max_iterations=1)
@@ -71,10 +79,7 @@ def test_failed_run_once_while_paused_marks_command_failed(tmp_path: Path) -> No
         raise UpstreamBlockedError("blocked token=secret")
 
     settings = RuntimeSettings(db_path=str(tmp_path / "work-feed.sqlite"), paused=True)
-    with connect_worker(settings.db_path) as connection:
-        collector_control.seed_config(connection, settings.persisted_defaults())
-        collector_control.enqueue_command(connection, "run_once", command_id="cmd-1")
-        connection.commit()
+    _enqueue_run_once_command(settings)
 
     runtime = WorkerRuntime(settings=settings, collect_once=fake_collect_once)
     runtime.run(max_iterations=1)

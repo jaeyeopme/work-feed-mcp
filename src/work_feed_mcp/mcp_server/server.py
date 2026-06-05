@@ -5,9 +5,32 @@ from __future__ import annotations
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, field_validator
 
 from work_feed_mcp.mcp_server import tools
 from work_feed_mcp.runtime.config import RuntimeSettings, load_runtime_settings
+
+
+class ConfigUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    interval_seconds: StrictInt | None = Field(default=None, ge=1)
+    queries: list[str] | None = None
+    max_pages: StrictInt | None = Field(default=None, ge=1)
+    page_size: StrictInt | None = Field(default=None, ge=1)
+    paused: StrictBool | None = None
+
+    @field_validator("queries")
+    @classmethod
+    def validate_queries(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        if not all(isinstance(item, str) and item.strip() for item in value):
+            raise ValueError("queries must be a list of non-empty strings")
+        return value
+
+    def to_update_dict(self) -> dict[str, Any]:
+        return self.model_dump(exclude_none=True)
 
 
 def build_server(settings: RuntimeSettings | None = None) -> FastMCP:
@@ -53,10 +76,10 @@ def build_server(settings: RuntimeSettings | None = None) -> FastMCP:
         return tools.config_get(settings=resolved)
 
     @mcp.tool()
-    def config_update(updates: dict[str, Any]) -> dict[str, Any]:
+    def config_update(updates: ConfigUpdate) -> dict[str, Any]:
         """Update mutable collector runtime config."""
 
-        return tools.config_update(updates=updates, settings=resolved)
+        return tools.config_update(updates=updates.to_update_dict(), settings=resolved)
 
     @mcp.tool()
     def collector_run_once() -> dict[str, Any]:

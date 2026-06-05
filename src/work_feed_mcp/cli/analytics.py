@@ -12,6 +12,7 @@ from typing import Never
 
 from work_feed_mcp.db.connection import connect_readonly
 from work_feed_mcp.services.analytics import run_query
+from work_feed_mcp.services.limits import MAX_QUERY_LIMIT
 
 
 class AnalyticsUsageError(Exception):
@@ -29,6 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--db", required=True)
     parser.add_argument("--skill")
     parser.add_argument("--title")
+    parser.add_argument("--limit", type=int, default=MAX_QUERY_LIMIT)
     return parser
 
 
@@ -39,7 +41,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise AnalyticsUsageError("SQLite database path does not exist")
         connection = connect_readonly(args.db)
         try:
-            result = run_query(connection, args.name, skill=args.skill, title=args.title)
+            result = run_query(
+                connection,
+                args.name,
+                skill=args.skill,
+                title=args.title,
+                limit=args.limit,
+            )
         finally:
             connection.close()
         print(json.dumps(result.to_dict(), ensure_ascii=False, sort_keys=True))

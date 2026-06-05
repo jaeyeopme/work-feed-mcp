@@ -1287,6 +1287,7 @@ source = { editable = "." }
 dependencies = [
     { name = "curl-cffi" },
     { name = "mcp" },
+    { name = "pydantic" },
 ]
 
 [package.optional-dependencies]
@@ -1304,6 +1305,7 @@ requires-dist = [
     { name = "import-linter", marker = "extra == 'dev'", specifier = ">=2.5" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "pydantic", specifier = ">=2" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.1" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },

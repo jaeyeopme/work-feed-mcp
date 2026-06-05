@@ -23,6 +23,10 @@ def test_schema_contains_control_tables_and_indexes(tmp_path: Path) -> None:
     assert "collector_commands" in names
     assert "idx_collector_commands_status_created_at" in names
     assert "idx_collector_commands_created_at" in names
+    assert "idx_collector_run_results_run_started_id" in names
+    assert "idx_collector_run_results_started_id" in names
+    assert "idx_collector_runs_started_run_id" in names
+    assert "idx_jobs_first_seen_job_id" in names
 
 
 def test_seed_config_preserves_existing_values(tmp_path: Path) -> None:

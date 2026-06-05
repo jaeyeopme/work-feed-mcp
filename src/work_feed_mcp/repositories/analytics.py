@@ -9,6 +9,8 @@ from typing import Any
 
 from work_feed_mcp.repositories.client_analytics import client_dimension_buckets
 
+DEFAULT_JOBS_LIMIT = 100
+
 
 @dataclass(frozen=True, slots=True)
 class QueryResult:
@@ -54,9 +56,11 @@ def jobs(
     *,
     skill: str | None = None,
     title: str | None = None,
+    limit: int = DEFAULT_JOBS_LIMIT,
 ) -> QueryResult:
     """Return jobs optionally filtered by skill and/or title keyword."""
 
+    resolved_limit = _validate_limit(limit)
     where: list[str] = []
     params: list[Any] = []
     if skill:
@@ -81,7 +85,8 @@ def jobs(
     """
     if where:
         sql += " WHERE " + " AND ".join(f"({clause})" for clause in where)
-    sql += " ORDER BY first_seen_at DESC, job_id ASC"
+    sql += " ORDER BY first_seen_at DESC, job_id ASC LIMIT ?"
+    params.append(resolved_limit)
     return QueryResult(query="jobs", rows=tuple(_dict_rows(connection.execute(sql, params))))
 
 
@@ -147,3 +152,11 @@ def _dict_rows(cursor: Iterable[sqlite3.Row] | sqlite3.Cursor) -> list[dict[str,
 
 def _normalize_skill(value: str) -> str:
     return " ".join(value.strip().split()).casefold()
+
+
+def _validate_limit(limit: int) -> int:
+    if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1:
+        raise ValueError("limit must be a positive integer")
+    if limit > DEFAULT_JOBS_LIMIT:
+        raise ValueError(f"limit must be <= {DEFAULT_JOBS_LIMIT}")
+    return limit

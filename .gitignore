@@ -1,36 +1,49 @@
-# Python
+# Python bytecode
 __pycache__/
 *.py[cod]
+
+# Virtual environments and packaging
+.venv/
+venv/
 *.egg-info/
+build/
+dist/
+
+# Tool caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-.coverage
-htmlcov/
-dist/
-build/
-.venv/
-venv/
+.import_linter_cache/
 
-# Local environment
+# Coverage reports
+.coverage
+.coverage.*
+coverage/
+coverage.xml
+htmlcov/
+
+# Local environment and secrets
 .env
 .env.*
 !.env.example
-
-# Local live/proxy material - never commit
 *.proxy
 *.secrets
 proxy*.txt
 
-# Forbidden runtime/state outputs for this collector core
+# Runtime state and collector outputs
 data/
 logs/
 *.log
+*.db
+*.db-*
 *.sqlite
+*.sqlite-*
 *.sqlite3
+*.sqlite3-*
 snapshot-*.json
 
-# OS/editor
+# Local agent, OS, and editor state
+.agents/
 .DS_Store
 .idea/
 .vscode/

@@ -171,8 +171,13 @@ def test_collect_live_builds_paged_requests_without_real_network(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     proxy = "http://user:pass@example.test:8080"
+    bootstrap_calls: list[dict[str, str] | None] = []
     post_calls: list[dict[str, Any]] = []
     sleep_calls: list[float] = []
+
+    def fake_bootstrap(*, proxies: dict[str, str] | None) -> str:
+        bootstrap_calls.append(proxies)
+        return "visitor-token"
 
     def fake_post(
         url: str,
@@ -204,7 +209,7 @@ def test_collect_live_builds_paged_requests_without_real_network(
     monkeypatch.setattr(
         transport,
         "_bootstrap_visitor_token",
-        lambda *, proxies: "visitor-token",
+        fake_bootstrap,
     )
     monkeypatch.setattr(transport.curl_requests, "post", fake_post)
     monkeypatch.setattr(transport.random, "uniform", lambda start, end: 2.25)
@@ -213,6 +218,7 @@ def test_collect_live_builds_paged_requests_without_real_network(
     results = transport.collect_live("python", max_pages=2, page_size=25)
 
     assert results == [{"page": 1}, {"page": 2}]
+    assert bootstrap_calls == [{"http": proxy, "https": proxy}]
     assert sleep_calls == [2.25]
     assert [call["json"]["variables"]["requestVariables"]["paging"] for call in post_calls] == [
         {"offset": 0, "count": 25},

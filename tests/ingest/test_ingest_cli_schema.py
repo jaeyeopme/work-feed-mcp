@@ -90,7 +90,7 @@ def test_schema_uses_jobs_only_indexes(tmp_path: Path) -> None:
         }
         assert {
             "idx_jobs_content_hash",
-            "idx_jobs_first_seen_at",
+            "idx_jobs_first_seen_job_id",
             "idx_job_skills_skill",
         } <= indexes
         columns = {row[1] for row in connection.execute("PRAGMA table_info(jobs)")}

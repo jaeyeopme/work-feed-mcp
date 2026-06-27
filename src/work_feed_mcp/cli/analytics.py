@@ -26,7 +26,7 @@ class AnalyticsArgumentParser(argparse.ArgumentParser):
 
 def build_parser() -> argparse.ArgumentParser:
     parser = AnalyticsArgumentParser(prog="work-feed analytics")
-    parser.add_argument("name", choices=("summary", "skills", "jobs", "budgets", "clients"))
+    parser.add_argument("name", choices=("summary", "skills", "jobs", "budgets"))
     parser.add_argument("--db", required=True)
     parser.add_argument("--skill")
     parser.add_argument("--title")

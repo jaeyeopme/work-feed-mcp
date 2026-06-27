@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from work_feed_mcp.db.connection import connect_readonly
 from work_feed_mcp.repositories import analytics
+from work_feed_mcp.services.limits import MAX_QUERY_LIMIT, validate_limit
 
 QueryResult = analytics.QueryResult
 
@@ -53,11 +54,8 @@ def run_query(
         case "skills":
             return analytics.skills(connection)
         case "jobs":
-            if limit is None:
-                return analytics.jobs(connection, skill=skill, title=title)
-            return analytics.jobs(connection, skill=skill, title=title, limit=limit)
+            resolved_limit = validate_limit(MAX_QUERY_LIMIT if limit is None else limit)
+            return analytics.jobs(connection, skill=skill, title=title, limit=resolved_limit)
         case "budgets":
             return analytics.budgets(connection)
-        case "clients":
-            return analytics.clients(connection)
     raise ValueError(f"unknown analytics query: {name}")

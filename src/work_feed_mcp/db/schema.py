@@ -89,13 +89,10 @@ CREATE TABLE IF NOT EXISTS collector_run_results (
 );
 
 CREATE INDEX IF NOT EXISTS idx_jobs_content_hash ON jobs(content_hash);
-CREATE INDEX IF NOT EXISTS idx_jobs_first_seen_at ON jobs(first_seen_at);
 CREATE INDEX IF NOT EXISTS idx_jobs_first_seen_job_id ON jobs(first_seen_at DESC, job_id ASC);
 CREATE INDEX IF NOT EXISTS idx_job_skills_skill ON job_skills(skill);
-CREATE INDEX IF NOT EXISTS idx_collector_runs_started_at ON collector_runs(started_at);
 CREATE INDEX IF NOT EXISTS idx_collector_runs_started_run_id
   ON collector_runs(started_at DESC, run_id DESC);
-CREATE INDEX IF NOT EXISTS idx_collector_run_results_run_id ON collector_run_results(run_id);
 CREATE INDEX IF NOT EXISTS idx_collector_run_results_query ON collector_run_results(query);
 CREATE INDEX IF NOT EXISTS idx_collector_run_results_started_id
   ON collector_run_results(started_at DESC, id DESC);

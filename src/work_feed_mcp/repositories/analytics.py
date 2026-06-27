@@ -4,12 +4,8 @@ from __future__ import annotations
 
 import sqlite3
 from collections.abc import Iterable
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Any
-
-from work_feed_mcp.repositories.client_analytics import client_dimension_buckets
-
-DEFAULT_JOBS_LIMIT = 100
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,11 +52,10 @@ def jobs(
     *,
     skill: str | None = None,
     title: str | None = None,
-    limit: int = DEFAULT_JOBS_LIMIT,
+    limit: int = 100,
 ) -> QueryResult:
     """Return jobs optionally filtered by skill and/or title keyword."""
 
-    resolved_limit = _validate_limit(limit)
     where: list[str] = []
     params: list[Any] = []
     if skill:
@@ -86,7 +81,7 @@ def jobs(
     if where:
         sql += " WHERE " + " AND ".join(f"({clause})" for clause in where)
     sql += " ORDER BY first_seen_at DESC, job_id ASC LIMIT ?"
-    params.append(resolved_limit)
+    params.append(limit)
     return QueryResult(query="jobs", rows=tuple(_dict_rows(connection.execute(sql, params))))
 
 
@@ -116,22 +111,6 @@ def budgets(connection: sqlite3.Connection) -> QueryResult:
     return QueryResult(query="budgets", rows=tuple(rows))
 
 
-def clients(connection: sqlite3.Connection) -> QueryResult:
-    """Return conditional client-dimension buckets."""
-
-    rows: list[dict[str, Any]] = []
-    for dimension in client_dimension_buckets(connection):
-        for bucket in dimension.buckets:
-            rows.append(
-                {
-                    "dimension": dimension.name,
-                    "available": dimension.available,
-                    **asdict(bucket),
-                }
-            )
-    return QueryResult(query="clients", rows=tuple(rows))
-
-
 def _count_table(connection: sqlite3.Connection, table: str) -> int:
     if table not in _table_names(connection):
         return 0
@@ -152,11 +131,3 @@ def _dict_rows(cursor: Iterable[sqlite3.Row] | sqlite3.Cursor) -> list[dict[str,
 
 def _normalize_skill(value: str) -> str:
     return " ".join(value.strip().split()).casefold()
-
-
-def _validate_limit(limit: int) -> int:
-    if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1:
-        raise ValueError("limit must be a positive integer")
-    if limit > DEFAULT_JOBS_LIMIT:
-        raise ValueError(f"limit must be <= {DEFAULT_JOBS_LIMIT}")
-    return limit

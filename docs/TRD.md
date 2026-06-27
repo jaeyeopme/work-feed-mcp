@@ -193,7 +193,8 @@ failures. User-facing diagnostics must not leak credential material.
 ## Analytics Requirements
 
 Analytics reads SQLite only. It must not perform live collection or infer
-missing client fields from title or description text.
+missing client fields from title or description text. Client analytics remain
+out of scope until the collector stores client fields explicitly.
 
 Current query groups:
 
@@ -201,10 +202,6 @@ Current query groups:
 - `skills`
 - `jobs`
 - `budgets`
-- `clients`
-
-Client dimensions absent from the current schema return unavailable,
-`unknown`, or `null` buckets.
 
 ## Docker and Deployment Requirements
 

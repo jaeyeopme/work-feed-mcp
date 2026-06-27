@@ -48,4 +48,4 @@ jobs:
           uv run --extra dev work-feed ingest --db /tmp/work-feed-e2e.sqlite --input /tmp/work-feed-e2e.jsonl
           uv run --extra dev work-feed analytics summary --db /tmp/work-feed-e2e.sqlite
           uv run --extra dev work-feed analytics skills --db /tmp/work-feed-e2e.sqlite
-          uv run --extra dev work-feed analytics clients --db /tmp/work-feed-e2e.sqlite
+          uv run --extra dev work-feed analytics jobs --db /tmp/work-feed-e2e.sqlite --limit 1
